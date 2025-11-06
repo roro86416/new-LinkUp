@@ -59,6 +59,9 @@ importers:
       express:
         specifier: ^5.1.0
         version: 5.1.0
+      zod:
+        specifier: ^4.1.12
+        version: 4.1.12
     devDependencies:
       '@types/cors':
         specifier: ^2.8.19
