@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-// 規格規範
+// 產品規格的規範
 const variantSchema = z.object({
   option1_name: z.string().optional(),
   option1_value: z.string().optional(),
@@ -11,7 +11,7 @@ const variantSchema = z.object({
   price_offset: z.number().default(0),
 });
 
-// --- 新增商品規範 ---
+//新增商品的規範
 export const createProductSchema = z.object({
   body: z.object({
     name: z.string().min(1, "商品名稱不能為空"),
@@ -23,10 +23,10 @@ export const createProductSchema = z.object({
   }),
 });
 
-// (我們需要匯出這個型別給 Service 使用)
+//給 Service 使用
 export type CreateProductBody = z.infer<typeof createProductSchema>["body"];
 
-// --- 更新商品規範 ---
+//更新商品規範
 export const updateProductSchema = z.object({
   body: z.object({
     name: z.string().min(1, "商品名稱不能為空").optional(),
@@ -38,5 +38,5 @@ export const updateProductSchema = z.object({
   }),
 });
 
-// (你原本已經有這個了，很棒！)
+//給 Service 使用
 export type UpdateProductBody = z.infer<typeof updateProductSchema>["body"];

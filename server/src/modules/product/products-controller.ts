@@ -87,7 +87,7 @@ export const updateProductController = async (req: Request, res: Response) => {
   }
 };
 
-// --- 刪除產品的 Controller ---
+//刪除產品的 Controller
 export const deleteProductController = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);

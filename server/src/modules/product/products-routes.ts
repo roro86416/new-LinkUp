@@ -11,19 +11,19 @@ import {
 
 const router = Router();
 
-// 獲取所有產品
+//獲取所有產品
 router.get("/", getAllProductsController);
 
-// 獲取指定產品
+//獲取指定產品
 router.get("/:id", getProductByIdController);
 
-// 建立新產品
+//建立新產品
 router.post("/", verify(createProductSchema), createProductController);
 
-// 更新指定產品
+//更新指定產品
 router.put("/:id", verify(updateProductSchema), updateProductController);
 
-// 刪除指定產品
+//刪除指定產品
 router.delete("/:id", deleteProductController);
 
 export default router;
