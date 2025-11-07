@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 // import organizerRoutes from "./api/api-organizer";
 import productRoutes from "./modules/product/products-routes.js";
 import authRoutes from "./modules/auth/auth-routes.js"; // 改名成 authRoutes
+import memberProfileRoutes from "./modules/member/memberProfile/memberProfile.routes.js";
 
 dotenv.config();
 const app: Express = express();
@@ -20,8 +21,10 @@ app.get("/api/test", (req: Request, res: Response) => {
 // 2. 模組三 (產品) 路由
 app.use("/api/v1/products", productRoutes);
 
-// ✅ 新增：會員模組路由
+// 模組一 會員模組路由
 app.use("/api/auth", authRoutes); // 前綴改成 /api/auth，跟路由檔案一致
+
+app.use("/api/member/profile", memberProfileRoutes);
 
 // 3. 模組二 (主辦方) 路由
 // app.use("/api/v1/organizer", organizerRoutes);
