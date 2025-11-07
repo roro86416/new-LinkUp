@@ -38,7 +38,13 @@ export const getProductByIdController = async (req: Request, res: Response) => {
       status: "success",
       data: product,
     });
-  } catch (error) {}
+  } catch (error) {
+    const e = error as Error;
+    res.status(500).json({
+      status: "error",
+      message: e.message,
+    });
+  }
 };
 
 //建立新產品的 Controller
