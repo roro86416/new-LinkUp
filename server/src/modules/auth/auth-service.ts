@@ -1,9 +1,8 @@
 import prisma from "../../utils/prisma-only.js";
 import bcrypt from "bcryptjs";
-import { RegisterInput, LoginInput } from "./member-schema.js";
+import { RegisterInput, LoginInput } from "./auth-schema.js";
 
-
-export const memberService = {
+export const authService = {
   async register(data: RegisterInput) {
     const { email, password, name } = data;
 
