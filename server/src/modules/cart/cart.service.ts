@@ -6,10 +6,11 @@ import { AddToCartBody } from "./cart.schema.js";
  * @param userId - 經過驗證的使用者 ID (來自 Controller)
  * @param body - 經過 Zod 驗證的請求主體
  */
+
 export const addToCartService = async (userId: string, body: AddToCartBody) => {
-  // --- 步驟 1：確保購物車存在 (Upsert Cart) ---
+  //確保購物車存在
   const cart = await prisma.cart.upsert({
-    where: { user_id: userId }, // (修正：使用傳入的 userId)
+    where: { user_id: userId },
     create: { user_id: userId },
     update: {},
     select: { id: true },
@@ -17,13 +18,10 @@ export const addToCartService = async (userId: string, body: AddToCartBody) => {
   const cart_id = cart.id;
   let resultItem;
 
-  // --- 步驟 2：根據 item_type 進行分流 ---
+  //根據 item_type分類票券or週邊商品
   if (body.item_type === "products") {
-    //
-    // ========= 這是「商品」的邏輯 =========
-    //
-
-    // (A) 先尋找現有項目
+    //「週邊商品」
+    //先尋找現有項目
     const existingItem = await prisma.cartItem.findFirst({
       where: {
         cart_id: cart_id,
@@ -32,22 +30,22 @@ export const addToCartService = async (userId: string, body: AddToCartBody) => {
       },
     });
 
-    // (B) 再抓取商品規格的庫存
+    //抓取商品規格的庫存
     const variant = await prisma.productVariant.findUniqueOrThrow({
       where: { id: body.product_variant_id },
       select: { stock_quantity: true },
     });
 
-    // (C) 計算「正確的」新總數
+    //計算正確的新總數
     const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
     const newTotalQuantity = currentQuantityInCart + body.quantity;
 
-    // (D) 檢查庫存
+    //檢查庫存
     if (variant.stock_quantity < newTotalQuantity) {
       throw new Error(`庫存不足！剩餘庫存：${variant.stock_quantity}`);
     }
 
-    // (E) 執行更新或建立
+    //執行更新
     if (existingItem) {
       resultItem = await prisma.cartItem.update({
         where: { id: existingItem.id },
@@ -57,6 +55,7 @@ export const addToCartService = async (userId: string, body: AddToCartBody) => {
           },
         },
       });
+      // 如無項目則更新
     } else {
       resultItem = await prisma.cartItem.create({
         data: {
@@ -68,11 +67,8 @@ export const addToCartService = async (userId: string, body: AddToCartBody) => {
       });
     }
   } else {
-    //
-    // ========= 這是「票券」的邏輯 =========
-    //
-
-    // (A) 抓取票券的 event_id 和總庫存
+    //「票券」
+    //抓取票券的 event_id 和總庫存
     const ticketType = await prisma.ticketType.findUniqueOrThrow({
       where: { id: body.ticket_type_id },
       select: {
@@ -81,19 +77,19 @@ export const addToCartService = async (userId: string, body: AddToCartBody) => {
       },
     });
 
-    // (B) 計算該活動票券已售出多少
+    //計算該活動票券已售出多少
     const sold_ticket = await prisma.orderItem.count({
       where: {
         ticket_type_id: body.ticket_type_id,
       },
     });
 
-    // (C) 如果已售出票券是否大於該票券庫存
+    //已售出票券是否大於該票券庫存
     if (sold_ticket >= ticketType.total_quantity) {
       throw new Error("此票券已售完");
     }
 
-    // (D) 檢查該使用者購物車有沒有重複購買
+    //檢查該使用者購物車有沒有重複購買
     const ticketInCart = await prisma.cartItem.findFirst({
       where: {
         cart_id: cart_id,
@@ -104,12 +100,12 @@ export const addToCartService = async (userId: string, body: AddToCartBody) => {
       },
     });
 
-    // (E) 如果有拋出錯誤
+    //如有則拋出錯誤
     if (ticketInCart) {
       throw new Error("您的購物車中已經有此活動的票券");
     }
 
-    // (F) 如果沒有就建立新項目 (已刪除重複的 create)
+    //如沒有就建立新項目
     resultItem = await prisma.cartItem.create({
       data: {
         cart_id: cart_id,
@@ -120,6 +116,6 @@ export const addToCartService = async (userId: string, body: AddToCartBody) => {
     });
   }
 
-  // --- 步驟 3：回傳結果 ---
+  //回傳結果
   return resultItem;
 };
