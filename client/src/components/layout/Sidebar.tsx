@@ -17,7 +17,7 @@ export interface SidebarProps {
 }
 
 export default function Sidebar({ type, activeMenu, onMenuChange }: SidebarProps) {
-  const { user, updateUser } = useUser();
+  const { user, updateUser, loading } = useUser();
 
   const menus: MenuItem[] =
     type === 'member'
@@ -47,12 +47,16 @@ export default function Sidebar({ type, activeMenu, onMenuChange }: SidebarProps
 
   return (
     <aside className="bg-white w-[280px] h-[660px] rounded-2xl p-6 flex flex-col gap-8 shadow-2xl shadow-gray-200/50">
-      <div className="relative w-[120px] h-[120px] mx-auto group">
-        <img
-          src={user?.avatar || '/login-icon/bear.png'}
-          alt="avatar"
-          className="w-full h-full rounded-full object-cover border-4 border-indigo-100 ring-2 ring-indigo-300 transition duration-300 group-hover:ring-4"
-        />
+      <div className="relative w-[120px] h-[120px] mx-auto group rounded-full border-4 border-indigo-100 ring-2 ring-indigo-300">
+        {loading ? (
+          <div className="w-full h-full rounded-full bg-gray-200 animate-pulse" />
+        ) : user?.avatar ? (
+          <img src={user.avatar} alt="avatar" className="w-full h-full rounded-full object-cover" />
+        ) : (
+          <div className="w-full h-full rounded-full bg-gray-500 flex items-center justify-center text-white text-5xl font-bold">
+            {user?.name?.[0]?.toUpperCase() || '?'}
+          </div>
+        )}
         <label
           htmlFor="avatar-upload"
           className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full border-4 border-white shadow-lg hover:bg-indigo-700 transition duration-200 cursor-pointer"
@@ -69,14 +73,17 @@ export default function Sidebar({ type, activeMenu, onMenuChange }: SidebarProps
       </div>
 
       <div className="text-center">
-        <p className="text-xl font-bold text-gray-800">{user?.name || (type === 'member' ? '普通會員' : '系統管理員')}</p>
-        <p className="text-sm text-gray-500 mt-0.5">{user?.email || 'user@example.com'}</p>
+        {loading ? (
+          <div className="flex flex-col items-center gap-2">
+            <div className="h-6 w-32 bg-gray-200 rounded animate-pulse" />
+            <div className="h-4 w-40 bg-gray-200 rounded animate-pulse" />
+          </div>
+        ) : (
+          <><p className="text-xl font-bold text-gray-800">{user?.name || (type === 'member' ? '普通會員' : '系統管理員')}</p><p className="text-sm text-gray-500 mt-0.5">{user?.email || 'user@example.com'}</p></>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
-        <h3 className="uppercase text-xs font-semibold text-gray-400 tracking-wider mb-2">
-          {type === 'member' ? '個人選單' : '管理控制台'}
-        </h3>
         {menus.map(item => {
           const isActive = activeMenu === item.label;
           return (

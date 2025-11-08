@@ -28,7 +28,7 @@ export default function LoginModal() {
             onClick={() => handleClick()}
             className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-200 cursor-pointer"
           >
-            <Image src="/icon-login/facebook.png" alt="Facebook" width={20} height={20} />
+            <Image src="/login-icon/facebook.png" alt="Facebook" width={20} height={20} />
             使用 Facebook 繼續
           </button>
 
@@ -36,7 +36,7 @@ export default function LoginModal() {
             onClick={() => handleClick()}
             className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-200 cursor-pointer"
           >
-            <Image src="/icon-login/google.png" alt="Google" width={20} height={20} />
+            <Image src="/login-icon/google.png" alt="Google" width={20} height={20} />
             使用 Google 繼續
           </button>
 
@@ -44,7 +44,7 @@ export default function LoginModal() {
             onClick={() => handleClick(openEmailLogin)}
             className="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-100 cursor-pointer"
           >
-            <Image src="/icon-login/email.png" alt="Email" width={20} height={20} />
+            <Image src="/login-icon/email.png" alt="Email" width={20} height={20} />
             使用 Email 繼續
           </button>
         </div>

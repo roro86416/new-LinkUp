@@ -17,7 +17,7 @@ import { useRouter } from 'next/navigation';
 
 export default function Header() {
   const { openLogin } = useModal();
-  const { user, logout } = useUser();
+  const { user, loading, logout } = useUser();
   const router = useRouter();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -44,6 +44,7 @@ export default function Header() {
           width={120}
           height={40}
           className="invert brightness-200"
+          style={{ width: 'auto' }}
         />
       </Link>
 
@@ -54,18 +55,28 @@ export default function Header() {
         </button>
 
         {/* 登入狀態 */}
-        {user ? (
+        {loading ? (
+          // 在讀取使用者狀態時，顯示一個佔位符或不顯示任何內容
+          // 這裡我們用一個固定寬高的 div 來避免佈局跳動
+          <div className="w-10 h-10" />
+        ) : user ? (
           <div className="relative" ref={menuRef}>
             {/* 大頭照按鈕，增加 border */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-300 hover:border-[#EF9D11] transition cursor-pointer"
             >
-              <img
-                src={user.avatar || '/login-icon/bear.png'}
-                alt="avatar"
-                className="w-full h-full object-cover rounded-full"
-              />
+              {user.avatar ? (
+                <img
+                  src={user.avatar}
+                  alt="avatar"
+                  className="w-full h-full object-cover rounded-full"
+                />
+              ) : (
+                <div className="w-full h-full bg-gray-500 flex items-center justify-center text-white text-xl font-bold">
+                  {user.name?.[0]?.toUpperCase()}
+                </div>
+              )}
             </button>
 
             {/* 下拉選單 */}
@@ -79,11 +90,17 @@ export default function Header() {
                   }}
                   className="w-full flex items-center p-4 border-b border-gray-300 text-left cursor-pointer hover:text-[#EF9D11] transition-colors"
                 >
-                  <img
-                    src={user.avatar || '/login-icon/bear.png'}
-                    alt="avatar"
-                    className="w-12 h-12 rounded-full border-2 border-gray-300 object-cover mr-3"
-                  />
+                  {user.avatar ? (
+                    <img
+                      src={user.avatar}
+                      alt="avatar"
+                      className="w-12 h-12 rounded-full border-2 border-gray-300 object-cover mr-3"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-gray-500 flex items-center justify-center text-white text-2xl font-bold mr-3 flex-shrink-0">
+                      {user.name?.[0]?.toUpperCase()}
+                    </div>
+                  )}
                   <div className="flex-1">
                     <p className="font-semibold text-gray-800">{user.name}</p>
                     <p className="text-sm text-gray-500">{user.email}</p>
