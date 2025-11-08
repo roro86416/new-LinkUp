@@ -6,6 +6,7 @@ import jwt from "jsonwebtoken";
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
 
 export const authController = {
+  /** 註冊 */
   async register(req: Request, res: Response) {
     try {
       const parsed = registerSchema.parse(req.body);
@@ -16,33 +17,39 @@ export const authController = {
     }
   },
 
+  /** 登入 */
   async login(req: Request, res: Response) {
     try {
       const parsed = loginSchema.parse(req.body);
       const user = await authService.login(parsed);
 
-      // 💡 修正：將使用者資訊加入 token payload
-      const token = jwt.sign({
+      // ✅ 將 avatar 一起放入 payload
+      const tokenPayload = {
         userId: user.id,
         email: user.email,
-        name: user.name, // 確保 name 被加入
-        avatar: user.avatar // 確保 avatar 被加入
-      }, JWT_SECRET, {
-        expiresIn: "7d",
-      });
+        name: user.name,
+        avatar: user.avatar || null,
+      };
 
-      res.status(200).json({ 
-        message: "登入成功", 
-        token, 
-        user: { name: user.name, email: user.email, avatar: user.avatar }
+      const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "7d" });
+
+      res.status(200).json({
+        message: "登入成功",
+        token,
+        user: tokenPayload,
       });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
   },
 
+  /** 取得登入者個人資料（需 JWT 驗證） */
   async profile(req: Request, res: Response) {
-    const user = (req as any).user;
-    res.json({ message: "取得個人資料成功", user });
+    try {
+      const user = (req as any).user;
+      res.status(200).json({ message: "取得個人資料成功", user });
+    } catch (err: any) {
+      res.status(400).json({ error: "無法取得使用者資料" });
+    }
   },
 };
