@@ -23,9 +23,15 @@ interface PasswordData {
   confirmPassword: string;
 }
 
+interface PasswordErrors {
+  currentPassword?: string;
+  newPassword?: string;
+  confirmPassword?: string;
+}
+
 // 共用樣式
 const labelClasses = "before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none text-[11px] font-normal leading-tight text-gray-600 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-gray-300 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-gray-300 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[3.75] peer-placeholder-shown:text-gray-600 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-indigo-500 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:!border-indigo-500 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:!border-indigo-500 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-gray-500";
-const inputFieldClasses = "peer w-full h-full bg-white text-gray-800 font-sans font-normal outline-none focus:outline-none disabled:bg-gray-100 disabled:border-0 transition-all border text-base px-3 py-2.5 rounded-[7px] border-gray-300 focus:border-indigo-500";
+const inputFieldClasses = "peer w-full h-full bg-white text-gray-900 font-sans font-normal outline-none focus:outline-none disabled:bg-gray-100 disabled:border-0 transition-all border text-base px-3 py-2.5 rounded-[7px] border-gray-300 focus:border-indigo-500";
 
 export default function AccountSettings() {
   const router = useRouter();
@@ -52,6 +58,7 @@ export default function AccountSettings() {
     newPassword: '',
     confirmPassword: '',
   });
+  const [passwordErrors, setPasswordErrors] = useState<PasswordErrors>({});
   const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
 
   // 登入方式 Tab 狀態
@@ -71,6 +78,16 @@ export default function AccountSettings() {
       formData.phoneNumber !== initialFormData.phoneNumber
     );
   }, [formData, initialFormData]);
+
+  const isPasswordFormValid = useMemo(() => {
+    return (
+      passwordData.currentPassword.trim() !== '' &&
+      passwordData.newPassword.trim() !== '' &&
+      passwordData.newPassword.trim().length >= 8 &&
+      passwordData.confirmPassword.trim() !== '' && // This is now implicitly checked by the next line
+      passwordData.newPassword === passwordData.confirmPassword
+    );
+  }, [passwordData]);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -158,21 +175,71 @@ export default function AccountSettings() {
     }
   };
 
+  // 驗證密碼欄位
+  const validatePasswordField = (name: keyof PasswordData, value: string) => {
+    let error = '';
+    if (!value.trim()) {
+      error = '此欄位為必填';
+    } else if (name === 'newPassword' && value.trim().length < 8) {
+      error = '密碼長度至少需要 8 個字元';
+    } else if (name === 'confirmPassword' && passwordData.newPassword && value !== passwordData.newPassword) {
+      error = '新密碼與確認密碼不相符';
+    } else if (name === 'newPassword' && passwordData.confirmPassword && value !== passwordData.confirmPassword) {
+      // 當新密碼變更時，也重新驗證確認密碼欄位
+      setPasswordErrors(prev => ({ ...prev, confirmPassword: '新密碼與確認密碼不相符' }));
+    }
+    setPasswordErrors(prev => ({ ...prev, [name]: error }));
+  };
+
   // 帳號安全 - 更改密碼
   const handleChangePassword = async () => {
+    // 再次進行提交前的完整驗證
+    const errors: PasswordErrors = {};
+    if (!passwordData.currentPassword.trim()) errors.currentPassword = '此欄位為必填';
+    if (!passwordData.newPassword.trim()) errors.newPassword = '此欄位為必填';
+    if (!passwordData.confirmPassword.trim()) errors.confirmPassword = '此欄位為必填';
+
+    if (Object.keys(errors).length > 0) {
+      setPasswordErrors(errors);
+      toast.error('請完成所有必填欄位');
+      return;
+    }
+
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error('新密碼與確認密碼不相符');
+      setPasswordErrors(prev => ({ ...prev, confirmPassword: '新密碼與確認密碼不相符' }));
       return;
     }
     if (passwordData.newPassword.length < 8) {
       toast.error('新密碼長度至少需要 8 個字元');
+      setPasswordErrors(prev => ({ ...prev, newPassword: '密碼長度至少需要 8 個字元' }));
       return;
     }
-    console.log("嘗試更改密碼...", passwordData);
-    // 實際應用中會呼叫 API
-    // await apiClient.post('/api/member/change-password', passwordData);
-    toast.success('密碼已成功更新！');
-    setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    setPasswordErrors({});
+
+
+    try {
+      console.log('Change password payload:', passwordData);
+
+      const response = await apiClient.post(
+        '/api/member/account-settings/change-password',
+        passwordData
+      );
+
+      toast.success(response.message || '密碼已成功更新！');
+
+      // 成功後清空表單
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err) {
+      console.error('Change password error:', err);
+      // Use a type guard to safely access the error message
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error('發生未知錯誤');
+      }
+    }
   };
 
   // 帳號安全 - 重新發送驗證信函
@@ -361,45 +428,62 @@ export default function AccountSettings() {
                       className="block text-sm font-medium text-gray-700 mb-2">原密碼 <span
                         className="text-red-500">*</span></label>
                     <input id="currentPassword" type={showPasswords.current ? 'text' : 'password'}
-                      placeholder="請輸入原密碼"
+                      placeholder="請輸入您的原密碼"
                       value={passwordData.currentPassword}
                       onChange={e => setPasswordData(p => ({ ...p, currentPassword: e.target.value }))}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 bg-white" />
+                      onBlur={e => validatePasswordField('currentPassword', e.target.value)}
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 bg-white text-gray-900 ${passwordErrors.currentPassword ? 'border-red-500' : 'border-gray-300'}`} />
                     <button type="button" onClick={() => setShowPasswords(s => ({ ...s, current: !s.current }))}
                       className="absolute right-3 top-10 text-gray-500">
                       {showPasswords.current ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                     </button>
+                    {passwordErrors.currentPassword && (
+                      <p className="text-xs text-red-600 mt-1">{passwordErrors.currentPassword}</p>
+                    )}
                   </div>
                   <div className="relative">
                     <label htmlFor="newPassword"
                       className="block text-sm font-medium text-gray-700 mb-2">新密碼 <span
                         className="text-red-500">*</span></label>
                     <input id="newPassword" type={showPasswords.new ? 'text' : 'password'}
-                      placeholder="請輸入新密碼"
+                      placeholder="至少 8 個字元"
                       value={passwordData.newPassword}
                       onChange={e => setPasswordData(p => ({ ...p, newPassword: e.target.value }))}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 bg-white" />
+                      onBlur={e => validatePasswordField('newPassword', e.target.value)}
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 bg-white text-gray-900 ${passwordErrors.newPassword ? 'border-red-500' : 'border-gray-300'}`} />
                     <button type="button" onClick={() => setShowPasswords(s => ({ ...s, new: !s.new }))}
                       className="absolute right-3 top-10 text-gray-500">
                       {showPasswords.new ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                     </button>
+                    {passwordErrors.newPassword && (
+                      <p className="text-xs text-red-600 mt-1">{passwordErrors.newPassword}</p>
+                    )}
                   </div>
                   <div className="relative">
                     <label htmlFor="confirmPassword"
-                      className="block text-sm font-medium text-gray-700 mb-2">再次確認新密碼</label>
+                      className="block text-sm font-medium text-gray-700 mb-2">再次確認新密碼 <span
+                        className="text-red-500">*</span></label>
                     <input id="confirmPassword" type={showPasswords.confirm ? 'text' : 'password'}
                       placeholder="再次確認新密碼"
                       value={passwordData.confirmPassword}
                       onChange={e => setPasswordData(p => ({ ...p, confirmPassword: e.target.value }))}
-                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 bg-white" />
+                      onBlur={e => validatePasswordField('confirmPassword', e.target.value)}
+                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 bg-white text-gray-900 ${passwordErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`} />
                     <button type="button" onClick={() => setShowPasswords(s => ({ ...s, confirm: !s.confirm }))}
                       className="absolute right-3 top-10 text-gray-500">
                       {showPasswords.confirm ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                     </button>
+                    {passwordErrors.confirmPassword && (
+                      <p className="text-xs text-red-600 mt-1">{passwordErrors.confirmPassword}</p>
+                    )}
                   </div>
                   <div className="pt-4 text-right">
                     <button type="button" onClick={handleChangePassword}
-                      className="bg-indigo-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg hover:bg-indigo-700 transition duration-150 focus:outline-none focus:ring-4 focus:ring-indigo-300 text-base">
+                      disabled={!isPasswordFormValid}
+                      className={`text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg transition duration-150 focus:outline-none focus:ring-4 focus:ring-indigo-300 text-base ${isPasswordFormValid
+                        ? 'bg-indigo-600 hover:bg-indigo-700 cursor-pointer'
+                        : 'bg-gray-400 cursor-not-allowed'
+                        }`}>
                       儲存新密碼
                     </button>
                   </div>

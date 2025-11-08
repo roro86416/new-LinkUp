@@ -1,7 +1,7 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 const api = {
-  async request(endpoint: string, options: RequestInit = {}) {
+  async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = localStorage.getItem('token');
 
     const headers: Record<string, string> = {
@@ -18,15 +18,48 @@ const api = {
       headers,
     });
 
-    if (response.status === 401) {
-      // 💡 關鍵：在這裡集中處理 401 錯誤
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login'; // 強制重定向到登入頁
-      throw new Error('登入已過期，請重新登入');
+    if (!response.ok) {
+      if (response.status === 401) {
+        // Dispatch a global event for the UserContext to handle logout
+        window.dispatchEvent(new CustomEvent('auth-error'));
+        throw new Error('登入已過期，請重新登入');
+      }
+
+      // Try to parse the JSON error body from the backend
+      try {
+        const errorData = await response.json();
+        // Throw an error with the specific message from the backend
+        throw new Error(errorData.message || `請求失敗，狀態碼: ${response.status}`);
+      } catch (e) {
+        // If the body isn't JSON, throw a generic error
+        throw new Error(`請求失敗，狀態碼: ${response.status}`);
+      }
     }
 
-    return response;
+    // If the request is successful, check for a JSON body
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      return response.json() as Promise<T>;
+    }
+
+    // For responses without a body (e.g., 204 No Content)
+    return undefined as T;
+  },
+
+  get<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: 'GET' });
+  },
+
+  post<T>(endpoint: string, body: unknown): Promise<T> {
+    return this.request<T>(endpoint, { method: 'POST', body: JSON.stringify(body) });
+  },
+
+  put<T>(endpoint: string, body: unknown): Promise<T> {
+    return this.request<T>(endpoint, { method: 'PUT', body: JSON.stringify(body) });
+  },
+
+  delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: 'DELETE' });
   },
 };
 

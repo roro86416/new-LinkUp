@@ -6,6 +6,7 @@ import dotenv from "dotenv";
 import productRoutes from "./modules/product/products-routes.js";
 import authRoutes from "./modules/auth/auth-routes.js";
 import memberProfileRoutes from "./modules/member/memberProfile/memberProfile.routes.js";
+import accountSettingsRoutes from "./modules/member/AccountSettings/accountSettings.routes.js";
 
 dotenv.config();
 
@@ -34,7 +35,10 @@ app.use("/api/v1/products", productRoutes);
 app.use("/api/auth", authRoutes);
 
 // ✅ 會員資料模組（採方案 A）
-app.use("/api/member", memberProfileRoutes);
+app.use("/api/member", memberProfileRoutes); // 維持 /api/member 作為基礎路徑
+
+// ✅ 帳號設定模組
+app.use("/api/member/account-settings", accountSettingsRoutes);
 
 // --- （未使用的主辦方模組預留）---
 // app.use("/api/v1/organizer", organizerRoutes);

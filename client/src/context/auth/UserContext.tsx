@@ -6,6 +6,7 @@ export interface User {
   name: string;
   avatar: string;
   email: string;
+  provider: string; // Add provider to the User type
 }
 
 interface DecodedUser {
@@ -14,6 +15,7 @@ interface DecodedUser {
   name?: string;
   avatar?: string;
   exp?: number;
+  provider?: string; // Add provider to the decoded type
 }
 
 interface UserContextType {
@@ -73,6 +75,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           name: decoded.name || '',
           email: decoded.email,
           avatar: decoded.avatar || '',
+          provider: decoded.provider || 'local', // Store the provider
         };
 
         localStorage.setItem('token', newToken);
