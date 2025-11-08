@@ -41,11 +41,6 @@ export const authService = {
 
     if (!user.is_active) throw new Error("帳號已停用");
 
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    };
+    return user;
   },
 };

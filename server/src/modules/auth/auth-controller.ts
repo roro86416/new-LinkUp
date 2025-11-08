@@ -21,11 +21,21 @@ export const authController = {
       const parsed = loginSchema.parse(req.body);
       const user = await authService.login(parsed);
 
-      const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, {
+      // 💡 修正：將使用者資訊加入 token payload
+      const token = jwt.sign({
+        userId: user.id,
+        email: user.email,
+        name: user.name, // 確保 name 被加入
+        avatar: user.avatar // 確保 avatar 被加入
+      }, JWT_SECRET, {
         expiresIn: "7d",
       });
 
-      res.status(200).json({ message: "登入成功", token, user });
+      res.status(200).json({ 
+        message: "登入成功", 
+        token, 
+        user: { name: user.name, email: user.email, avatar: user.avatar }
+      });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }

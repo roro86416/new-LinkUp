@@ -21,8 +21,8 @@ export const authMiddleware = (req: AuthRequest, res: Response, next: NextFuncti
   if (!token) return res.status(401).json({ message: "未提供 token" });
 
   try {
-    const payload = jwt.verify(token, JWT_SECRET) as JwtPayload;
-    req.user = payload;
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    req.user = decoded; // 💡 修正：將解碼後的 payload (decoded) 賦值給 req.user
     next();
   } catch (err) {
     res.status(403).json({ message: "Token 無效或已過期" });

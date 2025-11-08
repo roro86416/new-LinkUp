@@ -6,9 +6,9 @@ const router = Router();
 const controller = new MemberProfileController();
 
 // CRUD
-router.get("/", authMiddleware, controller.getProfile.bind(controller));
-router.post("/", authMiddleware, controller.createProfile.bind(controller));
-router.put("/", authMiddleware, controller.updateProfile.bind(controller));
-router.delete("/", authMiddleware, controller.deleteAccount.bind(controller));
+router.get("/profile", authMiddleware, controller.getProfile.bind(controller));
+router.post("/profile", authMiddleware, controller.createProfile.bind(controller));
+router.put("/profile", authMiddleware, controller.updateProfile.bind(controller));
+router.delete("/profile", authMiddleware, controller.deleteAccount.bind(controller));
 
 export default router;

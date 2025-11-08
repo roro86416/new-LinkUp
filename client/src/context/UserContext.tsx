@@ -1,45 +1,103 @@
 'use client';
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { jwtDecode } from 'jwt-decode'; // ✅ 正確的命名匯出方式
 
 export interface User {
   name: string;
-  avatar: string; // 大頭照 URL
+  avatar: string;
   email: string;
+}
+
+// 修正：移除索引簽名，避免 number | undefined 與 string | undefined 衝突
+interface DecodedUser {
+  userId: string;
+  email: string;
+  name?: string;
+  avatar?: string;
+  exp?: number;
 }
 
 interface UserContextType {
   user: User | null;
-  login: (userData: User) => void;
+  token: string | null;
+  login: (token: string) => void;
   logout: () => void;
-  updateUser: (data: Partial<User>) => void; // 更新部分欄位
+  updateUser: (data: Partial<User>) => void;
+  loading: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // 登入
-  const login = (userData: User) => {
-    setUser(userData);
+  useEffect(() => {
+    try {
+      const storedToken = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+
+      if (storedToken) {
+        const decoded = jwtDecode<DecodedUser>(storedToken);
+        const currentTime = Date.now() / 1000;
+
+        if (decoded.exp && decoded.exp < currentTime) {
+          logout();
+        } else if (storedUser) {
+          setUser(JSON.parse(storedUser));
+          setToken(storedToken);
+        }
+      }
+    } catch (error) {
+      console.error('恢復登入狀態失敗:', error);
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  const login = (newToken: string) => {
+    try {
+      const decoded = jwtDecode<DecodedUser>(newToken);
+      const userData: User = {
+        name: decoded.name || '',
+        email: decoded.email,
+        avatar: decoded.avatar || '',
+      };
+      localStorage.setItem('token', newToken);
+      localStorage.setItem('user', JSON.stringify(userData));
+      setToken(newToken);
+      setUser(userData);
+    } catch (error) {
+      console.error('登入時處理 token 失敗:', error);
+    }
   };
 
-  // 登出
-  const logout = () => setUser(null);
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    setToken(null);
+    setUser(null);
+  };
 
-  // 更新部分欄位（例如 avatar 或 name）
   const updateUser = (data: Partial<User>) => {
-    setUser(prev => (prev ? { ...prev, ...data } : prev));
+    setUser(prev => {
+      if (!prev) return null;
+      const updatedUser = { ...prev, ...data };
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return updatedUser;
+    });
   };
 
   return (
-    <UserContext.Provider value={{ user, login, logout, updateUser }}>
+    <UserContext.Provider value={{ user, token, login, logout, updateUser, loading }}>
       {children}
     </UserContext.Provider>
   );
 };
 
-// 自訂 Hook
 export const useUser = () => {
   const context = useContext(UserContext);
   if (!context) throw new Error('useUser 必須在 UserProvider 內使用');

@@ -1,5 +1,4 @@
 'use client';
-
 import { useModal } from '../../context/ModalContext';
 import { useUser } from '../../context/UserContext';
 import { useState } from 'react';
@@ -8,7 +7,7 @@ import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 
 export default function EmailLoginModal() {
   const { isEmailLoginOpen, closeEmailLogin, openRegister, openForgotPassword } = useModal();
-  const { login } = useUser();
+  const { login, logout } = useUser();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,26 +37,22 @@ export default function EmailLoginModal() {
     setError('');
 
     try {
-      const res = await fetch('http://localhost:3001/api/auth/login', {
+      // 登入前先清掉舊帳號
+      logout();
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
       const data = await res.json();
-
       if (!res.ok) throw new Error(data.message || '登入失敗');
 
-      // 登入成功後
-      login({
-        name: data.user.name,
-        avatar: data.user.avatar,
-        email: data.user.email,
-      });
-
-      // 存 localStorage
-      if (data.token) localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
+      if (data.token) {
+        console.log('登入 token:', data.token);
+        login(data.token);
+      }
 
       closeEmailLogin();
     } catch (err: unknown) {
@@ -119,7 +114,8 @@ export default function EmailLoginModal() {
           </div>
 
           <button
-            className={`w-full py-2 rounded-lg text-white transition-colors cursor-pointer ${loading ? 'bg-gray-300' : 'bg-[#658AD0] hover:bg-[#4f6eb1]'}`}
+            className={`w-full py-2 rounded-lg text-white transition-colors cursor-pointer ${loading ? 'bg-gray-300' : 'bg-[#658AD0] hover:bg-[#4f6eb1]'
+              }`}
             onClick={handleLogin}
             disabled={loading}
           >

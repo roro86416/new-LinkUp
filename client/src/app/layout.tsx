@@ -9,6 +9,7 @@ import EmailLoginModal from '../components/modals/EmailLoginModal';
 import RegisterModal from '../components/modals/RegisterModal';
 import ForgotPasswordModal from '../components/modals/ForgotPasswordModal';
 import PasswordSentModal from '../components/modals/PasswordSentModal';
+import { Toaster } from 'react-hot-toast';
 
 export const metadata = {
   title: 'LinkUp 報名系統',
@@ -19,6 +20,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="zh-TW">
       <body className="bg-white">
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            duration: 3000, // 預設 3 秒後消失
+          }}
+        />
         <UserProvider>
           <ModalProvider>
             <HeaderWrapper />

@@ -1,32 +1,42 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-// import organizerRoutes from "./api/api-organizer";
+
+// 模組匯入
 import productRoutes from "./modules/product/products-routes.js";
-import authRoutes from "./modules/auth/auth-routes.js"; // 改名成 authRoutes
+import authRoutes from "./modules/auth/auth-routes.js";
 import memberProfileRoutes from "./modules/member/memberProfile/memberProfile.routes.js";
 
 dotenv.config();
+
 const app: Express = express();
 
-// --- 中間件 (Middlewares) ---
-app.use(cors());
+// --- 全域中間件 ---
 app.use(express.json());
 
-// 1. 測試路由
+// --- CORS 設定（允許前端 localhost:3000 存取，含 cookies/token） ---
+app.use(cors({
+  origin: "http://localhost:3000",
+  credentials: true,
+}));
+
+// --- 測試用路由 ---
 app.get("/api/test", (req: Request, res: Response) => {
-  res.json({ message: "愛來自LinkUp伺服器! 🚀" });
+  res.json({ message: "愛來自 LinkUp 伺服器! 🚀" });
 });
 
-// 2. 模組三 (產品) 路由
+// --- 模組路由註冊 ---
+
+// 產品模組
 app.use("/api/v1/products", productRoutes);
 
-// 模組一 會員模組路由
-app.use("/api/auth", authRoutes); // 前綴改成 /api/auth，跟路由檔案一致
+// 登入註冊模組
+app.use("/api/auth", authRoutes);
 
-app.use("/api/member/profile", memberProfileRoutes);
+// ✅ 會員資料模組（採方案 A）
+app.use("/api/member", memberProfileRoutes);
 
-// 3. 模組二 (主辦方) 路由
+// --- （未使用的主辦方模組預留）---
 // app.use("/api/v1/organizer", organizerRoutes);
 
 export default app;
