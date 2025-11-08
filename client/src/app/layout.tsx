@@ -1,14 +1,14 @@
 
 import './globals.css';
-import { UserProvider } from '../context/UserContext';
-import { ModalProvider } from '../context/ModalContext';
+import { UserProvider } from '../context/auth/UserContext';
+import { ModalProvider } from '../context/auth/ModalContext';
 import HeaderWrapper from './HeaderWrapper';
 import Footer from '../components/Footer';
-import LoginModal from '../components/modals/LoginModal';
-import EmailLoginModal from '../components/modals/EmailLoginModal';
-import RegisterModal from '../components/modals/RegisterModal';
-import ForgotPasswordModal from '../components/modals/ForgotPasswordModal';
-import PasswordSentModal from '../components/modals/PasswordSentModal';
+import LoginModal from '../components/modals/auth/LoginModal';
+import EmailLoginModal from '../components/modals/auth/EmailLoginModal';
+import RegisterModal from '../components/modals/auth/RegisterModal';
+import ForgotPasswordModal from '../components/modals/auth/ForgotPasswordModal';
+import PasswordSentModal from '../components/modals/auth/PasswordSentModal';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata = {

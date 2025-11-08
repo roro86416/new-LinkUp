@@ -1,6 +1,6 @@
 'use client';
-import { useModal } from '../../context/ModalContext';
-import { useUser } from '../../context/UserContext';
+import { useModal } from '../../../context/auth/ModalContext';
+import { useUser } from '../../../context/auth/UserContext';
 import { useState } from 'react';
 import Image from 'next/image';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';

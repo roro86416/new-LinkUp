@@ -3,7 +3,7 @@
 import { Dispatch, SetStateAction, ReactElement, useState } from 'react';
 import { AiOutlineSetting, AiOutlineInbox, AiOutlineStar, AiOutlineCamera } from 'react-icons/ai';
 import { FiPackage, FiBarChart2 } from 'react-icons/fi';
-import { useUser } from '../../context/UserContext';
+import { useUser } from '../../context/auth/UserContext';
 
 interface MenuItem {
   label: string;
@@ -18,7 +18,6 @@ export interface SidebarProps {
 
 export default function Sidebar({ type, activeMenu, onMenuChange }: SidebarProps) {
   const { user, updateUser } = useUser();
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const menus: MenuItem[] =
     type === 'member'
@@ -41,19 +40,16 @@ export default function Sidebar({ type, activeMenu, onMenuChange }: SidebarProps
     const reader = new FileReader();
     reader.onloadend = () => {
       const newAvatar = reader.result as string;
-      setAvatarPreview(newAvatar);
       updateUser({ avatar: newAvatar }); // 更新 Context → Header 即時同步
     };
     reader.readAsDataURL(file);
   };
 
-  const displayAvatar = avatarPreview || user?.avatar || '/bear.png';
-
   return (
     <aside className="bg-white w-[280px] h-[660px] rounded-2xl p-6 flex flex-col gap-8 shadow-2xl shadow-gray-200/50">
       <div className="relative w-[120px] h-[120px] mx-auto group">
         <img
-          src={displayAvatar}
+          src={user?.avatar || '/login-icon/bear.png'}
           alt="avatar"
           className="w-full h-full rounded-full object-cover border-4 border-indigo-100 ring-2 ring-indigo-300 transition duration-300 group-hover:ring-4"
         />

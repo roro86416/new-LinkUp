@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useModal } from '../context/ModalContext';
-import { useUser } from '../context/UserContext';
+import { useModal } from '../context/auth/ModalContext';
+import { useUser } from '../context/auth/UserContext';
 import Image from 'next/image';
 import { FaTicketAlt } from 'react-icons/fa';
 import { useState, useRef, useEffect } from 'react';
@@ -62,7 +62,7 @@ export default function Header() {
               className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-300 hover:border-[#EF9D11] transition cursor-pointer"
             >
               <img
-                src={user.avatar || '/bear.png'}
+                src={user.avatar || '/login-icon/bear.png'}
                 alt="avatar"
                 className="w-full h-full object-cover rounded-full"
               />
@@ -80,7 +80,7 @@ export default function Header() {
                   className="w-full flex items-center p-4 border-b border-gray-300 text-left cursor-pointer hover:text-[#EF9D11] transition-colors"
                 >
                   <img
-                    src={user.avatar || '/bear.png'}
+                    src={user.avatar || '/login-icon/bear.png'}
                     alt="avatar"
                     className="w-12 h-12 rounded-full border-2 border-gray-300 object-cover mr-3"
                   />

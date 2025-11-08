@@ -1,6 +1,6 @@
 'use client';
 
-import { useModal } from '../../context/ModalContext';
+import { useModal } from '../../../context/auth/ModalContext';
 import Image from 'next/image';
 
 export default function PasswordSentModal() {

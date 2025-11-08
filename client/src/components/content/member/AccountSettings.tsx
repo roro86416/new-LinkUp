@@ -1,8 +1,8 @@
 import { useState, useEffect, ChangeEvent, useMemo, useCallback } from "react";
 import { EnvelopeIcon, CheckCircleIcon, XCircleIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
-import { useUser } from "../../../context/UserContext";
-import { apiClient } from "../../../api/apiClient";
+import { useUser } from "../../../context/auth/UserContext";
+import { apiClient } from "../../../api/auth/apiClient";
 import toast from 'react-hot-toast';
 
 type TabType = "基本資料" | "帳號安全" | "登入方式";
@@ -470,8 +470,8 @@ export default function AccountSettings() {
                   {Object.entries(providerStatus).map(([name, isBound]) => {
                     const isFacebook = name === 'Facebook';
                     const logoContent: React.ReactNode = isFacebook
-                      ? <img src="/icon-login/facebook.png" alt="Facebook Logo" className="w-8 h-8 object-contain" />
-                      : <img src="/icon-login/google.png" alt="Google Logo" className="w-8 h-8 object-contain" />;
+                      ? <img src="/login-icon/facebook.png" alt="Facebook Logo" className="w-8 h-8 object-contain" />
+                      : <img src="/login-icon/google.png" alt="Google Logo" className="w-8 h-8 object-contain" />;
 
                     return (
                       <div key={name}

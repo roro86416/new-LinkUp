@@ -39,13 +39,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const storedUser = localStorage.getItem('user');
 
       if (storedToken) {
-        const decoded = jwtDecode<DecodedUser>(storedToken);
+        const decoded = jwtDecode<DecodedUser & { exp?: number }>(storedToken);
         const currentTime = Date.now() / 1000;
 
         if (decoded.exp && decoded.exp < currentTime) {
           logout();
-        } else if (storedUser) {
-          setUser(JSON.parse(storedUser));
+        } else {
+          // 💡 修正：不再依賴 storedUser，直接從 token 解碼來恢復狀態
+          const userData: User = {
+            name: decoded.name || '',
+            email: decoded.email,
+            avatar: decoded.avatar || '',
+          };
+          setUser(userData);
           setToken(storedToken);
         }
       }
