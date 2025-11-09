@@ -1,7 +1,7 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
 
 class ApiClient {
-  private async request(endpoint: string, options: RequestInit = {}) {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     const headers = new Headers(options.headers);
 
@@ -32,25 +32,25 @@ class ApiClient {
 
     const contentType = res.headers.get("content-type");
     if (contentType && contentType.includes("application/json")) {
-      return res.json();
+      return res.json() as Promise<T>;
     }
-    return null;
+    return null as T;
   }
 
-  public get(endpoint: string, options: RequestInit = {}) {
-    return this.request(endpoint, { ...options, method: "GET" });
+  public get<T>(endpoint: string, options: RequestInit = {}) {
+    return this.request<T>(endpoint, { ...options, method: "GET" });
   }
 
-  public put<T>(endpoint: string, body: T, options: RequestInit = {}) {
-    return this.request(endpoint, { ...options, method: "PUT", body: JSON.stringify(body) });
+  public put<TResponse, TBody = unknown>(endpoint: string, body: TBody, options: RequestInit = {}) {
+    return this.request<TResponse>(endpoint, { ...options, method: "PUT", body: JSON.stringify(body) });
   }
 
-  public post<T>(endpoint: string, body: T, options: RequestInit = {}) {
-    return this.request(endpoint, { ...options, method: "POST", body: JSON.stringify(body) });
+  public post<TResponse, TBody = unknown>(endpoint: string, body: TBody, options: RequestInit = {}) {
+    return this.request<TResponse>(endpoint, { ...options, method: "POST", body: JSON.stringify(body) });
   }
 
-  public delete(endpoint: string, options: RequestInit = {}) {
-    return this.request(endpoint, { ...options, method: "DELETE" });
+  public delete<T, B = unknown>(endpoint: string, body?: B, options: RequestInit = {}): Promise<T> {
+    return this.request<T>(endpoint, { ...options, method: "DELETE", body: body ? JSON.stringify(body) : undefined, });
   }
 }
 
