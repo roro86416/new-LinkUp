@@ -1,5 +1,5 @@
-import prisma from "../../utils/prisma-only";
-import { CreateProductBody, UpdateProductBody } from "./products.schema.js"; //
+import prisma from "../../utils/prisma-only.js";
+import { CreateProductBody, UpdateProductBody } from "./products.schema"; //
 
 export const findAllProductsService = async () => {
   const products = await prisma.product.findMany({
