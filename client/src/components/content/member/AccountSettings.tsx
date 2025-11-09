@@ -219,6 +219,7 @@ export default function AccountSettings() {
     setPasswordErrors({});
 
 
+
     try {
       console.log('Change password payload:', passwordData);
 
@@ -249,13 +250,22 @@ export default function AccountSettings() {
   };
 
   // 帳號安全 - 刪除會員
-  const handleDeleteAccount = () => {
+  const handleDeleteAccount = async () => {
     if (window.confirm(`您確定要永久刪除帳號 ${user?.email} 嗎？此操作無法復原。`)) {
-      console.log("嘗試刪除會員...");
-      // await apiClient.delete('/api/member/profile');
-      // logout();
-      // router.push('/');
-      toast.error('已發起會員刪除流程...');
+      try {
+        console.log("嘗試刪除會員...");
+        await apiClient.delete('/api/member/profile');
+        toast.success('您的帳號已成功刪除。');
+        logout();
+        router.push('/');
+      } catch (err) {
+        console.error("刪除會員失敗:", err);
+        if (err instanceof Error) {
+          toast.error(err.message || '刪除帳號時發生錯誤');
+        } else {
+          toast.error('刪除帳號時發生未知錯誤');
+        }
+      }
     }
   };
 
@@ -522,7 +532,7 @@ export default function AccountSettings() {
                     永久刪除帳號 <span className="font-mono font-semibold break-all text-red-700">{user?.email}</span>
                   </p>
                   <button onClick={handleDeleteAccount}
-                    className="bg-red-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg hover:bg-red-700 transition duration-150 focus:outline-none focus:ring-4 focus:ring-red-300 w-full sm:w-auto text-base">
+                    className="bg-red-600 text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg hover:bg-red-700 transition duration-150 focus:outline-none focus:ring-4 focus:ring-red-300 w-full sm:w-auto text-base cursor-pointer">
                     刪除會員
                   </button>
                 </div>

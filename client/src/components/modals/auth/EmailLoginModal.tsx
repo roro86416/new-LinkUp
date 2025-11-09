@@ -27,6 +27,12 @@ export default function EmailLoginModal() {
     openForgotPassword();
   };
 
+  // 驗證 Email 格式
+  const validateEmail = (email: string) => {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
+  };
+
   const handleLogin = async () => {
     if (!email || !password) {
       setError('⚠️ 請填寫完整資訊');
@@ -36,27 +42,43 @@ export default function EmailLoginModal() {
     setLoading(true);
     setError('');
 
-    try {
-      // 登入前先清掉舊帳號
-      logout();
+    if (!validateEmail(email)) {
+      setError('❌ 請輸入有效的電子郵件格式');
+      setLoading(false);
+      return;
+    }
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, {
+    try {
+      // 1. 呼叫後端登入 API
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || '登入失敗');
+      const data = await response.json();
 
-      if (data.token) {
-        console.log('登入 token:', data.token);
-        login(data.token);
+      // 2. 檢查 API 回應，如果失敗則拋出後端提供的具體錯誤訊息
+      if (!response.ok) {
+        // 優先使用後端 data.message，若無則嘗試 data.error，最後才使用通用訊息
+        throw new Error(data.message || data.error || '登入失敗，請稍後再試');
       }
 
+      // 3. 登入成功，使用 UserContext 中的 login 函式儲存 token 並更新使用者狀態
+      if (data.token) {
+        login(data.token); // login 函式現在只負責儲存 token 和更新狀態
+      } else {
+        throw new Error('登入成功，但未收到 Token');
+      }
+
+      // 4. 關閉登入視窗
       closeEmailLogin();
     } catch (err: unknown) {
-      if (err instanceof Error) setError(err.message);
+      // 根據後端回傳的訊息顯示具體的錯誤提示
+      if (err instanceof Error) {
+        // 移除通用的 "登入失敗" 字眼，直接顯示後端給的具體錯誤
+        setError(`❌ ${err.message}`);
+      }
       else setError('發生未知錯誤');
     } finally {
       setLoading(false);
