@@ -12,17 +12,17 @@ import {
   Title,
   Tooltip,
   Legend,
-  ChartOptions
+  ChartOptions,
+  ScriptableContext
 } from 'chart.js';
 
-// ⭐️ 修正：匯入 Heroicons 的線條風格圖標
+// ⭐️ Heroicons
 import {
   UsersIcon,
   CalendarDaysIcon,
   BanknotesIcon,
   ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
-
 
 ChartJS.register(
   CategoryScale,
@@ -37,22 +37,18 @@ ChartJS.register(
 );
 
 export default function Dashboard() {
-  // --------------------- 統一顏色變數 (新主題：經典藍/亮橙) ---------------------
-  // 主色調：藍色 (用於使用者、總覽、表格)
-  const primaryColor = '#1976D2'; // 經典藍
-  const primaryBgColor = 'rgba(25, 118, 210, 0.15)';
-  const primaryHoverColor = '#1565C0';
+  // --------------------- 顏色 ---------------------
+  const primaryColor = '#c2410c';
+  const primaryBgColor = 'rgba(194, 65, 12, 0.1)';
+  const primaryHoverColor = '#9a3412';
 
-  // 次要/強調色調：橙色 (用於交易額、報名人數)
-  const secondaryColor = '#C07AB8';
-  const secondaryBgColor = 'rgba(255, 152, 0, 0.15)';
-  const secondaryHoverColor = '#6C3365';
+  const secondaryColor = '#d97706';
+  const secondaryBgColor = 'rgba(217, 119, 6, 0.1)';
+  const secondaryHoverColor = '#b45309';
 
-  // 圓餅圖顏色 (藍橙搭配)
-  const pieColors = ['#484891', '#7373B9', '	#A6A6D2', '#D8D8EB'];
+  const pieColors = ['#9a3412', '#c2410c', '#d97706', '#f59e0b'];
 
-
-  // --------------------- 圖表資料 (保持不變) ---------------------
+  // --------------------- 圖表資料 ---------------------
   const pieData = {
     labels: ['活動 A', '活動 B', '活動 C', '活動 D'],
     datasets: [
@@ -70,7 +66,6 @@ export default function Dashboard() {
       {
         label: '使用者數量',
         data: [1200, 1300, 1500],
-        // 使用主色調 (經典藍)
         borderColor: primaryColor,
         backgroundColor: primaryBgColor,
         tension: 0.4,
@@ -87,7 +82,6 @@ export default function Dashboard() {
       {
         label: '交易額',
         data: [20000, 25000, 30000],
-        // 使用次要色調 (亮橙色)
         borderColor: secondaryColor,
         backgroundColor: secondaryBgColor,
         tension: 0.4,
@@ -104,14 +98,13 @@ export default function Dashboard() {
       {
         label: '報名人數',
         data: [200, 250, 300],
-        // 使用次要色調 (亮橙色)
         backgroundColor: secondaryColor,
         hoverBackgroundColor: secondaryHoverColor,
       },
     ],
   };
 
-  // --------------------- 圖表選項 (保持不變) ---------------------
+  // --------------------- 圖表選項 ---------------------
   const pieOptions: ChartOptions<'doughnut'> = {
     responsive: true,
     plugins: {
@@ -119,8 +112,6 @@ export default function Dashboard() {
       tooltip: { enabled: true },
     },
     animation: {
-      animateRotate: true,
-      animateScale: true,
       duration: 1200,
       easing: 'easeOutBounce',
     },
@@ -132,9 +123,12 @@ export default function Dashboard() {
       legend: { position: 'bottom' },
       tooltip: { enabled: true },
     },
-    animation: {
-      duration: 1000,
-      easing: 'easeOutQuart',
+    animations: {
+      y: {
+        easing: 'easeInOutElastic',
+        duration: 800,
+        from: (ctx: ScriptableContext<'line'>) => (ctx.type === 'data' ? ctx.chart.height : 0)
+      }
     },
     hover: {
       mode: 'nearest',
@@ -148,9 +142,16 @@ export default function Dashboard() {
       legend: { position: 'bottom' },
       tooltip: { enabled: true },
     },
-    animation: {
-      duration: 1000,
-      easing: 'easeOutQuart',
+    animations: {
+      y: {
+        easing: 'easeInOutElastic',
+        duration: 800,
+        from: (ctx: ScriptableContext<'bar'>) => {
+          if (ctx.type === 'data') {
+            return ctx.chart.height
+          }
+        },
+      },
     },
     hover: {
       mode: 'nearest',
@@ -158,7 +159,7 @@ export default function Dashboard() {
     },
   };
 
-  // --------------------- 當月熱門活動 (保持不變) ---------------------
+  // --------------------- 當月熱門活動 ---------------------
   const hotActivities = [
     { name: '真時光', organizer: 'Microsoft', date: '2025/10/20', email: 'jane@microsoft.com', count: 150, status: '進行中' },
     { name: '未來課堂', organizer: 'Microsoft', date: '2025/10/20', email: 'jane@microsoft.com', count: 120, status: '報名中' },
@@ -166,22 +167,19 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="w-full mx-auto">
-      {/* ---------------- 匯出按鈕 ---------------- */}
+    <div className="w-full mx-auto pb-12">
+      {/* 匯出按鈕 */}
       <div className="flex justify-end mb-4">
-        {/* ⭐️ 修正：替換 SVG 圖標，使用 Heroicon */}
-        <span className="flex items-center gap-1 text-blue-700 cursor-pointer font-semibold hover:text-blue-500 transition-colors">
+        <span className="flex items-center gap-1 text-yellow-700 cursor-pointer font-semibold hover:text-orange-600 transition-colors">
           <ArrowDownTrayIcon className="w-5 h-5" /> 匯出報表
         </span>
       </div>
 
-      {/* ---------------- KPI 卡片 ---------------- */}
+      {/* KPI 卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {/* 總使用人數 (使用主色調：藍) */}
-        <div className="bg-blue-50 rounded-lg shadow p-4 flex items-center gap-4">
-          <div className="p-2 border border-blue-400 rounded">
-            {/* ⭐️ 修正：替換為 UsersIcon */}
-            <UsersIcon className="w-6 h-6 text-blue-600" />
+        <div className="bg-orange-50 rounded-lg shadow p-4 flex items-center gap-4">
+          <div className="p-2 border border-orange-400 rounded">
+            <UsersIcon className="w-6 h-6 text-orange-600" />
           </div>
           <div>
             <h3 className="text-gray-800 font-semibold">總使用人數</h3>
@@ -189,11 +187,9 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 當月活動總數 (使用主色調：藍) */}
-        <div className="bg-blue-50 rounded-lg shadow p-4 flex items-center gap-4">
-          <div className="p-2 border border-blue-400 rounded">
-            {/* ⭐️ 修正：替換為 CalendarDaysIcon */}
-            <CalendarDaysIcon className="w-6 h-6 text-blue-600" />
+        <div className="bg-orange-50 rounded-lg shadow p-4 flex items-center gap-4">
+          <div className="p-2 border border-orange-400 rounded">
+            <CalendarDaysIcon className="w-6 h-6 text-orange-600" />
           </div>
           <div>
             <h3 className="text-gray-800 font-semibold">當月活動總數</h3>
@@ -201,10 +197,8 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 當月交易額 (使用次要色調：橙) */}
         <div className="bg-orange-50 rounded-lg shadow p-4 flex items-center gap-4">
           <div className="p-2 border border-orange-400 rounded">
-            {/* ⭐️ 修正：替換為 BanknotesIcon */}
             <BanknotesIcon className="w-6 h-6 text-orange-600" />
           </div>
           <div>
@@ -214,7 +208,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ---------------- 圖表區 (保持不變) ---------------- */}
+      {/* 圖表區 */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg shadow p-4 mt-6">
           <h3 className="text-gray-900 font-semibold mb-4">使用者成長趨勢</h3>
@@ -239,30 +233,41 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ---------------- 當月熱門活動表格 (保持不變) ---------------- */}
+      {/* 當月熱門活動表格 */}
       <div className="bg-white rounded-lg shadow p-4 mt-6">
-        <h3 className="text-gray-900 font-semibold mb-4">當月熱門活動</h3>
+        <h3 className="text-gray-900 font-semibold mb-4 text-lg">當月熱門活動</h3>
         <div className="overflow-x-auto">
-          <table className="w-full border border-gray-200">
-            <thead>
-              <tr className="bg-[#7373B9] text-white">
-                <th className="p-2">活動名稱</th>
-                <th className="p-2">主辦方</th>
-                <th className="p-2">建立日期</th>
-                <th className="p-2">E-mail</th>
-                <th className="p-2">報名人數</th>
-                <th className="p-2">狀態</th>
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">活動名稱</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">主辦方</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">建立日期</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">E-mail</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">報名人數</th>
+                <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">狀態</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="bg-white divide-y divide-gray-200">
               {hotActivities.map((item, idx) => (
-                <tr key={idx} className="border-t hover:bg-gray-100 cursor-pointer">
-                  <td className="p-2 text-gray-900">{item.name}</td>
-                  <td className="p-2 text-gray-900">{item.organizer}</td>
-                  <td className="p-2 text-gray-900">{item.date}</td>
-                  <td className="p-2 text-gray-900">{item.email}</td>
-                  <td className="p-2 text-gray-900">{item.count}</td>
-                  <td className="p-2 text-gray-900">{item.status}</td>
+                <tr key={idx} className="hover:bg-orange-50/50 transition-colors duration-150">
+                  <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{item.organizer}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{item.date}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{item.email}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-right font-semibold text-gray-800">
+                    {item.count}
+                  </td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-center">
+                    <span
+                      className={`px-3 py-1 text-xs font-semibold rounded-full ${item.status === '進行中'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-green-100 text-green-800'
+                        }`}
+                    >
+                      {item.status}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -1,8 +1,16 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { apiClient } from '../../../api/auth/apiClient';
+import toast from 'react-hot-toast';
 
 // ----------------------------------------------------
 // 1. 類型定義 (Type Definitions)
 // ----------------------------------------------------
+
+// ✅ 修正：在前端自行定義類型，移除對 @prisma/client 的依賴
+enum FavoritableType {
+  EVENT = 'EVENT',
+  ORGANIZER = 'ORGANIZER',
+}
 
 interface FavoriteEvent {
   id: number;
@@ -30,22 +38,6 @@ function isFavoriteOrganizer(item: FavoriteItem): item is FavoriteOrganizer {
 }
 
 // ----------------------------------------------------
-// 2. 模擬資料
-// ----------------------------------------------------
-
-const initialFavoriteEvents: FavoriteEvent[] = [
-  { id: 101, title: '2026 年前端開發趨勢論壇', date: '2026/03/15', location: '線上直播', isUpcoming: true, organizerName: 'Tech Innovators Co.' },
-  { id: 102, title: 'Python 資料科學實戰營', date: '2025/11/20', location: '台北市信義區', isUpcoming: true, organizerName: 'Data Master' },
-  { id: 103, title: '區塊鏈技術與應用入門', date: '2025/08/01', location: '台中市南屯區', isUpcoming: false, organizerName: 'Crypto World' },
-];
-
-const initialFavoriteOrganizers: FavoriteOrganizer[] = [
-  { id: 201, name: 'Tech Innovators Co.', category: '科技', followers: 15200, description: '專注於最新的軟體開發與設計趨勢。' },
-  { id: 202, name: 'Creative Arts Center', category: '藝術', followers: 8500, description: '提供多元化的藝術工作坊與展覽。' },
-  { id: 203, name: 'Green Earth Foundation', category: '環保', followers: 23000, description: '致力於推動環境保護與永續發展。' },
-];
-
-// ----------------------------------------------------
 // 3. 收藏活動卡片
 // ----------------------------------------------------
 
@@ -55,15 +47,15 @@ interface EventCardProps {
 }
 
 const FavoriteEventCard: React.FC<EventCardProps> = ({ event, onRemove }) => {
-  const statusClass = event.isUpcoming ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-500';
+  const statusClass = event.isUpcoming ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-500';
   const statusText = event.isUpcoming ? '即將舉行' : '已結束';
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow-md flex items-start justify-between hover:shadow-lg transition duration-200 border-l-4 border-indigo-400">
+    <div className="bg-white p-4 rounded-xl shadow-md flex items-start justify-between hover:shadow-lg transition duration-200 border-l-4 border-orange-400">
       <div className="flex-grow min-w-0 pr-4">
         <h3 className="text-lg font-semibold text-gray-900 truncate">{event.title}</h3>
         <p className="text-sm text-gray-600 mt-1">
-          <span className="font-medium text-indigo-500">{event.organizerName}</span> | {event.location}
+          <span className="font-medium text-orange-600">{event.organizerName}</span> | {event.location}
         </p>
         <div className="flex items-center space-x-3 mt-2 text-xs text-gray-500">
           <span className="font-bold">{event.date}</span>
@@ -88,19 +80,19 @@ interface OrganizerCardProps {
 
 const FavoriteOrganizerCard: React.FC<OrganizerCardProps> = ({ organizer, onRemove }) => {
   return (
-    <div className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition duration-200 border-t-4 border-green-400">
+    <div className="bg-white p-5 rounded-xl shadow-md hover:shadow-lg transition duration-200 border-l-4 border-orange-400">
       <div className="flex items-center justify-between">
         <div className="min-w-0 flex-grow pr-4">
           <h3 className="text-xl font-bold text-gray-900 truncate">{organizer.name}</h3>
-          <p className="text-sm text-green-600 font-medium my-1">{organizer.category}</p>
+          <p className="text-sm text-orange-600 font-medium my-1">{organizer.category}</p>
           <p className="text-xs text-gray-500 mb-2 truncate">{organizer.description}</p>
           <span className="text-sm text-gray-700">
-            追蹤者: <span className="font-extrabold text-indigo-600">{organizer.followers.toLocaleString()}</span>
+            追蹤者: <span className="font-extrabold text-orange-600">{organizer.followers.toLocaleString()}</span>
           </span>
         </div>
 
         <div className="flex flex-col space-y-2 flex-shrink-0">
-          <button className="text-sm font-medium text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-lg transition">
+          <button className="text-sm font-medium text-orange-600 bg-orange-50 hover:bg-orange-100 px-3 py-1 rounded-lg transition">
             查看主頁
           </button>
           <button onClick={() => onRemove(organizer.id, organizer.name)} className="text-xs font-medium text-red-500 hover:text-red-700 p-1 rounded-lg hover:bg-red-50 transition">
@@ -133,7 +125,7 @@ const EmptyState: React.FC<EmptyStateProps> = ({ message, isSearchEmpty = false,
 
     {isSearchEmpty && onClearSearch && (
       <div className="mt-6">
-        <button onClick={onClearSearch} className="px-4 py-2 text-sm font-medium rounded-md text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition">
+        <button onClick={onClearSearch} className="px-4 py-2 text-sm font-medium rounded-md text-orange-600 bg-orange-50 hover:bg-orange-100 transition">
           清除搜尋條件
         </button>
       </div>
@@ -147,9 +139,38 @@ const EmptyState: React.FC<EmptyStateProps> = ({ message, isSearchEmpty = false,
 
 const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<FavoriteTab>('all');
-  const [favoriteEvents, setFavoriteEvents] = useState<FavoriteEvent[]>(initialFavoriteEvents);
-  const [favoriteOrganizers, setFavoriteOrganizers] = useState<FavoriteOrganizer[]>(initialFavoriteOrganizers);
   const [currentSearchTerm, setCurrentSearchTerm] = useState('');
+
+  // ✅ 新增 API 相關狀態
+  const [favoriteEvents, setFavoriteEvents] = useState<FavoriteEvent[]>([]);
+  const [favoriteOrganizers, setFavoriteOrganizers] = useState<FavoriteOrganizer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // ✅ 獲取收藏資料的函式
+  const fetchFavorites = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await apiClient.get<{
+        favoriteEvents: FavoriteEvent[];
+        favoriteOrganizers: FavoriteOrganizer[];
+      }>('/api/member/favorites');
+      setFavoriteEvents(data.favoriteEvents || []);
+      setFavoriteOrganizers(data.favoriteOrganizers || []);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : '獲取收藏失敗';
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // ✅ 在組件載入時獲取資料
+  useEffect(() => {
+    fetchFavorites();
+  }, [fetchFavorites]);
 
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCurrentSearchTerm(e.target.value);
@@ -176,19 +197,32 @@ const App: React.FC = () => {
     );
   }, [favoriteOrganizers, lowerSearchTerm]);
 
-  const removeFavoriteEvent = useCallback((id: number, title: string) => {
-    // ⚠️ 替換掉 alert/confirm
-    if (window.confirm(`確定要取消收藏活動：「${title}」嗎？`)) {
-      setFavoriteEvents(prev => prev.filter(e => e.id !== id));
+  // ✅ 修改 removeFavorite 以呼叫 API
+  const removeFavorite = useCallback(async (id: number, type: FavoritableType, name: string) => {
+    const typeName = type === FavoritableType.EVENT ? '活動' : '主辦方';
+    if (window.confirm(`確定要取消收藏${typeName}：「${name}」嗎？`)) {
+      try {
+        await apiClient.delete('/api/member/favorites', {
+          body: JSON.stringify({ id, type }),
+        });
+        toast.success('成功取消收藏！');
+        // 重新獲取資料以更新 UI
+        fetchFavorites();
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : '取消收藏失敗';
+        toast.error(errorMessage);
+      }
     }
-  }, []);
+  }, [fetchFavorites]);
+
+  const removeFavoriteEvent = useCallback((id: number, title: string) => {
+    removeFavorite(id, FavoritableType.EVENT, title);
+  }, [removeFavorite]);
 
   const removeFavoriteOrganizer = useCallback((id: number, name: string) => {
-    // ⚠️ 替換掉 alert/confirm
-    if (window.confirm(`確定要取消收藏主辦方：「${name}」嗎？`)) {
-      setFavoriteOrganizers(prev => prev.filter(o => o.id !== id));
-    }
-  }, []);
+    // 假設主辦方的類型是 ORGANIZER
+    removeFavorite(id, FavoritableType.ORGANIZER, name);
+  }, [removeFavorite]);
 
   const allFavorites: FavoriteItem[] = useMemo(() => [...filteredEvents, ...filteredOrganizers], [filteredEvents, filteredOrganizers]);
 
@@ -199,6 +233,18 @@ const App: React.FC = () => {
   ];
 
   const renderContent = () => {
+    if (loading) {
+      return <div className="text-center py-20">載入中...</div>;
+    }
+
+    if (error) {
+      return (
+        <EmptyState
+          message={`資料載入失敗：${error}。請稍後再試。`}
+        />
+      );
+    }
+
     let list: FavoriteItem[] = [];
     if (currentTab === 'events') list = filteredEvents;
     else if (currentTab === 'organizers') list = filteredOrganizers;
@@ -244,17 +290,16 @@ const App: React.FC = () => {
             {tabs.map(tab => {
               const isActive = tab.id === currentTab;
               const tabClasses = isActive
-                ? 'text-indigo-600 border-b-2 border-indigo-600'
+                ? 'text-[#EF9D11] border-b-2 border-[#EF9D11]'
                 : 'text-gray-600 hover:text-indigo-500  border-transparent'; // 確保非啟用狀態也有 border-b-2 透明邊線以保持高度一致
 
               return (
                 <button
                   key={tab.id}
                   onClick={() => setCurrentTab(tab.id as FavoriteTab)}
-                  className={`py-3 px-5 text-base font-semibold leading-normal align-text-bottom transition duration-200 border-b-2 -mb-px focus:outline-none whitespace-nowrap
-    ${currentTab === tab.id
-                      ? "text-indigo-600 border-indigo-600"
-                      : "text-gray-600 border-transparent hover:text-indigo-500 hover:border-indigo-300"
+                  className={`py-3 px-5 text-base font-semibold leading-normal align-text-bottom transition duration-200 border-b-2 -mb-px focus:outline-none whitespace-nowrap ${currentTab === tab.id
+                    ? "text-[#EF9D11] border-[#EF9D11]"
+                    : "text-gray-600 border-transparent hover:text-orange-600 hover:border-orange-400"
                     }`}
                 >
                   {tab.name} {('count' in tab) && `(${tab.count})`}
@@ -269,7 +314,7 @@ const App: React.FC = () => {
             <input
               type="text"
               placeholder={`在收藏的${currentTab === 'events' ? '活動' : currentTab === 'organizers' ? '主辦方' : '內容'}中搜尋...`}
-              className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm shadow-sm focus:ring-indigo-600 focus:border-indigo-600 transition"
+              className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm shadow-sm focus:ring-orange-500 focus:border-orange-500 transition"
               onChange={handleSearch}
               value={currentSearchTerm}
             />

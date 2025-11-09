@@ -14,9 +14,9 @@ import React, { useState } from 'react';
 // 因為 Heroicons 已經為它們提供了正確的 TypeScript 類型。
 
 // --------------------- 顏色與樣式變數 ---------------------
-const primaryColor = '#1976D2'; // 經典藍 (不變)
-const primaryBgColor = 'bg-blue-600'; // (不變)
-const primaryTextColor = 'text-blue-700'; // (不變)
+const primaryColor = '#EF9D11'; // 主題橘
+const primaryBgColor = 'bg-[#EF9D11]';
+const primaryTextColor = 'text-orange-600';
 
 // --------------------- 模擬數據 ---------------------
 const transactions = [
@@ -82,7 +82,7 @@ export default function TransactionManagement() {
           <input
             type="text"
             placeholder="搜尋交易 ID、活動或使用者..."
-            className="w-full border border-gray-300 rounded-lg py-2 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150"
+            className="w-full border border-gray-300 rounded-lg py-2 pl-10 pr-4 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition duration-150"
           />
           {/* ⭐️ 使用 Heroicon: MagnifyingGlassIcon */}
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -96,7 +96,7 @@ export default function TransactionManagement() {
             <span>進階篩選</span>
           </button>
           <button className={`px-4 py-2 rounded-lg text-white ${primaryBgColor} hover:bg-blue-700 transition duration-150`}>
-            匯出 CSV
+            匯出 CSV_
           </button>
         </div>
       </div>
@@ -107,7 +107,7 @@ export default function TransactionManagement() {
         <table className="min-w-full divide-y divide-gray-200 shadow-md rounded-lg overflow-hidden">
           <thead className={`bg-gray-50`}>
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-blue-700 transition duration-150">
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:text-orange-600 transition duration-150">
                 交易 ID
                 {/* ⭐️ 使用 Heroicon: ArrowDownIcon */}
                 <ArrowDownIcon className="inline ml-1 h-3 w-3" />

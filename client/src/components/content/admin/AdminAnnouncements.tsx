@@ -21,8 +21,8 @@ interface Banner {
 type BannerValue = Banner[keyof Banner];
 
 // --------------------- 顏色與樣式變數 ---------------------
-const primaryBgColor = 'bg-blue-600';
-const primaryTextColor = 'text-blue-700';
+const primaryBgColor = 'bg-[#EF9D11]';
+const primaryTextColor = 'text-orange-600';
 
 // --------------------- 模擬資料 ---------------------
 const initialBanners: Banner[] = [
@@ -128,7 +128,7 @@ const BannerCard: React.FC<BannerCardProps> = ({
               value={banner.title}
               onChange={(e) => onUpdate(index, 'title', e.target.value)}
               placeholder="輸入 Banner 標題"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
 
@@ -140,7 +140,7 @@ const BannerCard: React.FC<BannerCardProps> = ({
               value={banner.linkUrl}
               onChange={(e) => onUpdate(index, 'linkUrl', e.target.value)}
               placeholder="例如: /products/new-item"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-blue-500 focus:border-blue-500"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-orange-500 focus:border-orange-500"
             />
           </div>
 
@@ -155,7 +155,7 @@ const BannerCard: React.FC<BannerCardProps> = ({
                 onChange={(e) => onUpdate(index, 'isActive', e.target.checked)}
                 className="sr-only peer"
               />
-              <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all ${primaryBgColor} peer-checked:bg-blue-600`}></div>
+              <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#EF9D11]`}></div>
             </label>
           </div>
         </div>
@@ -260,7 +260,7 @@ export default function BannerManagement() {
       <div className="sticky bottom-0 bg-white p-4 border-t border-gray-200 shadow-xl z-10 flex flex-col md:flex-row-reverse md:justify-start items-center">
         <button
           onClick={handleSave}
-          className={`w-full md:w-auto px-8 py-3 rounded-lg text-white font-semibold ${primaryBgColor} hover:bg-blue-700 transition duration-150 shadow-md order-1`}
+          className={`w-full md:w-auto px-8 py-3 rounded-lg text-white font-semibold ${primaryBgColor} hover:bg-[#d9890e] transition duration-150 shadow-md order-1`}
         >
           儲存所有變更
         </button>

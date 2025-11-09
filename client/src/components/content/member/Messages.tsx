@@ -55,7 +55,7 @@ const getTypeConfig = (type: Message['type']) => {
     },
     'attendance_notice': {
       path: "M12 19l9 2-9-18-9 18 9-2zm0 0v-8",
-      color: "text-indigo-500",
+      color: "text-gray-500", // 出席通知改為中性灰色
       label: '出席通知',
     },
     'event_reminder': {
@@ -86,7 +86,7 @@ const getTypeConfig = (type: Message['type']) => {
 
 const MessageCard: React.FC<MessageCardProps> = ({ message, onToggleRead, onDelete }) => {
   const { icon, label } = getTypeConfig(message.type);
-  const isReadClass = message.isRead ? 'bg-white border-l-4 border-l-gray-300' : 'bg-gray-50 border-l-4 border-l-indigo-600';
+  const isReadClass = message.isRead ? 'bg-white border-l-4 border-l-gray-300' : 'bg-orange-50 border-l-4 border-l-orange-500';
   const readToggleText = message.isRead ? '標記為未讀' : '標記為已讀';
 
   return (
@@ -114,8 +114,7 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, onToggleRead, onDele
 
         {/* 右側操作按鈕 */}
         <div className="flex flex-col space-y-2 flex-shrink-0">
-          <button onClick={() => onToggleRead(message.id)}
-            className="text-xs font-medium text-indigo-600 hover:text-indigo-800 transition duration-150 p-1 rounded-md hover:bg-indigo-50 whitespace-nowrap">
+          <button onClick={() => onToggleRead(message.id)} className="text-xs font-medium text-orange-600 hover:text-orange-800 transition duration-150 p-1 rounded-md hover:bg-orange-50 whitespace-nowrap">
             {readToggleText}
           </button>
           <button onClick={() => onDelete(message.id, message.title)}
@@ -213,8 +212,8 @@ const App: React.FC = () => {
             <div id="filter-tabs" className="inline-flex rounded-lg bg-gray-100 p-1">
               {tabs.map(tab => {
                 const isActive = tab.id === currentFilter;
-                const activeClass = isActive
-                  ? 'bg-white text-indigo-600 shadow-sm font-semibold'
+                const activeClass = isActive ?
+                  'bg-white text-orange-600 shadow-sm font-semibold'
                   : 'text-gray-500 hover:text-gray-700 font-medium';
 
                 return (
@@ -230,7 +229,7 @@ const App: React.FC = () => {
           {/* 搜尋框 */}
           <div className="relative w-full sm:max-w-xs">
             <input type="text" id="search-input" placeholder="搜尋標題、內容或活動名稱..."
-              className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm shadow-sm focus:ring-indigo-600 focus:border-indigo-600 transition duration-150"
+              className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm shadow-sm focus:ring-orange-500 focus:border-orange-500 transition duration-150"
               onChange={handleSearch}
               value={currentSearchTerm} />
             {/* 搜尋圖標 */}

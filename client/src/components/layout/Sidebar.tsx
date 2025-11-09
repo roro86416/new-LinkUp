@@ -47,7 +47,7 @@ export default function Sidebar({ type, activeMenu, onMenuChange }: SidebarProps
 
   return (
     <aside className="bg-white w-[280px] h-[660px] rounded-2xl p-6 flex flex-col gap-8 shadow-2xl shadow-gray-200/50">
-      <div className="relative w-[120px] h-[120px] mx-auto group rounded-full border-4 border-indigo-100 ring-2 ring-indigo-300">
+      <div className="relative w-[120px] h-[120px] mx-auto group rounded-full border-4 border-orange-100 ring-2 ring-orange-300">
         {loading ? (
           <div className="w-full h-full rounded-full bg-gray-200 animate-pulse" />
         ) : user?.avatar ? (
@@ -59,7 +59,7 @@ export default function Sidebar({ type, activeMenu, onMenuChange }: SidebarProps
         )}
         <label
           htmlFor="avatar-upload"
-          className="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full border-4 border-white shadow-lg hover:bg-indigo-700 transition duration-200 cursor-pointer"
+          className="absolute bottom-0 right-0 bg-[#EF9D11] text-white p-2 rounded-full border-4 border-white shadow-lg hover:bg-[#d9890e] transition duration-200 cursor-pointer"
         >
           <AiOutlineCamera className="w-4 h-4" />
         </label>
@@ -92,11 +92,11 @@ export default function Sidebar({ type, activeMenu, onMenuChange }: SidebarProps
               onClick={() => onMenuChange(item.label)}
               className={`flex items-center gap-4 w-full text-left cursor-pointer py-3 px-4 rounded-xl transition-all duration-200
                 ${isActive
-                  ? 'bg-indigo-600 text-white font-semibold shadow-lg shadow-indigo-500/50'
-                  : 'text-gray-600 hover:bg-indigo-50 hover:text-indigo-600 font-medium'
+                  ? 'bg-[#EF9D11] text-white font-semibold shadow-lg shadow-orange-400/50'
+                  : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'
                 }`}
             >
-              <span className={`flex items-center justify-center w-5 h-5 ${isActive ? 'text-white' : 'text-indigo-600'}`}>
+              <span className={`flex items-center justify-center w-5 h-5 ${isActive ? 'text-white' : 'text-orange-600'}`}>
                 {item.icon}
               </span>
               <span className="text-base">{item.label}</span>

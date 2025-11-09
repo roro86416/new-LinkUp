@@ -30,8 +30,8 @@ interface PasswordErrors {
 }
 
 // 共用樣式
-const labelClasses = "before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none text-[11px] font-normal leading-tight text-gray-600 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-gray-300 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-gray-300 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[3.75] peer-placeholder-shown:text-gray-600 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-indigo-500 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:!border-indigo-500 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:!border-indigo-500 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-gray-500";
-const inputFieldClasses = "peer w-full h-full bg-white text-gray-900 font-sans font-normal outline-none focus:outline-none disabled:bg-gray-100 disabled:border-0 transition-all border text-base px-3 py-2.5 rounded-[7px] border-gray-300 focus:border-indigo-500";
+const labelClasses = "before:content[' '] after:content[' '] pointer-events-none absolute left-0 -top-1.5 flex h-full w-full select-none text-[11px] font-normal leading-tight text-gray-600 transition-all before:pointer-events-none before:mt-[6.5px] before:mr-1 before:box-border before:block before:h-1.5 before:w-2.5 before:rounded-tl-md before:border-t before:border-l before:border-gray-300 before:transition-all after:pointer-events-none after:mt-[6.5px] after:ml-1 after:box-border after:block after:h-1.5 after:w-2.5 after:flex-grow after:rounded-tr-md after:border-t after:border-r after:border-gray-300 after:transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:leading-[3.75] peer-placeholder-shown:text-gray-600 peer-placeholder-shown:before:border-transparent peer-placeholder-shown:after:border-transparent peer-focus:text-[11px] peer-focus:leading-tight peer-focus:text-orange-600 peer-focus:before:border-t-2 peer-focus:before:border-l-2 peer-focus:before:!border-orange-500 peer-focus:after:border-t-2 peer-focus:after:border-r-2 peer-focus:after:!border-orange-500 peer-disabled:text-transparent peer-disabled:before:border-transparent peer-disabled:after:border-transparent peer-disabled:peer-placeholder-shown:text-gray-500";
+const inputFieldClasses = "peer w-full h-full bg-white text-gray-900 font-sans font-normal outline-none focus:outline-none disabled:bg-gray-100 disabled:border-0 transition-all border text-base px-3 py-2.5 rounded-[7px] border-gray-300 focus:border-orange-500";
 
 export default function AccountSettings() {
   const router = useRouter();
@@ -307,9 +307,9 @@ export default function AccountSettings() {
             key={tab}
             onClick={() => setActiveTab(tab as TabType)}
             className={`py-3 px-5 text-base font-semibold transition duration-200 border-b-2 
-    ${activeTab === tab
-                ? "text-indigo-600 border-indigo-600"
-                : "text-gray-600 border-transparent hover:text-indigo-500 hover:border-indigo-300"
+    ${activeTab === tab ?
+                "text-[#EF9D11] border-[#EF9D11]" :
+                "text-gray-600 border-transparent hover:text-orange-600 hover:border-orange-400"
               } -mb-px focus:outline-none whitespace-nowrap`}
           >
             {tab}
@@ -416,8 +416,8 @@ export default function AccountSettings() {
                 onClick={handleSave}
                 disabled={!isDirty}
                 className={`px-8 py-2.5 rounded-xl text-white font-medium shadow-lg transition duration-150 ease-in-out text-base ${isDirty
-                  ? 'bg-indigo-600 hover:bg-indigo-700 cursor-pointer'
-                  : 'bg-gray-400 cursor-not-allowed'
+                  ? 'bg-[#EF9D11] hover:bg-[#d9890e] cursor-pointer'
+                  : 'bg-gray-300 cursor-not-allowed'
                   }`}
               >
                 儲存變更
@@ -431,7 +431,7 @@ export default function AccountSettings() {
             <h3 className="text-xl font-semibold text-gray-800 mb-8 border-b pb-4 border-gray-200">管理密碼與帳號狀態</h3>
             <div className="space-y-12">
               <div className="p-6 rounded-xl border border-gray-200 bg-gray-50/50 shadow-sm">
-                <h4 className="text-lg font-semibold text-gray-800 mb-6 border-l-4 border-indigo-600 pl-3">更改密碼</h4>
+                <h4 className="text-lg font-semibold text-gray-800 mb-6 border-l-4 border-orange-500 pl-3">更改密碼</h4>
                 <form className="space-y-6 max-w-md">
                   <div className="relative">
                     <label htmlFor="currentPassword"
@@ -441,8 +441,7 @@ export default function AccountSettings() {
                       placeholder="請輸入您的原密碼"
                       value={passwordData.currentPassword}
                       onChange={e => setPasswordData(p => ({ ...p, currentPassword: e.target.value }))}
-                      onBlur={e => validatePasswordField('currentPassword', e.target.value)}
-                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 bg-white text-gray-900 ${passwordErrors.currentPassword ? 'border-red-500' : 'border-gray-300'}`} />
+                      onBlur={e => validatePasswordField('currentPassword', e.target.value)} className={`w-full px-4 py-2.5 border rounded-lg focus:ring-orange-500 focus:border-orange-500 transition duration-150 bg-white text-gray-900 ${passwordErrors.currentPassword ? 'border-red-500' : 'border-gray-300'}`} />
                     <button type="button" onClick={() => setShowPasswords(s => ({ ...s, current: !s.current }))}
                       className="absolute right-3 top-10 text-gray-500">
                       {showPasswords.current ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
@@ -459,8 +458,7 @@ export default function AccountSettings() {
                       placeholder="至少 8 個字元"
                       value={passwordData.newPassword}
                       onChange={e => setPasswordData(p => ({ ...p, newPassword: e.target.value }))}
-                      onBlur={e => validatePasswordField('newPassword', e.target.value)}
-                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 bg-white text-gray-900 ${passwordErrors.newPassword ? 'border-red-500' : 'border-gray-300'}`} />
+                      onBlur={e => validatePasswordField('newPassword', e.target.value)} className={`w-full px-4 py-2.5 border rounded-lg focus:ring-orange-500 focus:border-orange-500 transition duration-150 bg-white text-gray-900 ${passwordErrors.newPassword ? 'border-red-500' : 'border-gray-300'}`} />
                     <button type="button" onClick={() => setShowPasswords(s => ({ ...s, new: !s.new }))}
                       className="absolute right-3 top-10 text-gray-500">
                       {showPasswords.new ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
@@ -477,8 +475,7 @@ export default function AccountSettings() {
                       placeholder="再次確認新密碼"
                       value={passwordData.confirmPassword}
                       onChange={e => setPasswordData(p => ({ ...p, confirmPassword: e.target.value }))}
-                      onBlur={e => validatePasswordField('confirmPassword', e.target.value)}
-                      className={`w-full px-4 py-2.5 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition duration-150 bg-white text-gray-900 ${passwordErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`} />
+                      onBlur={e => validatePasswordField('confirmPassword', e.target.value)} className={`w-full px-4 py-2.5 border rounded-lg focus:ring-orange-500 focus:border-orange-500 transition duration-150 bg-white text-gray-900 ${passwordErrors.confirmPassword ? 'border-red-500' : 'border-gray-300'}`} />
                     <button type="button" onClick={() => setShowPasswords(s => ({ ...s, confirm: !s.confirm }))}
                       className="absolute right-3 top-10 text-gray-500">
                       {showPasswords.confirm ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
@@ -490,9 +487,9 @@ export default function AccountSettings() {
                   <div className="pt-4 text-right">
                     <button type="button" onClick={handleChangePassword}
                       disabled={!isPasswordFormValid}
-                      className={`text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg transition duration-150 focus:outline-none focus:ring-4 focus:ring-indigo-300 text-base ${isPasswordFormValid
-                        ? 'bg-indigo-600 hover:bg-indigo-700 cursor-pointer'
-                        : 'bg-gray-400 cursor-not-allowed'
+                      className={`text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg transition duration-150 focus:outline-none focus:ring-4 focus:ring-orange-300 text-base ${isPasswordFormValid
+                        ? 'bg-[#EF9D11] hover:bg-[#d9890e] cursor-pointer'
+                        : 'bg-gray-300 cursor-not-allowed'
                         }`}>
                       儲存新密碼
                     </button>
@@ -500,7 +497,7 @@ export default function AccountSettings() {
                 </form>
               </div>
               <div className="p-6 rounded-xl border border-gray-200 bg-gray-50/50 shadow-sm">
-                <h4 className="text-lg font-semibold text-gray-800 mb-6 border-l-4 border-indigo-600 pl-3">驗證登入信箱</h4>
+                <h4 className="text-lg font-semibold text-gray-800 mb-6 border-l-4 border-orange-500 pl-3">驗證登入信箱</h4>
                 <div
                   className="flex flex-col sm:flex-row items-center justify-between p-5 rounded-lg border border-gray-300 bg-white shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 mb-4 sm:mb-0">
@@ -512,7 +509,7 @@ export default function AccountSettings() {
                   </div>
                   {!isVerified && (
                     <button onClick={handleResendVerification}
-                      className="text-sm text-indigo-600 font-medium hover:text-indigo-800 transition duration-150 disabled:opacity-50 w-full sm:w-auto text-center py-2 px-4 rounded-lg border border-indigo-300"
+                      className="text-sm text-orange-600 font-medium hover:text-orange-800 transition duration-150 disabled:opacity-50 w-full sm:w-auto text-center py-2 px-4 rounded-lg border border-orange-300"
                       disabled={!user?.email}>
                       重新發送驗證信
                     </button>
@@ -547,10 +544,9 @@ export default function AccountSettings() {
               <div className="mb-12">
                 <h4 className="text-xl font-semibold text-gray-800 mb-4 border-l-4 border-gray-400 pl-3">電子郵件</h4>
                 <div className="p-5 rounded-xl border border-gray-200 max-w-lg bg-white shadow-md">
-                  <div className="flex items-start space-x-4">
-                    <div className="p-3 bg-indigo-100 rounded-xl shrink-0 mt-0.5">
-                      <EnvelopeIcon className="w-6 h-6 text-indigo-600" />
-                    </div>
+                  <div className="flex items-start space-x-4"> <div className="p-3 bg-orange-100 rounded-xl shrink-0 mt-0.5">
+                    <EnvelopeIcon className="w-6 h-6 text-orange-600" />
+                  </div>
                     <div>
                       <p className="text-sm font-medium text-gray-500 mb-1">主要登入方式</p>
                       <p className="text-lg font-semibold text-gray-800 break-all">{user?.email}</p>
@@ -586,7 +582,7 @@ export default function AccountSettings() {
                         ) : (
                           <button
                             onClick={() => handleBind(name as keyof typeof providerStatus, isBound)}
-                            className="py-2.5 px-6 rounded-xl text-base font-medium border border-indigo-500 text-indigo-600 hover:bg-indigo-50 transition duration-150 shadow-sm">
+                            className="py-2.5 px-6 rounded-xl text-base font-medium border border-orange-500 text-orange-600 hover:bg-orange-50 transition duration-150 shadow-sm">
                             綁定
                           </button>
                         )}
