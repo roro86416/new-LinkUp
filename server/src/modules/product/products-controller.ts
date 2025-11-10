@@ -1,14 +1,13 @@
 import { Request, Response } from "express";
-
-// 我們將從「下一步」要建立的 service 檔案中匯入這些函式
 import {
   findAllProductsService,
+  findProductByIdService,
   createNewProductService,
   updateProductService,
   deleteProductService,
 } from "./products-service.js";
 
-// --- 獲取所有產品的 Controller ---
+//獲取所有產品的 Controller
 export const getAllProductsController = async (req: Request, res: Response) => {
   try {
     // 呼叫 Service 去拿資料
@@ -29,7 +28,20 @@ export const getAllProductsController = async (req: Request, res: Response) => {
   }
 };
 
-// --- 建立新產品的 Controller ---
+//獲取指定商品的Controller
+export const getProductByIdController = async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id);
+    const product = await findProductByIdService(id);
+
+    res.json({
+      status: "success",
+      data: product,
+    });
+  } catch (error) {}
+};
+
+//建立新產品的 Controller
 export const createProductController = async (req: Request, res: Response) => {
   try {
     // 呼叫 Service，並把 request body 傳給它
@@ -48,7 +60,7 @@ export const createProductController = async (req: Request, res: Response) => {
   }
 };
 
-// --- 更新產品的 Controller ---
+//更新產品的 Controller
 export const updateProductController = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
