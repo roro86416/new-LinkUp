@@ -1,7 +1,16 @@
-# 將所有檔案的換行符在 Git 儲存時都統一轉換為 LF (Unix 格式)
-# 當 checkout (拉取) 檔案時，會根據作業系統自動轉換
-* text=auto eol=lf
-
-# 明確指定 .bat 檔案使用 Windows 換行符 (CRLF)
+*.js   text eol=lf
+*.jsx  text eol=lf
+*.ts   text eol=lf
+*.tsx  text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.yaml text eol=lf
+*.yml  text eol=lf
+*.css  text eol=lf
 *.bat text eol=crlf
 *.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary
