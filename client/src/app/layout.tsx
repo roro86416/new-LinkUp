@@ -9,6 +9,7 @@ import EmailLoginModal from '../components/modals/auth/EmailLoginModal';
 import RegisterModal from '../components/modals/auth/RegisterModal';
 import ForgotPasswordModal from '../components/modals/auth/ForgotPasswordModal';
 import PasswordSentModal from '../components/modals/auth/PasswordSentModal';
+import AdminLoginModal from '../components/modals/auth/AdminLoginModal';
 import { Toaster } from 'react-hot-toast';
 
 export const metadata = {
@@ -39,6 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <RegisterModal />
             <ForgotPasswordModal />
             <PasswordSentModal />
+            <AdminLoginModal />
 
             <Footer />
           </ModalProvider>

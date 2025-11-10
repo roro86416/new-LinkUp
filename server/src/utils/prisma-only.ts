@@ -1,7 +1,19 @@
-import { PrismaClient } from "../generated/prisma/client";
+import { PrismaClient } from "../generated/prisma/client.js";
 
-// 建立一個 PrismaClient 的單一實體
-const prisma = new PrismaClient();
+const prismaClientSingleton = () => {
+  return new PrismaClient();
+};
 
-// 將這個實體匯出，讓其他檔案可以 import 並使用它
+declare global {
+  var prisma: undefined | ReturnType<typeof prismaClientSingleton>;
+}
+
+// 在開發環境中，使用 globalThis 來快取 PrismaClient 實例，
+// 避免在熱重載時重複建立。
+const prisma = globalThis.prisma ?? prismaClientSingleton();
+
 export default prisma;
+
+if (process.env.NODE_ENV !== "production") {
+  globalThis.prisma = prisma;
+}

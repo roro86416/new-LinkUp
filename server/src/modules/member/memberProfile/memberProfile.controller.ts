@@ -1,6 +1,6 @@
 import { Response } from "express";
 import prisma from "../../../utils/prisma-only.js";
-import { AuthRequest } from "../../../middleware/auth-middleware.js";
+import { AuthRequest } from "../../../middleware/auth.middleware.js";
 
 export class MemberProfileController {
   // 可更新欄位白名單

@@ -25,6 +25,11 @@ type ModalContextType = {
   isPasswordSentOpen: boolean;
   openPasswordSent: () => void;
   closePasswordSent: () => void;
+
+  // 後台登入
+  isAdminLoginOpen: boolean;
+  openAdminLogin: () => void;
+  closeAdminLogin: () => void;
 };
 
 const ModalContext = createContext<ModalContextType>({} as ModalContextType);
@@ -35,6 +40,7 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [isPasswordSentOpen, setIsPasswordSentOpen] = useState(false);
+  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
 
   return (
     <ModalContext.Provider
@@ -63,6 +69,11 @@ export const ModalProvider = ({ children }: { children: ReactNode }) => {
         isPasswordSentOpen,
         openPasswordSent: () => setIsPasswordSentOpen(true),
         closePasswordSent: () => setIsPasswordSentOpen(false),
+
+        // AdminLogin
+        isAdminLoginOpen,
+        openAdminLogin: () => setIsAdminLoginOpen(true),
+        closeAdminLogin: () => setIsAdminLoginOpen(false),
       }}
     >
       {children}

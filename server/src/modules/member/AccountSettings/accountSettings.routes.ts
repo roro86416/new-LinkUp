@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { AccountSettingsController } from "./accountSettings.controller.js";
-import { authMiddleware } from "../../../middleware/auth-middleware.js";
+import { auth } from "../../../middleware/auth.middleware.js";
 
 const router = Router();
 const accountSettingsController = new AccountSettingsController();
@@ -9,7 +9,7 @@ const accountSettingsController = new AccountSettingsController();
 // POST /api/member/account-settings/change-password
 router.post(
   "/change-password",
-  authMiddleware, // Protect this route
+  auth("member"), // 使用新的 auth middleware，並指定角色為 'member'
   (req, res) => accountSettingsController.changePassword(req, res)
 );
 

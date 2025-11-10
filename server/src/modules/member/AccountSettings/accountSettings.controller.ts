@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { AuthRequest } from "../../../middleware/auth-middleware.js";
+import { AuthRequest } from "../../../middleware/auth.middleware.js";
 import { AccountSettingsService } from "./accountSettings.service.js";
 import { changePasswordSchema } from "./accountSettings.schema.js";
 
