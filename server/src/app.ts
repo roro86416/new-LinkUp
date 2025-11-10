@@ -23,10 +23,12 @@ const app: Express = express();
 app.use(express.json());
 
 // --- CORS 設定（允許前端 localhost:3000 存取，含 cookies/token） ---
-app.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true,
-}));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
 
 // --- 測試用路由 ---
 app.get("/api/test", (req: Request, res: Response) => {
@@ -37,7 +39,6 @@ app.get("/api/test", (req: Request, res: Response) => {
 
 // 產品模組
 app.use("/api/v1/products", productRoutes);
-
 
 // 登入註冊模組
 app.use("/api/auth", authRoutes);
@@ -54,9 +55,8 @@ app.use("/api/member", memberProfileRoutes); // 維持 /api/member 作為基礎�
 // 帳號設定模組
 app.use("/api/member/account-settings", accountSettingsRoutes);
 
-
 // --- （未使用的主辦方模組預留）---
-app.use("/api/v1/organizer", organizerRoutes); 
+app.use("/api/v1/organizer", organizerRoutes);
 
 // 模組四 (使用者購買票券) 路由 ->活動評論API
 app.use("/api/ratings", eventRatingsRoutes);
