@@ -1,8 +1,6 @@
-import prisma from "../../utils/prisma-only";
-import { Prisma } from "../../generated/prisma/client"; 
-import {
-  CreateEventBody,
-} from "./organizer.schema";
+import prisma from "../../utils/prisma-only.js";
+import { Prisma } from "../../generated/prisma/client.js";
+import { CreateEventBody } from "./organizer.schema.js";
 
 // TODO: 登入完成後改從 req.user 取
 const MOCK_ORGANIZER_ID = "00000000-0000-0000-0000-000000000001";
@@ -25,7 +23,10 @@ export const createEvent = async (data: CreateEventBody) => {
     },
   });
 };
-export const updateEvent = async (eventId: number, data: Partial<CreateEventBody>) => {
+export const updateEvent = async (
+  eventId: number,
+  data: Partial<CreateEventBody>
+) => {
   // 權限檢查
   const found = await prisma.event.findFirst({
     where: { id: eventId, organizer_id: MOCK_ORGANIZER_ID },
@@ -63,12 +64,19 @@ export const copyEvent = async (eventId: number) => {
 };
 
 // -------- Guests --------
-export const addGuest = async (eventId: number, body: { name: string; bio: string; photo_url: string }) => {
+export const addGuest = async (
+  eventId: number,
+  body: { name: string; bio: string; photo_url: string }
+) => {
   await ensureEventOwned(eventId);
   return prisma.eventGuest.create({ data: { ...body, event_id: eventId } });
 };
 
-export const updateGuest = async (eventId: number, guestId: number, body: Partial<{ name: string; bio: string; photo_url: string }>) => {
+export const updateGuest = async (
+  eventId: number,
+  guestId: number,
+  body: Partial<{ name: string; bio: string; photo_url: string }>
+) => {
   await ensureGuestOwned(eventId, guestId);
   return prisma.eventGuest.update({ where: { id: guestId }, data: body });
 };
@@ -81,7 +89,13 @@ export const deleteGuest = async (eventId: number, guestId: number) => {
 // -------- Ticket Types --------
 export const addTicketType = async (
   eventId: number,
-  body: { name: string; price: number; total_quantity: number; sale_start_time: Date; sale_end_time: Date }
+  body: {
+    name: string;
+    price: number;
+    total_quantity: number;
+    sale_start_time: Date;
+    sale_end_time: Date;
+  }
 ) => {
   await ensureEventOwned(eventId);
   return prisma.ticketType.create({
@@ -99,13 +113,22 @@ export const addTicketType = async (
 export const updateTicketType = async (
   eventId: number,
   ticketTypeId: string,
-  body: Partial<{ name: string; price: number; total_quantity: number; sale_start_time: Date; sale_end_time: Date }>
+  body: Partial<{
+    name: string;
+    price: number;
+    total_quantity: number;
+    sale_start_time: Date;
+    sale_end_time: Date;
+  }>
 ) => {
   await ensureTicketTypeOwned(eventId, ticketTypeId);
   return prisma.ticketType.update({ where: { id: ticketTypeId }, data: body });
 };
 
-export const deleteTicketType = async (eventId: number, ticketTypeId: string) => {
+export const deleteTicketType = async (
+  eventId: number,
+  ticketTypeId: string
+) => {
   await ensureTicketTypeOwned(eventId, ticketTypeId);
   return prisma.ticketType.delete({ where: { id: ticketTypeId } });
 };
@@ -113,7 +136,13 @@ export const deleteTicketType = async (eventId: number, ticketTypeId: string) =>
 // -------- Coupons --------
 export const addCoupon = async (
   eventId: number,
-  body: { code: string; discount_type: "PERCENTAGE" | "FIXED_AMOUNT"; value: number; expires_at: Date; usage_limit: number }
+  body: {
+    code: string;
+    discount_type: "PERCENTAGE" | "FIXED_AMOUNT";
+    value: number;
+    expires_at: Date;
+    usage_limit: number;
+  }
 ) => {
   await ensureEventOwned(eventId);
   return prisma.coupon.create({
@@ -131,7 +160,13 @@ export const addCoupon = async (
 export const updateCoupon = async (
   eventId: number,
   couponId: string,
-  body: Partial<{ code: string; discount_type: "PERCENTAGE" | "FIXED_AMOUNT"; value: number; expires_at: Date; usage_limit: number }>
+  body: Partial<{
+    code: string;
+    discount_type: "PERCENTAGE" | "FIXED_AMOUNT";
+    value: number;
+    expires_at: Date;
+    usage_limit: number;
+  }>
 ) => {
   await ensureCouponOwned(eventId, couponId);
   return prisma.coupon.update({ where: { id: couponId }, data: body });
@@ -143,46 +178,71 @@ export const deleteCoupon = async (eventId: number, couponId: string) => {
 };
 
 // -------- Attachments --------
-export const addAttachment = async (eventId: number, body: { file_name: string; file_url: string }) => {
+export const addAttachment = async (
+  eventId: number,
+  body: { file_name: string; file_url: string }
+) => {
   await ensureEventOwned(eventId);
-  return prisma.eventAttachment.create({ data: { event_id: eventId, ...body } });
+  return prisma.eventAttachment.create({
+    data: { event_id: eventId, ...body },
+  });
 };
 
-export const deleteAttachment = async (eventId: number, attachmentId: number) => {
+export const deleteAttachment = async (
+  eventId: number,
+  attachmentId: number
+) => {
   await ensureAttachmentOwned(eventId, attachmentId);
   return prisma.eventAttachment.delete({ where: { id: attachmentId } });
 };
 
 // -------- Helpers (權限確認) --------
 const ensureEventOwned = async (eventId: number) => {
-  const exist = await prisma.event.findFirst({ where: { id: eventId, organizer_id: MOCK_ORGANIZER_ID } });
+  const exist = await prisma.event.findFirst({
+    where: { id: eventId, organizer_id: MOCK_ORGANIZER_ID },
+  });
   if (!exist) throw new Error("Event not found or no permission");
 };
 
 const ensureGuestOwned = async (eventId: number, guestId: number) => {
   const guest = await prisma.eventGuest.findFirst({
-    where: { id: guestId, event_id: eventId, event: { organizer_id: MOCK_ORGANIZER_ID } },
+    where: {
+      id: guestId,
+      event_id: eventId,
+      event: { organizer_id: MOCK_ORGANIZER_ID },
+    },
   });
   if (!guest) throw new Error("Guest not found or no permission");
 };
 
 const ensureTicketTypeOwned = async (eventId: number, ticketTypeId: string) => {
   const tt = await prisma.ticketType.findFirst({
-    where: { id: ticketTypeId, event_id: eventId, event: { organizer_id: MOCK_ORGANIZER_ID } },
+    where: {
+      id: ticketTypeId,
+      event_id: eventId,
+      event: { organizer_id: MOCK_ORGANIZER_ID },
+    },
   });
   if (!tt) throw new Error("TicketType not found or no permission");
 };
 
 const ensureCouponOwned = async (eventId: number, couponId: string) => {
   const c = await prisma.coupon.findFirst({
-    where: { id: couponId, event_id: eventId, /* coupon 可為 null event，但這裡限制一定屬於此活動 */ },
+    where: {
+      id: couponId,
+      event_id: eventId /* coupon 可為 null event，但這裡限制一定屬於此活動 */,
+    },
   });
   if (!c) throw new Error("Coupon not found or no permission");
 };
 
 const ensureAttachmentOwned = async (eventId: number, attachmentId: number) => {
   const a = await prisma.eventAttachment.findFirst({
-    where: { id: attachmentId, event_id: eventId, event: { organizer_id: MOCK_ORGANIZER_ID } },
+    where: {
+      id: attachmentId,
+      event_id: eventId,
+      event: { organizer_id: MOCK_ORGANIZER_ID },
+    },
   });
   if (!a) throw new Error("Attachment not found or no permission");
 };
