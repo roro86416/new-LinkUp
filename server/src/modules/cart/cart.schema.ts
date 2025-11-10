@@ -18,5 +18,13 @@ const ticketBody = z.object({
 export const addToCartSchema = z.object({
   body: z.discriminatedUnion("item_type", [productBody, ticketBody]),
 });
+
+// 修改購物車項目的規範
+export const updateCartItemSchema = z.object({
+  body: z.object({
+    quantity: z.number().int().min(1, "數量至少為 1"),
+  }),
+});
 //
 export type AddToCartBody = z.infer<typeof addToCartSchema>["body"];
+export type UpdateCartItemBody = z.infer<typeof updateCartItemSchema>["body"];
