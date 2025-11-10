@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 // import organizerRoutes from "./api/api-organizer";
 import productRoutes from "./modules/product/products-routes";
+import organizerRoutes from "./modules/organizer/organizer-routes";
+
 
 dotenv.config();
 const app: Express = express();
@@ -19,7 +21,8 @@ app.get("/api/test", (req: Request, res: Response) => {
 // 2. 模組三 (產品) 路由
 app.use("/api/v1/products", productRoutes);
 
+
 // 3. 模組二 (主辦方) 路由
-// app.use("/api/v1/organizer", organizerRoutes);
+app.use("/api/v1/organizer", organizerRoutes); 
 
 export default app;
