@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, ReactNode } from 'react';
+import { ReactNode } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
 
 // 會員內容頁面
@@ -22,13 +23,29 @@ interface UserLayoutProps {
 }
 
 export default function UserLayout({ type }: UserLayoutProps) {
-  const [activeMenu, setActiveMenu] = useState(
-    type === 'member' ? '帳號設定' : '後台總覽'
-  );
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const section = searchParams.get('section');
+
+  // 每次渲染時都重新計算 activeMenu 的值
+  // 這樣可以確保它總是與 URL 的 'section' 參數同步
+  const getActiveMenu = () => {
+    if (type === 'member') {
+      // 確保 section 的值是有效的 member menu label
+      const validSections = ['帳號設定', '訊息管理', '我的收藏'];
+      const currentSection = section || '';
+      return validSections.find(s => s === currentSection) || '帳號設定';
+    }
+    return '後台總覽';
+  }
+
+  const handleMenuChange = (menu: string) => {
+    router.push(`/member?section=${menu}`);
+  };
 
   const renderContent = (): ReactNode => {
     if (type === 'member') {
-      switch (activeMenu) {
+      switch (getActiveMenu()) {
         case '帳號設定':
           return <AccountSettings />;
         case '訊息管理':
@@ -38,8 +55,8 @@ export default function UserLayout({ type }: UserLayoutProps) {
         default:
           return <div>請選擇一個頁面</div>;
       }
-    } else {
-      switch (activeMenu) {
+    } else { // admin
+      switch (getActiveMenu()) {
         case '後台總覽':
           return <AdminDashboard />;
         case '會員管理':
@@ -58,8 +75,8 @@ export default function UserLayout({ type }: UserLayoutProps) {
     <div className="bg-[#f5f5f5] flex gap-6 min-h-screen p-12 justify-center">
       <Sidebar
         type={type}
-        activeMenu={activeMenu}
-        onMenuChange={setActiveMenu}
+        activeMenu={getActiveMenu()}
+        onMenuChange={handleMenuChange}
       />
 
       <div className="bg-white rounded-md p-6 w-[952px]">

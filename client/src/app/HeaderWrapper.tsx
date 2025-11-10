@@ -8,7 +8,7 @@ export default function HeaderWrapper() {
   const isHome = pathname === '/';
 
   return (
-    <div className={!isHome ? 'mb-12' : ''}>
+    <div className={!isHome ? 'mb-16' : ''}>
       <Header />
     </div>
   );

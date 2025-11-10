@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, Fragment } from 'react';
 import { useUser } from '../context/auth/UserContext'; // ⭐️ 引入 useUser
+import { useRouter } from 'next/navigation';//是 Next.js 13+（App Router） 才有的用法，用來在 前端元件裡實現頁面導向（跳轉）
 import { useModal } from '../context/auth/ModalContext'; // ⭐️ 引入 useModal
 import { Listbox, Transition } from '@headlessui/react';
 // ⭐️ 修正：替換所有 react-icons，改用 Heroicons
@@ -85,6 +86,7 @@ export default function HomePage() {
   const [isMounted, setIsMounted] = useState(false); // ✅ 新增 isMounted 狀態
   const { user, updateUser } = useUser(); // ⭐️ 取得使用者資訊和更新函式
   const [favorites, setFavorites] = useState<Set<number>>(new Set()); // 移除模擬資料，預設為空
+  const router = useRouter();
   const { openLogin } = useModal(); // ⭐️ 取得開啟登入 Modal 的函式
 
   const locations = ['台北市', '新北市', '台中市', '台南市', '高雄市'];
@@ -179,10 +181,10 @@ export default function HomePage() {
               placeholder="搜尋活動"
               className="w-full pl-10 pr-3 py-3 rounded-lg bg-black/20 text-white placeholder-white text-center hover:bg-black/30 focus:outline-none focus:ring-0 border border-white transition-all duration-200 cursor-pointer"
             />
-            {/* ⭐️ 替換圖標 */}
+
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
           </div>
-          {/* ⭐️ 移除「舉辦活動」和「我的票卷」按鈕 */}
+
           <div className="flex gap-2 flex-wrap justify-center">
             {/* <button className="..."> <FaBriefcase className="text-lg" /> 舉辦活動 </button> */}
             {/* <button className="..."> <FaTicketAlt className="text-lg" /> 我的票卷 </button> */}
@@ -257,7 +259,7 @@ export default function HomePage() {
               key={event.id}
               className="bg-white/30 backdrop-blur-md rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300 shadow-lg relative group"
             >
-              {/* ⭐️ 新增：收藏按鈕 */}
+
               <button
                 onClick={(e) => {
                   e.stopPropagation(); // 避免觸發卡片點擊
@@ -301,12 +303,13 @@ export default function HomePage() {
           <p className="text-lg mb-6 leading-relaxed">
             城市的每個角落都隱藏著故事，從老街的咖啡香氣到河畔的微風，每一步都能感受到生活的溫度。跟隨步伐，慢慢走過不一樣的街道，聆聽人們的笑聲與交談，偶爾停下來看看街頭藝人的表演，或是在小巷的書店裡翻閱一本書，這些看似平凡的瞬間，卻能讓心靈得到滿足。用心觀察身邊的細節，你會發現城市也能像一本厚重的日誌，記錄著每個人的故事與情感。
           </p>
-          {/* ⭐️ 修改：按鈕樣式 */}
+
           <button
             className="flex items-center gap-2 text-white font-medium transition-all px-6 py-3 border border-white rounded-lg 
             shadow-lg cursor-pointer bg-black/20 backdrop-blur-sm hover:bg-white/20"
+            onClick={() => router.push('/post')}
           >
-            {/* ⭐️ 替換為 BookOpenIcon */}
+
             <BookOpenIcon className="w-5 h-5" /> 查看更多文章
           </button>
         </div>

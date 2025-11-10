@@ -108,16 +108,24 @@ export default function Header() {
                   <CogIcon className="w-5 h-5 text-gray-500 hover:text-[#EF9D11]" />
                 </button>
 
-                {/* 其他選單 */}
-                <button className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer">
-                  <ClipboardDocumentIcon className="w-5 h-5 pointer-events-none" />
-                  訂單管理
-                </button>
-                <button className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer">
+
+                <button
+                  onClick={() => {
+                    router.push('/member?section=訊息管理');
+                    setMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer"
+                >
                   <InboxIcon className="w-5 h-5 pointer-events-none" />
                   訊息管理
                 </button>
-                <button className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer">
+                <button
+                  onClick={() => {
+                    router.push('/member?section=我的收藏');
+                    setMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer"
+                >
                   <StarIcon className="w-5 h-5 pointer-events-none" />
                   我的收藏
                 </button>

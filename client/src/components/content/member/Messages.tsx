@@ -198,7 +198,7 @@ const App: React.FC = () => {
     <div id="app" className="w-full mx-auto">
       <header>
         <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
-          訊息中心
+          訊息管理
         </h1>
         <p className="text-gray-500">管理您的所有活動通知和提醒。</p>
       </header>

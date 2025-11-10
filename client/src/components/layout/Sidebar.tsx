@@ -1,6 +1,6 @@
 'use client';
 
-import { Dispatch, SetStateAction, ReactElement, useState } from 'react';
+import { ReactElement, useState } from 'react';
 import { AiOutlineSetting, AiOutlineInbox, AiOutlineStar, AiOutlineCamera } from 'react-icons/ai';
 import { FiPackage, FiBarChart2 } from 'react-icons/fi';
 import { useUser } from '../../context/auth/UserContext';
@@ -13,7 +13,7 @@ interface MenuItem {
 export interface SidebarProps {
   type: 'member' | 'admin';
   activeMenu: string;
-  onMenuChange: Dispatch<SetStateAction<string>>;
+  onMenuChange: (menu: string) => void;
 }
 
 export default function Sidebar({ type, activeMenu, onMenuChange }: SidebarProps) {
@@ -92,7 +92,7 @@ export default function Sidebar({ type, activeMenu, onMenuChange }: SidebarProps
               onClick={() => onMenuChange(item.label)}
               className={`flex items-center gap-4 w-full text-left cursor-pointer py-3 px-4 rounded-xl transition-all duration-200
                 ${isActive
-                  ? 'bg-[#EF9D11] text-white font-semibold shadow-lg shadow-orange-400/50'
+                  ? 'bg-[#EF9D11] text-white font-semibold shadow-lg shadow-orange-400/50 hover:bg-[#d9890e]'
                   : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'
                 }`}
             >
