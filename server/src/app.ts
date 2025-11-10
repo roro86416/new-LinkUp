@@ -14,6 +14,7 @@ import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js"
 import cartRoutes from "./modules/cart/cart.routes.js";
 
 dotenv.config();
+
 const app: Express = express();
 
 // --- 中間件 (Middlewares) ---
