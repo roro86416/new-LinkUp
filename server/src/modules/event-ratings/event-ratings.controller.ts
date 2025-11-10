@@ -10,6 +10,9 @@ Controller 不直接動資料庫，只負責：
 import { Request, Response } from "express";
 import { createRatingSchema } from "./event-ratings.schema";
 import { createRatingService } from "./event-ratings.service";
+import { getRatingsSchema } from "./event-ratings.schema";
+import { getRatingsService } from "./event-ratings.service";
+import { success } from "zod";
 
 /**
  * 新增活動評論
@@ -47,6 +50,50 @@ export async function createRating(req: Request, res: Response) {
 
     res.status(500).json({
       message: "伺服器內部錯誤，評論新增失敗",
+    });
+  }
+}
+// =================================================
+// ✅ 取得特定活動的所有評論 GET /api/ratings/:eventId
+/*
+說明
+`getRatingsSchema.parse` -> 檢查 URL 中的 :eventId 是否為合法數字
+`getRatingsService(eventId)`  -> 稍後會在 service 層實作，負責實際去查資料庫
+回傳格式統一：
+  成功時 → { success: true, data: [...] }
+  失敗時 → { success: false, message: "..." }
+*/
+export async function getRatings(req: Request, res: Response) {
+  try {
+    // 驗證路徑參數
+    const parsed = getRatingsSchema.parse({
+      params: req.params,
+    });
+
+    const { eventId } = parsed.params;
+
+    // 呼叫service層，查詢評論
+    const ratings = await getRatingsService(eventId);
+
+    return res.status(200).json({
+      success: true,
+      data: ratings,
+    });
+  } catch (error: any) {
+    console.error("❌ getRatings 錯誤：", error);
+  
+    // Zod 驗證錯誤
+    if (error.name === "ZodError") {
+      return res.status(400).json({
+        success: false,
+        message: "參數格式錯誤",
+        errors: error.errors,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "伺服器錯誤，無法取得評論資料",
     });
   }
 }

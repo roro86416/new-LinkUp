@@ -33,9 +33,28 @@ export const createRatingSchema = z.object({
     .max(5, { message: "評分不能高於 5 分" }),
   comment: z
     .string()
-    .max(500, { message: "評論文字不能超過 500 字" })
+    .max(191, { message: "評論文字不能超過 191 字" })
     .optional(),
 });
 
+
+// ✅ 驗證查詢活動評論的路徑參數
+// 已有的 createRatingSchema 可留著 -> export const createRatingSchema = ...
+export const getRatingsSchema = z.object({
+  params: z.object({ 
+    eventId: z
+      .string()
+      .regex(/^\d+$/, "eventId 必須是數字")
+      .transform((val) => Number(val)), // 轉成 number
+  }),
+});
+/*
+params：用來驗證 Express 的路由參數 /api/ratings/:eventId
+.regex(/^\d+$/)：確保傳入的 eventId 是純數字
+.transform(Number)：自動轉成 number，供後端使用
+GetRatingsParams：是我們之後 controller 與 service 會用到的型別
+*/
+
 // TypeScript 型別定義（給 service 層使用）
 export type CreateRatingInput = z.infer<typeof createRatingSchema>;
+export type GetRatingsParams = z.infer<typeof getRatingsSchema>["params"];

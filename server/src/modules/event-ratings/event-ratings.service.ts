@@ -46,3 +46,36 @@ export async function createRatingService(data: CreateRatingInput) {
     throw new Error("資料庫寫入失敗");
   }
 }
+
+// =======================================================================
+// ✅ 取得特定活動的所有評論 (含使用者資訊)
+/*
+findMany -> 查出所有符合條件 (event_id = eventId) 的評論
+include.user → 關聯 User 表，選取{id, name, avatar}三樣，以便前端顯示「評論者的暱稱與頭像」
+orderBy → 最新的評論會排在最上方
+*/
+
+export async function getRatingsService(eventId: number) {
+  try {
+    const ratings = await prisma.eventRating.findMany({
+      where: { event_id: eventId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: "desc", // 依建立時間倒序排列
+      },
+    });
+
+    return ratings;
+  } catch (error) {
+    console.error("❌ Prisma getRatingsService 錯誤：", error);
+    throw new Error("資料庫查詢失敗");
+  }
+}
