@@ -1,1 +1,7 @@
 node_modules
+
+
+
+
+# 組員可以設立各自在local的seed.ts，供自己於本地端測試使用。所以不能進版控
+server/prisma/seed-local.ts

@@ -1,4 +1,4 @@
-import prisma from "../../utils/prisma-only";
+import prisma from "../../utils/prisma-only.js";
 import { CreateProductBody, UpdateProductBody } from "./products.schema.js"; //
 
 export const findAllProductsService = async () => {
