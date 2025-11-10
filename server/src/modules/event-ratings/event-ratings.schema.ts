@@ -55,6 +55,33 @@ params：用來驗證 Express 的路由參數 /api/ratings/:eventId
 GetRatingsParams：是我們之後 controller 與 service 會用到的型別
 */
 
+// 編修自己的評論
+export const updateRatingSchema = z.object({
+  params: z.object({
+    ratingId: z
+      .string()
+      .regex(/^\d+$/, { message: "評論 ID 必須是數字" }),
+  }),
+  body: z.object({
+    rating: z
+      .number()
+      .min(1, { message: "星等不得低於 1" })
+      .max(5, { message: "星等不得高於 5" })
+      .optional(),
+    comment: z
+      .string()
+      .max(191, { message: "評論文字不能超過 191 字" })
+      .optional(),
+  }),
+});
+
 // TypeScript 型別定義（給 service 層使用）
 export type CreateRatingInput = z.infer<typeof createRatingSchema>;
 export type GetRatingsParams = z.infer<typeof getRatingsSchema>["params"];
+export type UpdateRatingInput = {
+  ratingId: number; // URL 參數中的 ID
+  data: {
+    rating?: number;
+    comment?: string;
+  };
+};

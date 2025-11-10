@@ -2,19 +2,18 @@
 
 // src/modules/event-ratings/event-ratings.service.ts
 import prisma from "../../utils/prisma-only"; // 不要建立新的 new PrismaClient()，用統一的 Prisma Client 實例
-import { CreateRatingInput } from "./event-ratings.schema";
+import { CreateRatingInput, UpdateRatingInput } from "./event-ratings.schema";
 
 /**
- * 建立一筆新的活動評論
  * @param data 評論內容（來自 controller 層）
- * 
+說明:
+`prisma.rating.create()` | 用 Prisma 建立一筆新的評論
+`data: {...}`            | 寫入欄位（對應你的資料表 schema）
+`include`                | 一次查出關聯的 user、event，方便回傳前端時顯示
+`try / catch`            | 捕捉資料庫錯誤並統一丟回給 controller 處理
 */
-// 說明:
-// `prisma.rating.create()` | 用 Prisma 建立一筆新的評論
-// `data: {...}`            | 寫入欄位（對應你的資料表 schema）
-// `include`                | 一次查出關聯的 user、event，方便回傳前端時顯示
-// `try / catch`            | 捕捉資料庫錯誤並統一丟回給 controller 處理
 
+// 建立一筆新的活動評論
 export async function createRatingService(data: CreateRatingInput) {
   try {
     const newRating = await prisma.eventRating.create({
@@ -77,5 +76,45 @@ export async function getRatingsService(eventId: number) {
   } catch (error) {
     console.error("❌ Prisma getRatingsService 錯誤：", error);
     throw new Error("資料庫查詢失敗");
+  }
+}
+
+
+// =======================================================================
+// 「修改自己評論」的商業邏輯核心
+export async function updateRatingService({ ratingId, data }: UpdateRatingInput) {
+  try {
+    // 確認評論是否存在
+    const existing = await prisma.eventRating.findUnique({
+      where: { id: ratingId },
+    });
+
+    if (!existing) {
+      throw new Error("找不到該評論");
+    }
+
+    // 執行更新
+    const updated = await prisma.eventRating.update({
+      where: { id: ratingId },
+      data: {
+        rating: data.rating,
+        comment: data.comment,
+        updated_at: new Date(),
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    return updated;
+  } catch (error: any) {
+    console.error("❌ Prisma updateRatingService 錯誤：", error);
+    throw new Error("資料庫寫入失敗");
   }
 }

@@ -5,7 +5,7 @@ import { Router } from "express";
 // 若你之後要加權限驗證，可以在這裡引入 verify.middleware
 // import verify from "../../middleware/verify.middleware";
 // import { ratingSchema } from "./event-ratings.schema.js"; // 先照抄products-routes.ts
-import { createRating, getRatings } from "./event-ratings.controller";
+import { createRating, getRatings, updateRating } from "./event-ratings.controller";
 
 // --- 活動評論路由 (event-ratings Routes) ---
 const router = Router();
@@ -17,5 +17,8 @@ router.post("/", /* verifyUser, */ createRating);
 // GET /api/ratings/:eventId → 新增評論
 // ✅ 取得特定活動的所有評論
 router.get("/:eventId", getRatings);
+
+// 更新評論
+router.patch("/:ratingId", updateRating);
 
 export default router;

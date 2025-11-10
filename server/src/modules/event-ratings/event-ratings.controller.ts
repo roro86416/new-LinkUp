@@ -8,11 +8,8 @@ Controller 不直接動資料庫，只負責：
 
 // src/modules/event-ratings/event-ratings.controller.ts
 import { Request, Response } from "express";
-import { createRatingSchema } from "./event-ratings.schema";
-import { createRatingService } from "./event-ratings.service";
-import { getRatingsSchema } from "./event-ratings.schema";
-import { getRatingsService } from "./event-ratings.service";
-import { success } from "zod";
+import { createRatingSchema, getRatingsSchema, updateRatingSchema } from "./event-ratings.schema";
+import { createRatingService, getRatingsService, updateRatingService } from "./event-ratings.service";
 
 /**
  * 新增活動評論
@@ -94,6 +91,53 @@ export async function getRatings(req: Request, res: Response) {
     return res.status(500).json({
       success: false,
       message: "伺服器錯誤，無法取得評論資料",
+    });
+  }
+}
+
+// =================================================
+// PATCH /api/ratings/:Id
+/*
+這裡使用 updateRatingSchema 來同時驗證：
+  req.params → URL 中的 :ratingId
+  req.body → 要修改的內容
+驗證沒問題後，交給下一步的 service 層 (updateRatingService) 處理資料庫更新。
+*/
+export async function updateRating(req: Request, res: Response) {
+  try {
+    // 驗證路由參數 + body
+    const parsed = updateRatingSchema.parse({
+      params: req.params,
+      body: req.body,
+    });
+
+    const { ratingId } = parsed.params;
+    const { rating, comment } = parsed.body;
+
+    const updatedRating = await updateRatingService({
+      ratingId: Number(ratingId),
+      data: { rating, comment },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "評論已成功更新",
+      data: updatedRating,
+    });
+  } catch (error: any) {
+    console.error("❌ updateRating 錯誤：", error);
+
+    if (error.name === "ZodError") {
+      return res.status(400).json({
+        success: false,
+        message: "資料格式錯誤",
+        errors: error.errors,
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "伺服器內部錯誤，評論更新失敗",
     });
   }
 }
