@@ -9,6 +9,8 @@ import memberProfileRoutes from "./modules/member/memberProfile/memberProfile.ro
 import adminAuthRoutes from "./modules/admin-auth/adminAuth.routes.js";
 import accountSettingsRoutes from "./modules/member/AccountSettings/accountSettings.routes.js";
 import adminMemberRoutes from "./modules/admin-member/member.routes.js";
+import organizerRoutes from "./modules/organizer/organizer-routes";
+
 
 dotenv.config();
 
@@ -33,6 +35,7 @@ app.get("/api/test", (req: Request, res: Response) => {
 // 產品模組
 app.use("/api/v1/products", productRoutes);
 
+
 // 登入註冊模組
 app.use("/api/auth", authRoutes);
 
@@ -50,6 +53,6 @@ app.use("/api/member/account-settings", accountSettingsRoutes);
 
 
 // --- （未使用的主辦方模組預留）---
-// app.use("/api/v1/organizer", organizerRoutes);
+app.use("/api/v1/organizer", organizerRoutes); 
 
 export default app;
