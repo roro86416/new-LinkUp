@@ -1,9 +1,9 @@
-// prisma/seed.ts
-import { PrismaClient } from "./generated/prisma/client.js";
+// server/prisma/seed.ts
+import { PrismaClient } from "../src/generated/prisma/client.js";
 
 const prisma = new PrismaClient();
 
-// 預期的活動類別資料 (注意：我們不指定 ID，讓 DB 自動生成)
+// 活動類別（不指定 id，讓 DB 自動生成）
 const categories = [
   "課程",
   "展覽",
@@ -20,20 +20,49 @@ const categories = [
   "體驗",
 ].map((name) => ({ name }));
 
+// 固定 organizer/user ID，用來對應 service 中 MOCK_ORGANIZER_ID
+const ORGANIZER_ID = "00000000-0000-0000-0000-000000000001";
+const USER_ID = "00000000-0000-0000-0000-000000000002";
+
 async function main() {
   console.log("🌱 正在開始類別 Seeding...");
 
-  // 1. 清除舊的 Category 資料 (可選，但可確保資料庫乾淨)
-  // 如果你使用 SQLITE 或需要清空資料，可以加上這行：
-  // await prisma.category.deleteMany({});
-
-  // 2. 插入所有主要類別
+  // 1️⃣ 插入活動類別
   const result = await prisma.category.createMany({
     data: categories,
-    skipDuplicates: true, // 如果分類名稱已存在，則跳過，避免報錯
+    skipDuplicates: true,
+  });
+  console.log(`✅ 成功插入/跳過 ${result.count} 個活動類別。`);
+
+  // 2️⃣ 建立測試用使用者（Organizer 對應的 user）
+  console.log("👤 建立測試用 User...");
+  await prisma.user.upsert({
+    where: { id: USER_ID },
+    update: {},
+    create: {
+      id: USER_ID,
+      email: "demo@linkup.test",
+      password_hash: "mock_hash", // 這裡放假的密碼雜湊
+      name: "Demo Organizer User",
+      role: "ORGANIZER",
+      is_active: true,
+    },
   });
 
-  console.log(`✅ 成功插入/跳過 ${result.count} 個活動類別。`);
+  // 3️⃣ 建立測試用 Organizer
+  console.log("🏢 建立測試用 Organizer...");
+  await prisma.organizer.upsert({
+    where: { id: ORGANIZER_ID },
+    update: {},
+    create: {
+      id: ORGANIZER_ID,
+      user_id: USER_ID,
+      org_name: "LinkUp Demo 組織",
+      is_verified: true,
+    },
+  });
+
+  console.log("✅ Mock Organizer 資料已建立:", ORGANIZER_ID);
 }
 
 main()
