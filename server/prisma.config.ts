@@ -1,9 +1,7 @@
-import { defineConfig } from "prisma/config";
-import * as dotenv from "dotenv";
-import path from "path";
+import dotenv from "dotenv";
+dotenv.config(); // ✅ 強制載入 .env
 
-// 先載入 .env
-dotenv.config({ path: path.resolve(__dirname, "./.env") });
+import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
   schema: "prisma/schema.prisma",

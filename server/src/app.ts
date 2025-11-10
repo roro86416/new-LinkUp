@@ -12,6 +12,9 @@ import adminMemberRoutes from "./modules/admin-member/member.routes.js";
 import organizerRoutes from "./modules/organizer/organizer-routes";
 
 
+ 
+import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes";
+
 dotenv.config();
 
 const app: Express = express();
@@ -54,5 +57,8 @@ app.use("/api/member/account-settings", accountSettingsRoutes);
 
 // --- （未使用的主辦方模組預留）---
 app.use("/api/v1/organizer", organizerRoutes); 
+
+// 模組四 (使用者購買票券) 路由 ->活動評論API
+app.use("/api/ratings", eventRatingsRoutes);
 
 export default app;
