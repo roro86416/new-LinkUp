@@ -17,12 +17,11 @@ app.use(express.json());
 app.get("/api/test", (req: Request, res: Response) => {
   res.json({ message: "愛來自LinkUp伺服器! 🚀" });
 });
-
 //模組三 (產品) 路由
 app.use("/api/v1/products", productRoutes);
 //模組二 (主辦方) 路由
 app.use("/api/v1/organizer", organizerRoutes);
-// 模組四 (使用者購買票券) 路由 ->活動評論API
+//模組四 (使用者購買票券) 路由 ->活動評論API
 app.use("/api/ratings", eventRatingsRoutes);
 
 export default app;
