@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { authService } from "./auth-service.js";
-import { registerSchema, loginSchema } from "./auth-schema.js";
+import { authService } from "./auth.service.js";
+import { registerSchema, loginSchema } from "./auth.schema.js";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";

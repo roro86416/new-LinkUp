@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
-import { PrismaClient } from "@prisma/client";
-import prisma from "../../utils/prisma-only";
-import express from "express"
+import prisma from "../../utils/prisma-only.js";
+import express from "express";
 
 const router = express.Router();
 
@@ -40,18 +39,17 @@ router.post("/", async (req: Request, res: Response): Promise<void> => {
 
 //  修改分類
 router.put("/:id", async (req: Request, res: Response): Promise<void> => {
-  
   const idParam = req.params.id;
-if (!idParam) {
-  res.status(400).json({ error: "缺少 id 參數" });
-  return;
-}
+  if (!idParam) {
+    res.status(400).json({ error: "缺少 id 參數" });
+    return;
+  }
 
-const id = parseInt(idParam, 10);
-if (isNaN(id)) {
-  res.status(400).json({ error: "id 必須是數字" });
-  return;
-}
+  const id = parseInt(idParam, 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "id 必須是數字" });
+    return;
+  }
 
   const { name } = req.body as { name?: string };
 
@@ -63,7 +61,7 @@ if (isNaN(id)) {
   try {
     const updated = await prisma.postCategory.update({
       where: { id },
-      data: { name:String(name) },
+      data: { name: String(name) },
     });
     res.json(updated);
   } catch (error) {
@@ -74,17 +72,17 @@ if (isNaN(id)) {
 
 //  刪除分類
 router.delete("/:id", async (req: Request, res: Response): Promise<void> => {
-   const idParam = req.params.id;
-if (!idParam) {
-  res.status(400).json({ error: "缺少 id 參數" });
-  return;
-}
+  const idParam = req.params.id;
+  if (!idParam) {
+    res.status(400).json({ error: "缺少 id 參數" });
+    return;
+  }
 
-const id = parseInt(idParam, 10);
-if (isNaN(id)) {
-  res.status(400).json({ error: "id 必須是數字" });
-  return;
-}
+  const id = parseInt(idParam, 10);
+  if (isNaN(id)) {
+    res.status(400).json({ error: "id 必須是數字" });
+    return;
+  }
   if (isNaN(id)) {
     res.status(400).json({ error: "ID 格式錯誤" });
     return;
