@@ -2,10 +2,10 @@
 import express, { Request, Response } from "express";
 // import prisma from "../../prismaClient";
 // import { Prisma } from "@prisma/client";
-import { validateComment } from "../../middleware/comment.middleware"
+import { validateComment } from "../../middleware/comment.middleware.js"
 // import { PrismaClient } from "@prisma/client";
 import { Prisma } from "@prisma/client";
-import prisma from "../../utils/prisma-only";
+import prisma from "../../utils/prisma-only.js";
 import { string } from "zod";
 
 const router = express.Router();

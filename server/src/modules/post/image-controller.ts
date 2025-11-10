@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import multer from "multer";
-import { PrismaClient } from "@prisma/client";
-import prisma from "../../utils/prisma-only";
+import prisma from "../../utils/prisma-only.js";
 import express from "express"
 
 const router = express.Router();
