@@ -1,8 +1,8 @@
 // service是後端程式之一，其功能是商業邏輯層，進行資料處理、與資料庫互動；在我們的專案就是與Prisma互動: 執行 Prisma 寫入、驗證、錯誤處理
 
 // src/modules/event-ratings/event-ratings.service.ts
-import prisma from "../../utils/prisma-only"; // 不要建立新的 new PrismaClient()，用統一的 Prisma Client 實例
-import { CreateRatingInput, UpdateRatingInput } from "./event-ratings.schema";
+import prisma from "../../utils/prisma-only.js"; // 不要建立新的 new PrismaClient()，用統一的 Prisma Client 實例
+import { CreateRatingInput, UpdateRatingInput } from "./event-ratings.schema.js";
 
 /**
  * @param data 評論內容（來自 controller 層）

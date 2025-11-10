@@ -9,11 +9,11 @@ import memberProfileRoutes from "./modules/member/memberProfile/memberProfile.ro
 import adminAuthRoutes from "./modules/admin-auth/adminAuth.routes.js";
 import accountSettingsRoutes from "./modules/member/AccountSettings/accountSettings.routes.js";
 import adminMemberRoutes from "./modules/admin-member/member.routes.js";
-import organizerRoutes from "./modules/organizer/organizer-routes";
+import organizerRoutes from "./modules/organizer/organizer-routes.js";
 
 
  
-import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes";
+import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js";
 
 dotenv.config();
 

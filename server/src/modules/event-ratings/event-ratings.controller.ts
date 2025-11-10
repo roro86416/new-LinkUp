@@ -8,8 +8,8 @@ Controller 不直接動資料庫，只負責：
 
 // src/modules/event-ratings/event-ratings.controller.ts
 import { Request, Response } from "express";
-import { createRatingSchema, getRatingsSchema, updateRatingSchema } from "./event-ratings.schema";
-import { createRatingService, getRatingsService, updateRatingService } from "./event-ratings.service";
+import { createRatingSchema, getRatingsSchema, updateRatingSchema } from "./event-ratings.schema.js";
+import { createRatingService, getRatingsService, updateRatingService } from "./event-ratings.service.js";
 
 /**
  * 新增活動評論
