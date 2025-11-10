@@ -8,8 +8,16 @@ Controller 不直接動資料庫，只負責：
 
 // src/modules/event-ratings/event-ratings.controller.ts
 import { Request, Response } from "express";
-import { createRatingSchema, getRatingsSchema, updateRatingSchema } from "./event-ratings.schema";
-import { createRatingService, getRatingsService, updateRatingService } from "./event-ratings.service";
+import {
+  createRatingSchema,
+  getRatingsSchema,
+  updateRatingSchema,
+} from "./event-ratings.schema.js";
+import {
+  createRatingService,
+  getRatingsService,
+  updateRatingService,
+} from "./event-ratings.service.js";
 
 /**
  * 新增活動評論
@@ -78,7 +86,7 @@ export async function getRatings(req: Request, res: Response) {
     });
   } catch (error: any) {
     console.error("❌ getRatings 錯誤：", error);
-  
+
     // Zod 驗證錯誤
     if (error.name === "ZodError") {
       return res.status(400).json({

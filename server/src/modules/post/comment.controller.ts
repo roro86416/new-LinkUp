@@ -1,15 +1,10 @@
 // src/routes/commentRoutes.ts
 import express, { Request, Response } from "express";
-// import prisma from "../../prismaClient";
-// import { Prisma } from "@prisma/client";
-import { validateComment } from "../../middleware/comment.middleware.js"
-// import { PrismaClient } from "@prisma/client";
-import { Prisma } from "@prisma/client";
+import { validateComment } from "../../middleware/comment.middleware.js";
 import prisma from "../../utils/prisma-only.js";
 import { string } from "zod";
 
 const router = express.Router();
-// const prisma = new PrismaClient
 
 // ==========================
 //  Controller + API
@@ -52,7 +47,9 @@ const createComment = async (req: Request, res: Response): Promise<void> => {
     const { authorId, content, rating, post_id } = req.body;
 
     if (!authorId || !content || rating == null || !post_id) {
-      res.status(400).json({ error: "authorId, content, rating, and post_id are required" });
+      res
+        .status(400)
+        .json({ error: "authorId, content, rating, and post_id are required" });
       return;
     }
 
@@ -68,7 +65,7 @@ const createComment = async (req: Request, res: Response): Promise<void> => {
         post_id: Number(post_id),
         rating: Number(rating),
         created_at: new Date(),
-      }
+      },
     });
 
     res.status(201).json(newComment);
@@ -128,10 +125,10 @@ const deleteComment = async (req: Request, res: Response): Promise<void> => {
 // ==========================
 //  Routes
 // ==========================
-router.get("/", getAllComments);                  // GET /api/comments
-router.get("/:id", getCommentById);              // GET /api/comments/:id
+router.get("/", getAllComments); // GET /api/comments
+router.get("/:id", getCommentById); // GET /api/comments/:id
 router.post("/", validateComment, createComment); // POST /api/comments
 router.put("/:id", validateComment, updateComment); // PUT /api/comments/:id
-router.delete("/:id", deleteComment);           // DELETE /api/comments/:id
+router.delete("/:id", deleteComment); // DELETE /api/comments/:id
 
 export default router;
