@@ -1,3 +1,9 @@
+# 預設：所有文字檔讓 Git 偵測為 text，自動處理換行
+# 這表示預設所有檔案如果被 Git 判定為 文字檔，則自動處理換行。這比硬寫 eol=lf 或 eol=crlf 為好，因為通用性高。
+# 官方文件: https://git-scm.com/docs/gitattributes#_text
+* text=auto
+
+# 明確指定這些常見程式碼／設定檔使用 LF，避免不同 OS 規則導致差異
 *.js   text eol=lf
 *.jsx  text eol=lf
 *.ts   text eol=lf
@@ -7,10 +13,27 @@
 *.yaml text eol=lf
 *.yml  text eol=lf
 *.css  text eol=lf
+
+# 明確指定 .bat 檔案使用 Windows 換行符 (CRLF)。Windows 批次檔例外：保持 CRLF
 *.bat text eol=crlf
 *.cmd text eol=crlf
 *.ps1 text eol=crlf
+
+# 圖片與二進位檔案不進行文字處理: 避免 Git 嘗試處理換行符號導致亂碼或檔案損壞。
 *.png binary
 *.jpg binary
 *.ico binary
 *.pdf binary
+
+
+# 團隊成員需要做的設定（Windows 與 macOS）
+#     Windows 使用者
+# git config --global core.autocrlf true
+# git config --global core.safecrlf true
+# 這設定讓 Git 在你檢出時 (checkout) 將 LF → CRLF（在工作目錄）／在你 commit 時將 CRLF → LF（儲存庫內）。這很適合 Windows 使用者與其他 OS 共同作業。
+# 參考：https://git-scm.com/book/en/v2/Customizing-Git-Git-Configuration
+
+#     macOS / Linux 使用者
+# git config --global core.autocrlf input
+# git config --global core.safecrlf true
+# 這樣在 commit 時將 CRLF → LF，但在檢出時不轉（保持檔案原始裝置上的換行）。這對 Unix-like 系統是比較一致的策略。

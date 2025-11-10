@@ -2,8 +2,9 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 // import organizerRoutes from "./api/api-organizer";
-import productRoutes from "./modules/product/products.routes";
-import cartRoutes from "./modules/cart/cart.routes";
+import productRoutes from "./modules/product/products-routes";
+import organizerRoutes from "./modules/organizer/organizer-routes";
+import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes";
 
 dotenv.config();
 const app: Express = express();
@@ -19,11 +20,9 @@ app.get("/api/test", (req: Request, res: Response) => {
 
 //模組三 (產品) 路由
 app.use("/api/v1/products", productRoutes);
-
-//模組三 (購物車) 路由
-app.use("/api/v1/cart", cartRoutes);
-
 //模組二 (主辦方) 路由
-// app.use("/api/v1/organizer", organizerRoutes);
+app.use("/api/v1/organizer", organizerRoutes);
+// 模組四 (使用者購買票券) 路由 ->活動評論API
+app.use("/api/ratings", eventRatingsRoutes);
 
 export default app;
