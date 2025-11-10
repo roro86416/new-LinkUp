@@ -1,6 +1,6 @@
 import prisma from "../../utils/prisma-only.js";
 import bcrypt from "bcryptjs";
-import { RegisterInput, LoginInput } from "./auth-schema.js";
+import { RegisterInput, LoginInput } from "./auth.schema.js";
 
 export const authService = {
   /** 註冊 */
@@ -18,8 +18,7 @@ export const authService = {
     // 預設名稱與預設頭像
     const defaultName = name || email.split("@")[0] || `User_${Date.now()}`;
     const defaultAvatar =
-      avatar ||
-      "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // ✅ 預設頭像圖片
+      avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // ✅ 預設頭像圖片
 
     // 建立使用者
     const user = await prisma.user.create({
@@ -31,7 +30,13 @@ export const authService = {
         role: "MEMBER",
         is_active: true,
       },
-      select: { id: true, email: true, name: true, avatar: true, created_at: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatar: true,
+        created_at: true,
+      },
     });
 
     return user;

@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import * as svc from "./organizer-service";
+import * as svc from "./organizer.service.js";
 
 // --- Event ---
 export const listEvents = async (_req: Request, res: Response) => {
