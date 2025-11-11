@@ -1,4 +1,4 @@
-import Slider from"../layouts/FeatureSlider"
+import Slider from"../../post-component/post-layouts/FeatureSlider"
 
 
 export const metadata = {

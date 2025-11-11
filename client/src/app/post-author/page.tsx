@@ -1,6 +1,8 @@
-import Breadcrumb from "../layouts/Breadcrumb";
-import PostCard from "../component/posts/postcard"
-import { Author } from "../type/author"
+// "use client";
+
+import Breadcrumb from "../../post-component/post-layouts/Breadcrumb";
+import PostCard from "../../post-component/posts/postcard"
+import { Author } from "../../post-component/type/author"
 interface AuthorPageProps {
   params: { id: string };
 }
