@@ -25,7 +25,7 @@ function LoginModal({ onClose, onSwitch }: { onClose: () => void; onSwitch: () =
       <div className="bg-white/30 backdrop-blur-md rounded-xl w-96 p-6 shadow-lg relative">
         <h2 className="text-2xl font-bold mb-4 text-gray-900">登入</h2>
         <input
-          type="text"
+          type="email"
           placeholder="Email"
           className="w-full border border-gray-300 rounded-md p-2 mb-3 bg-white/50 backdrop-blur-sm"
         />
@@ -60,7 +60,7 @@ function RegisterModal({ onClose }: { onClose: () => void }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-md">
       <div className="bg-white/30 backdrop-blur-md rounded-xl w-96 p-6 shadow-lg relative">
         <h2 className="text-2xl font-bold mb-4 text-gray-900">註冊</h2>
-        <input type="text" placeholder="Email" className="w-full border border-gray-300 rounded-md p-2 mb-3 bg-white/50 backdrop-blur-sm" />
+        <input type="email" placeholder="Email" className="w-full border border-gray-300 rounded-md p-2 mb-3 bg-white/50 backdrop-blur-sm" />
         <input type="password" placeholder="密碼" className="w-full border border-gray-300 rounded-md p-2 mb-3 bg-white/50 backdrop-blur-sm" />
         <input type="password" placeholder="確認密碼" className="w-full border border-gray-300 rounded-md p-2 mb-3 bg-white/50 backdrop-blur-sm" />
         <button className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-md transition-colors">

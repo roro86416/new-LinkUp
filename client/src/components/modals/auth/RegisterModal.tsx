@@ -21,7 +21,7 @@ async function registerUser(email: string, password: string): Promise<RegisterRe
   const result = await res.json();
 
   if (!res.ok) {
-    throw new Error(result.message || '註冊失敗');
+    throw new Error(result.message || result.error || '註冊失敗');
   }
 
   return result;
@@ -47,6 +47,11 @@ export default function RegisterModal() {
       setMessage('⚠️ 請填寫完整資訊');
       return;
     }
+    // ✅ 新增：客戶端密碼長度驗證
+    if (password.length < 8) {
+      setMessage('❌ 密碼長度至少需要 8 個字元');
+      return;
+    }
 
     setLoading(true);
     setMessage(null);
@@ -68,7 +73,15 @@ export default function RegisterModal() {
       }, 1500);
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setMessage(`❌ ${err.message}`);
+        try {
+          // 嘗試解析錯誤訊息，因為後端可能回傳 JSON 格式的錯誤陣列
+          const errors = JSON.parse(err.message);
+          if (Array.isArray(errors) && errors.length > 0) {
+            setMessage(`❌ ${errors[0].message}`); // 只顯示第一條錯誤訊息
+          }
+        } catch (e) {
+          setMessage(`❌ ${err.message}`); // 如果解析失敗，顯示原始錯誤訊息
+        }
       } else {
         setMessage('❌ 發生未知錯誤');
       }
@@ -97,13 +110,13 @@ export default function RegisterModal() {
           placeholder="電子郵件"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EF9D11] text-gray-800 placeholder-gray-500"
+          className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EF9D11] focus:bg-white focus:text-gray-900 text-gray-800 placeholder-gray-500"
         />
 
         <div className="relative w-full mb-3">
           <input
             type={showPassword ? 'text' : 'password'}
-            placeholder="密碼 (至少8碼)"
+            placeholder="密碼 (至少 8 碼)"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-[#EF9D11]"
