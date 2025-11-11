@@ -50,7 +50,7 @@ export const getRatingsSchema = z.object({
 });
 /*
 params：用來驗證 Express 的路由參數 /api/ratings/:eventId
-.regex(/^\d+$/)：確保傳入的 eventId 是純數字
+.regex(/^\d+$/)：確保傳入的 eventId 是純數字(字串)
 .transform(Number)：自動轉成 number，供後端使用
 GetRatingsParams：是我們之後 controller 與 service 會用到的型別
 */
@@ -75,6 +75,19 @@ export const updateRatingSchema = z.object({
   }),
 });
 
+// 刪除評論驗證 schema
+// .transform((val) => Number(val)) -> 轉成 number 型別給 Prisma 使用。
+// 匯出的 DeleteRatingParams 型別會在下一步 controller 中用來定義傳入參數型別。
+export const deleteRatingSchema = z.object({
+  params: z.object({
+    ratingId: z
+      .string()
+      .regex(/^\d+$/, { message: "評論 ID 必須為數字" })
+      .transform((val) => Number(val)),
+  }),
+});
+
+
 // TypeScript 型別定義（給 service 層使用）
 export type CreateRatingInput = z.infer<typeof createRatingSchema>;
 export type GetRatingsParams = z.infer<typeof getRatingsSchema>["params"];
@@ -85,3 +98,4 @@ export type UpdateRatingInput = {
     comment?: string;
   };
 };
+export type DeleteRatingParams = z.infer<typeof deleteRatingSchema.shape.params>;

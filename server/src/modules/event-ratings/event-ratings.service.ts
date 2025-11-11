@@ -118,3 +118,30 @@ export async function updateRatingService({ ratingId, data }: UpdateRatingInput)
     throw new Error("資料庫寫入失敗");
   }
 }
+
+// =======================================================================
+// 🧩 刪除評論 Service
+export async function deleteRatingService(ratingId: number) {
+  try {
+    // 1️⃣ 確認該評論是否存在
+    const existingRating = await prisma.eventRating.findUnique({
+      where: { id: ratingId },
+    });
+
+    if (!existingRating) {
+      // 拋出錯誤給 controller 捕捉
+      throw new Error("NOT_FOUND");
+    }
+
+    // 2️⃣ 刪除評論
+    await prisma.eventRating.delete({
+      where: { id: ratingId },
+    });
+
+    // 回傳成功訊息
+    return true;
+  } catch (error) {
+    console.error("❌ Prisma deleteRatingService 錯誤：", error);
+    throw error;
+  }
+}

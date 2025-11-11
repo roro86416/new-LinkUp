@@ -8,15 +8,18 @@ Controller 不直接動資料庫，只負責：
 
 // src/modules/event-ratings/event-ratings.controller.ts
 import { Request, Response } from "express";
+// 評論控制器：新增、取用、更新、刪除評論控制器
 import {
   createRatingSchema,
   getRatingsSchema,
   updateRatingSchema,
+  deleteRatingSchema
 } from "./event-ratings.schema.js";
 import {
   createRatingService,
   getRatingsService,
   updateRatingService,
+  deleteRatingService
 } from "./event-ratings.service.js";
 
 /**
@@ -146,6 +149,52 @@ export async function updateRating(req: Request, res: Response) {
     return res.status(500).json({
       success: false,
       message: "伺服器內部錯誤，評論更新失敗",
+    });
+  }
+}
+
+// =================================================
+// DELETE /api/ratings/:id
+export async function deleteRating(req: Request, res: Response) {
+  try {
+    // 驗證 URL 參數
+    const parsed = deleteRatingSchema.parse({
+      params: req.params,
+    });
+
+    const { ratingId } = parsed.params;
+
+    // 呼叫 service 執行刪除
+    await deleteRatingService(ratingId);
+
+    return res.status(200).json({
+      success: true,
+      message: "評論已成功刪除",
+    });
+  } catch (error: any) {
+    console.error("❌ deleteRating 錯誤：", error);
+
+    // Zod 驗證錯誤
+    if (error.name === "ZodError") {
+      return res.status(400).json({
+        success: false,
+        message: "資料格式錯誤",
+        errors: error.errors,
+      });
+    }
+
+    // 找不到評論
+    if (error.message === "NOT_FOUND") {
+      return res.status(404).json({
+        success: false,
+        message: "找不到該評論",
+      });
+    }
+
+    // 其他未預期錯誤
+    return res.status(500).json({
+      success: false,
+      message: "伺服器內部錯誤，評論刪除失敗",
     });
   }
 }

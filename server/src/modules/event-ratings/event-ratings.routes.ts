@@ -9,6 +9,7 @@ import {
   createRating,
   getRatings,
   updateRating,
+  deleteRating
 } from "./event-ratings.controller.js";
 
 // --- 活動評論路由 (event-ratings Routes) ---
@@ -24,5 +25,8 @@ router.get("/:eventId", getRatings);
 
 // 更新評論
 router.patch("/:ratingId", updateRating);
+
+// ❌ 刪除評論
+router.delete("/:ratingId", deleteRating);
 
 export default router;
