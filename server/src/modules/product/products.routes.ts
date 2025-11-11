@@ -1,5 +1,5 @@
 import { Router } from "express";
-import verify from "../../middleware/verify.middleware";
+import verify from "../../middleware/verify.middleware.js";
 import { createProductSchema, updateProductSchema } from "./products.schema.js";
 import {
   getAllProductsController,
