@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from 'next/image';
 import { useState } from "react";
 // import { Search, Menu, X } from "lucide-react";
 
@@ -13,10 +14,20 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-16">
           {/* Left: Logo */}
           <div className="flex items-center space-x-2">
-            <Link href="/" className="flex items-center space-x-1">
+            {/* <Link href="/" className="flex items-center space-x-1">
               <span className="text-orange-500 font-bold text-2xl">Linkup</span>
               <span className="font-semibold text-gray-900">| All Access</span>
-            </Link>
+            </Link> */}
+            <Link href="/" className="cursor-pointer">
+        <Image
+          src="/logo/logoBlack.png"
+          alt="LOGO"
+          width={120}
+          height={40}
+          className="invert brightness-200"
+          style={{ width: 'auto' }}
+        />
+      </Link>
           </div>
 
           {/* Center: Menu (Desktop) */}

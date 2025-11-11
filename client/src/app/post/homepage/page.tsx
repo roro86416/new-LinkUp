@@ -1,4 +1,5 @@
 import Slider from"../../../post-component/post-layouts/FeatureSlider"
+import Header from "../../../post-component/post-layouts/header"
 
 
 export const metadata = {
@@ -10,6 +11,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="zh-TW">
       <body className="bg-white">
+        <Header/>
         <Slider/>
         {children}
       </body>

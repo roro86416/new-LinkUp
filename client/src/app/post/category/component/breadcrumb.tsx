@@ -12,7 +12,7 @@ export default function Breadcrumb({ paths }: BreadcrumbProps) {
           <Link href={path.href} className="hover:underline">
             {path.name}
           </Link>
-          {i < paths.length - 1 && " / "}.
+          {i < paths.length - 1 && " / "}
         </span>
       ))}
     </nav>
