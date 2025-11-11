@@ -72,7 +72,14 @@ export async function getRatingsService(eventId: number) {
       },
     });
 
-    return ratings;
+    // 2️⃣ 計算平均分數
+    const avgRating =
+      ratings.length > 0
+        ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+        : 0;
+
+    // 3️⃣ 回傳結果
+    return { ratings, averageRating: avgRating };
   } catch (error) {
     console.error("❌ Prisma getRatingsService 錯誤：", error);
     throw new Error("資料庫查詢失敗");

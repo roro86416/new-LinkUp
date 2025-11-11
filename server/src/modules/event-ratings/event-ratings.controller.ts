@@ -81,11 +81,13 @@ export async function getRatings(req: Request, res: Response) {
     const { eventId } = parsed.params;
 
     // 呼叫service層，查詢評論
-    const ratings = await getRatingsService(eventId);
+    const result = await getRatingsService(Number(eventId));
 
     return res.status(200).json({
       success: true,
-      data: ratings,
+      message: "成功取得評論資料",
+      averageRating: result.averageRating, // ⭐ 新增平均分數
+      data: result.ratings,
     });
   } catch (error: any) {
     console.error("❌ getRatings 錯誤：", error);
