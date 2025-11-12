@@ -1,7 +1,7 @@
-'use client';
+// 'use client';
 // backend/page.tsx
 import { redirect } from "next/navigation";
 
 export default function BackendHomePage() {
-  redirect("/backend/admin/create-post");
+  redirect("/post/backend/admin/create-post");
 }

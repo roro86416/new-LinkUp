@@ -5,10 +5,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const menu = [
-  { name: "創作文章", path: "/backend/admin/create-post" },
-  { name: "創作者文章", path: "/backend/admin/creator-posts" },
-  { name: "每日點閱數", path: "/backend/admin/daily-views" },
-  { name: "每日訂閱人數", path: "/backend/admin/daily-subscribers" },
+  { name: "創作文章", path: "/post/backend/admin/create-post" },
+  { name: "創作者文章", path: "/post/backend/admin/creator-posts" },
+  { name: "每日點閱數", path: "/post/backend/admin/daily-views" },
+  { name: "每日訂閱人數", path: "/post/backend/admin/daily-subscribers" },
 ];
 
 export default function Sidebar() {
