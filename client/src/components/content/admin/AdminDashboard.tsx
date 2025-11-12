@@ -250,7 +250,7 @@ export default function Dashboard() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {hotActivities.map((item, idx) => (
-                <tr key={idx} className="hover:bg-orange-50/50 transition-colors duration-150">
+                <tr key={item.name + idx} className="hover:bg-orange-50/50 transition-colors duration-150">
                   <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{item.organizer}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">{item.date}</td>

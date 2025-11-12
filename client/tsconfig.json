@@ -35,6 +35,10 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts",
+    "../server/src/modules/notify/notifications.routes.ts",
+    "../server/src/modules/notify/notifications.schema.ts",
+    "../server/src/modules/notify/notifications.service.ts",
+    "../server/src/modules/notify/notifications.controller.ts",
   ],
   "exclude": [
     "node_modules"
