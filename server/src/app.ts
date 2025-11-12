@@ -11,6 +11,7 @@ import accountSettingsRoutes from "./modules/member/AccountSettings/accountSetti
 import adminMemberRoutes from "./modules/admin-member/member.routes.js";
 import organizerRoutes from "./modules/organizer/organizer.routes.js";
 import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js";
+import eventSearchRoutes from "./modules/event-search/event-search.routes.js";
 
 dotenv.config();
 
@@ -57,5 +58,7 @@ app.use("/api/v1/organizer", organizerRoutes);
 
 // 模組四 (使用者購買票券) 路由 ->活動評論API
 app.use("/api/ratings", eventRatingsRoutes);
+// 活動搜尋與篩選模組 
+app.use("/api/events", eventSearchRoutes);
 
 export default app;

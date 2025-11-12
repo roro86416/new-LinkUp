@@ -9,8 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
+    "@mantine/core": "^8.3.7",
+    "@mantine/hooks": "^8.3.7",
+    "@mantine/notifications": "^8.3.7",
     "chart.js": "^4.5.1",
     "jwt-decode": "^4.0.0",
     "next": "16.0.1",
@@ -19,6 +24,7 @@
     "react-dom": "19.2.0",
     "react-hot-toast": "^2.6.0",
     "react-icons": "^5.5.0",
+    "sweetalert2": "^11.26.3",
     "swiper": "^12.0.3"
   },
   "devDependencies": {
