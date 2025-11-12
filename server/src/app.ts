@@ -12,6 +12,7 @@ import adminMemberRoutes from "./modules/admin-member/member.routes.js";
 import organizerRoutes from "./modules/organizer/organizer.routes.js";
 import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js";
 import eventSearchRoutes from "./modules/event-search/event-search.routes.js";
+import eventStatsRoutes from "./modules/event-stats/event-stats.routes.js";
 
 dotenv.config();
 
@@ -60,5 +61,7 @@ app.use("/api/v1/organizer", organizerRoutes);
 app.use("/api/ratings", eventRatingsRoutes);
 // 活動搜尋與篩選模組 
 app.use("/api/events", eventSearchRoutes);
+// 活動統計模組 (Event Stats)
+app.use("/api/events", eventStatsRoutes);
 
 export default app;
