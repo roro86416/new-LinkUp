@@ -2,34 +2,45 @@ import prisma from "../../utils/prisma-only.js";
 import { Prisma } from "../../generated/prisma/client.js";
 import { CreateEventBody } from "./organizer.schema.js";
 
-// TODO: 登入完成後改從 req.user 取
-const MOCK_ORGANIZER_ID = "00000000-0000-0000-0000-000000000001";
+const getOrganizerIdFromUserId = async (userId: string) => {
+  const organizer = await prisma.organizer.findUnique({
+    where: { user_id: userId }, //從 User ID 找到 Organizer
+    select: { id: true },
+  });
+  if (!organizer) {
+    throw new Error("找不到對應的主辦方身份");
+  }
+  return organizer.id;
+};
 
 // -------- Event --------
-export const listMyEvents = async () => {
+export const listMyEvents = async (userId: string) => {
+  const organizerId = await getOrganizerIdFromUserId(userId);
   return prisma.event.findMany({
-    where: { organizer_id: MOCK_ORGANIZER_ID },
+    where: { organizer_id: organizerId },
     orderBy: { start_time: "desc" },
   });
 };
-
-export const createEvent = async (data: CreateEventBody) => {
+export const createEvent = async (userId: string, data: CreateEventBody) => {
+  const organizerId = await getOrganizerIdFromUserId(userId);
   return prisma.event.create({
     data: {
       ...data,
       latitude: new Prisma.Decimal(String(data.latitude)),
       longitude: new Prisma.Decimal(String(data.longitude)),
-      organizer_id: MOCK_ORGANIZER_ID,
+      organizer_id: organizerId,
     },
   });
 };
 export const updateEvent = async (
+  userId: string,
   eventId: number,
   data: Partial<CreateEventBody>
 ) => {
   // 權限檢查
+  const organizerId = await getOrganizerIdFromUserId(userId);
   const found = await prisma.event.findFirst({
-    where: { id: eventId, organizer_id: MOCK_ORGANIZER_ID },
+    where: { id: eventId, organizer_id: organizerId },
   });
   if (!found) throw new Error("Event not found or no permission");
 
@@ -38,19 +49,14 @@ export const updateEvent = async (
     data,
   });
 };
-
-export const deleteEvent = async (eventId: number) => {
-  const found = await prisma.event.findFirst({
-    where: { id: eventId, organizer_id: MOCK_ORGANIZER_ID },
-  });
-  if (!found) throw new Error("Event not found or no permission");
-
+export const deleteEvent = async (userId: string, eventId: number) => {
+  await ensureEventOwned(userId, eventId); // ✅ (Helper 也更新了)
   return prisma.event.delete({ where: { id: eventId } });
 };
-
-export const copyEvent = async (eventId: number) => {
+export const copyEvent = async (userId: string, eventId: number) => {
+  const organizerId = await getOrganizerIdFromUserId(userId); // ✅
   const existing = await prisma.event.findFirst({
-    where: { id: eventId, organizer_id: MOCK_ORGANIZER_ID },
+    where: { id: eventId, organizer_id: organizerId }, // ✅
   });
   if (!existing) throw new Error("Event not found or no permission");
 

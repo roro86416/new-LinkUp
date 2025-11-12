@@ -1,14 +1,17 @@
 import { Router } from "express";
-import verify from "../../middleware/verify.middleware";
-import { addToCartSchema, updateCartItemSchema } from "./cart.schema";
+import verify from "../../middleware/verify.middleware.js";
+import { auth } from "../../middleware/auth.middleware.js";
+import { addToCartSchema, updateCartItemSchema } from "./cart.schema.js";
 import {
   addToCartController,
   getCartController,
   deleteCartItemController,
   updateCartItemController,
-} from "./cart.controller";
+} from "./cart.controller.js";
 
 const router = Router();
+
+router.use(auth);
 //取得購物車
 router.get("/", getCartController);
 

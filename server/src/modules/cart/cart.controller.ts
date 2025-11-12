@@ -4,8 +4,8 @@ import {
   getCartService,
   updateCartItemService,
   deleteCartItemService,
-} from "./cart.service";
-import { AddToCartBody, UpdateCartItemBody } from "./cart.schema";
+} from "./cart.service.js";
+import { AddToCartBody, UpdateCartItemBody } from "./cart.schema.js";
 
 /**
  * @desc  新增項目到購物車
@@ -21,7 +21,7 @@ export const getCartController = async (
   next: NextFunction
 ) => {
   try {
-    const userId = "d5dbe765-1f72-4efc-859c-4662d8d8da36";
+    const userId = req.user.id;
     const cart = await getCartService(userId);
     res.status(200).json({
       status: "success",
@@ -44,7 +44,7 @@ export const addToCartController = async (
 ) => {
   try {
     const body = req.body as AddToCartBody;
-    const userId = "d5dbe765-1f72-4efc-859c-4662d8d8da36"; //未來user修改處
+    const userId = req.user.id;
     const resultItem = await addToCartService(userId, body);
     res.status(200).json({
       status: "success",
@@ -66,7 +66,7 @@ export const updateCartItemController = async (
   next: NextFunction
 ) => {
   try {
-    const userId = "d5dbe765-1f72-4efc-859c-4662d8d8da36";
+    const userId = req.user.id;
     const itemId = parseInt(req.params.id);
     const body = req.body as UpdateCartItemBody;
     const result = await updateCartItemService(userId, itemId, body);
@@ -90,7 +90,7 @@ export const deleteCartItemController = async (
   next: NextFunction
 ) => {
   try {
-    const userId = "d5dbe765-1f72-4efc-859c-4662d8d8da36";
+    const userId = req.user.id;
     const itemId = parseInt(req.params.id);
     const result = await deleteCartItemService(userId, itemId);
     res.status(200).json({
