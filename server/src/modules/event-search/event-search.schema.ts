@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const searchEventsSchema = z.object({
   keyword: z.string().optional(),  // 🔍 關鍵字搜尋 (optional)
-  category: z.coerce.number().optional(),  // 🎨 分類 ID
+  category_id: z.coerce.number().optional(),  // 🎨 分類 ID
   region: z.string().optional(),  // 📍 地區關鍵字
   date: z.enum([  // 🕓 日期篩選 (token-based)
     // 前端只允許傳這幾種字串作為日期篩選條件（token），確保輸入值合法，後端不會收到奇怪的 date 值。例如：/api/events/search?date=this_week，或/api/events/search?date=custom&from=2025-11-01&to=2025-11-10 自訂時間才允許傳入 from / to

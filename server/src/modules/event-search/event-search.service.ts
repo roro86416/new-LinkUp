@@ -12,7 +12,7 @@ export async function searchEventsService(filters: SearchEventsInput) {
   try {
     const {
       keyword,
-      category,
+      category_id,
       region,
       date,
       startDate,
@@ -45,8 +45,8 @@ export async function searchEventsService(filters: SearchEventsInput) {
     }
 
     // 🎟️ 類別篩選
-        if (category) {
-          whereClause.category_id = Number(category);
+        if (category_id) {
+          whereClause.category_id = category_id;
         }
 
     // 📍 地區篩選
