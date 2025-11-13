@@ -1,23 +1,48 @@
+// src/app/components/HeaderUpload.tsx
 "use client";
-import { useState } from "react";
+
+import { useUpload } from "../../../hooks/useUpload";
 
 export default function HeaderUpload() {
-  const [preview, setPreview] = useState<string | null>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) setPreview(URL.createObjectURL(file));
-  };
+  const {
+    isDragging,
+    uploading,
+    imageUrl,
+    handleDragOver,
+    handleDragLeave,
+    handleDrop,
+    uploadImage,
+  } = useUpload();
 
   return (
-    <div className="relative w-full h-64 bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center">
-      {preview ? (
-        <img src={preview} alt="preview" className="object-cover w-full h-full" />
+    <div
+      className={`border-2 border-dashed rounded-xl p-6 text-center transition ${
+        isDragging ? "border-blue-400 bg-blue-50" : "border-gray-300"
+      }`}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {uploading ? (
+        <p>上傳中...</p>
+      ) : imageUrl ? (
+        <img src={imageUrl} alt="Uploaded" className="w-48 h-48 object-cover mx-auto" />
       ) : (
-        <label className="cursor-pointer flex flex-col items-center justify-center text-gray-500 hover:text-blue-500">
-          <input type="file" className="hidden" onChange={handleFileChange} />
-          <span className="text-lg font-medium">Upload cover image</span>
-        </label>
+        <>
+          <p className="text-gray-500">拖曳圖片到這裡，或</p>
+          <label className="cursor-pointer text-blue-500 underline">
+            點擊上傳
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) uploadImage(file);
+              }}
+            />
+          </label>
+        </>
       )}
     </div>
   );
