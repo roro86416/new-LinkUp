@@ -1,7 +1,6 @@
 // src/routes/tagRouter.ts
 import { Router } from "express";
-import { PrismaClient } from "@prisma/client";
-import prisma from "../../utils/prisma-only";
+import prisma from "../../utils/prisma-only.js";
 
 const router = Router();
 

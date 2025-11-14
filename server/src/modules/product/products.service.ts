@@ -70,7 +70,7 @@ export const updateProductService = async (
   return result;
 };
 
-// --- 刪除產品的 Service ---
+//刪除產品的 Service
 export const deleteProductService = async (id: number) => {
   const deletedProduct = await prisma.product.delete({
     where: { id },

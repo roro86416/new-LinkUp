@@ -5,7 +5,7 @@ import {
   createNewProductService,
   updateProductService,
   deleteProductService,
-} from "./products-service.js";
+} from "./products.service.js";
 
 //獲取所有產品的 Controller
 export const getAllProductsController = async (req: Request, res: Response) => {
@@ -38,7 +38,13 @@ export const getProductByIdController = async (req: Request, res: Response) => {
       status: "success",
       data: product,
     });
-  } catch (error) {}
+  } catch (error) {
+    const e = error as Error;
+    res.status(500).json({
+      status: "error",
+      message: e.message,
+    });
+  }
 };
 
 //建立新產品的 Controller
@@ -81,7 +87,7 @@ export const updateProductController = async (req: Request, res: Response) => {
   }
 };
 
-// --- 刪除產品的 Controller ---
+//刪除產品的 Controller
 export const deleteProductController = async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id);
