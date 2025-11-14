@@ -1,3 +1,4 @@
+"use client";
 import CoverUploader from "./component/CoverUploader";
 import PostMetaForm from "./component/PostMetaForm";
 import PostContentForm from "./component/PostEditor";

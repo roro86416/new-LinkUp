@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import Breadcrumb from "../../../post-component/post-layouts/Breadcrumb";
+import Breadcrumb from "../post-component/layouts/Breadcrumb";
 import ArticleHeader from "./postHeader";
 import ArticleContent from "./postContent";
 import CommentSection from "./CommentList";

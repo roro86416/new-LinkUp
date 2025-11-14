@@ -4,7 +4,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { coverSchema, CoverSchemaType } from "../../../types/coverSchema"; 
-import { useUpload } from "../../../hooks/useUpload";
+import { useUpload } from "../../../hook/useUpload";
 
 export default function HeaderUpload() {
   const {
