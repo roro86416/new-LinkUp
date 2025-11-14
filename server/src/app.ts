@@ -13,11 +13,12 @@ import organizerRoutes from "./modules/organizer/organizer.routes.js";
 import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js";
 import eventSearchRoutes from "./modules/event-search/event-search.routes.js";
 import eventStatsRoutes from "./modules/event-stats/event-stats.routes.js";
+import eventWeatherRoutes from "./modules/event-weather/event-weather.routes.js";
 
 dotenv.config();
 
 const app: Express = express();
-
+console.log("CWB_API_KEY:", process.env.CWB_API_KEY);
 // --- 全域中間件 ---
 app.use(express.json());
 
@@ -63,5 +64,7 @@ app.use("/api/ratings", eventRatingsRoutes);
 app.use("/api/events", eventSearchRoutes);
 // 活動統計模組 (Event Stats)
 app.use("/api/events", eventStatsRoutes);
+// 查詢活動當地天氣
+app.use("/api/events", eventWeatherRoutes);
 
 export default app;
