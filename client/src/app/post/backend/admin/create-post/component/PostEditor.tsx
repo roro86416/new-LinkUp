@@ -1,7 +1,15 @@
 "use client";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { contentSchema, ContentSchemaType } from "../../../types/contentSchema"; 
 
 export default function PostContentForm() {
+  const form = useForm<ContentSchemaType>({
+  resolver: zodResolver(contentSchema),
+  defaultValues: { content: "", images: [] },
+});
+
   const [content, setContent] = useState("");
   const [images, setImages] = useState<string[]>([]);
 

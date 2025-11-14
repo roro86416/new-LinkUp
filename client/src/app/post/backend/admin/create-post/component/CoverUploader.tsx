@@ -1,6 +1,9 @@
 // src/app/components/HeaderUpload.tsx
 "use client";
 
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { coverSchema, CoverSchemaType } from "../../../types/coverSchema"; 
 import { useUpload } from "../../../hooks/useUpload";
 
 export default function HeaderUpload() {
@@ -13,6 +16,10 @@ export default function HeaderUpload() {
     handleDrop,
     uploadImage,
   } = useUpload();
+  const form = useForm<CoverSchemaType>({
+  resolver: zodResolver(coverSchema),
+  defaultValues: { coverImage: "" },
+});
 
   return (
     <div

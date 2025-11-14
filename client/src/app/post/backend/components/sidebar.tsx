@@ -16,7 +16,7 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 bg-white shadow-md p-6 flex flex-col">
-      <h2 className="text-2xl font-semibold mb-8 text-gray-800">後台管理</h2>
+      <h2 className="text-2xl font-semibold mb-8 text-gray-800">創作者介面</h2>
       <nav className="flex flex-col space-y-3">
         {menu.map((item) => (
           <Link
