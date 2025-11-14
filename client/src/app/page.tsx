@@ -3,7 +3,9 @@ import { useState, useEffect, Fragment } from 'react';
 import { useUser } from '../context/auth/UserContext'; // ⭐️ 引入 useUser
 import { useModal } from '../context/auth/ModalContext'; // ⭐️ 引入 useModal
 import { Listbox, Transition } from '@headlessui/react';
+
 // ⭐️ 修正：替換所有 react-icons，改用 Heroicons
+
 import {
   MagnifyingGlassIcon, // 替代 AiOutlineSearch
   ChevronDownIcon as HiChevronDown, // 替代 HiChevronDown

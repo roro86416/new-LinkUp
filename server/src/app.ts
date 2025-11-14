@@ -11,12 +11,12 @@ import accountSettingsRoutes from "./modules/member/AccountSettings/accountSetti
 import adminMemberRoutes from "./modules/admin-member/member.routes.js";
 import organizerRoutes from "./modules/organizer/organizer.routes.js";
 import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js";
+import cartRoutes from "./modules/cart/cart.routes.js";
 
 dotenv.config();
-
 const app: Express = express();
 
-// --- 全域中間件 ---
+// --- 中間件 (Middlewares) ---
 app.use(express.json());
 
 // --- CORS 設定（允許前端 localhost:3000 存取，含 cookies/token） ---
@@ -29,12 +29,10 @@ app.use(
 
 // --- 測試用路由 ---
 app.get("/api/test", (req: Request, res: Response) => {
-  res.json({ message: "愛來自 LinkUp 伺服器! 🚀" });
+  res.json({ message: "愛來自LinkUp伺服器! 🚀" });
 });
 
-// --- 模組路由註冊 ---
-
-// 產品模組
+// 模組三 (產品) 路由
 app.use("/api/v1/products", productRoutes);
 
 // 登入註冊模組
@@ -52,10 +50,13 @@ app.use("/api/member", memberProfileRoutes); // 維持 /api/member 作為基礎�
 // 帳號設定模組
 app.use("/api/member/account-settings", accountSettingsRoutes);
 
-// --- （未使用的主辦方模組預留）---
+// 主辦方模組
 app.use("/api/v1/organizer", organizerRoutes);
 
-// 模組四 (使用者購買票券) 路由 ->活動評論API
+// 模組四 (使用者購買票券) 路由 -> 活動評論 API
 app.use("/api/ratings", eventRatingsRoutes);
+
+// 模組三 (購物車) 路由
+app.use("/api/v1/cart", cartRoutes);
 
 export default app;
