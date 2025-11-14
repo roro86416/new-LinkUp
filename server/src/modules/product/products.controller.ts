@@ -5,7 +5,7 @@ import {
   createNewProductService,
   updateProductService,
   deleteProductService,
-} from "./products-service.js";
+} from "./products.service.js";
 
 //獲取所有產品的 Controller
 export const getAllProductsController = async (req: Request, res: Response) => {
