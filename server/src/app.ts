@@ -11,6 +11,7 @@ import accountSettingsRoutes from "./modules/member/AccountSettings/accountSetti
 import adminMemberRoutes from "./modules/admin-member/member.routes.js";
 import organizerRoutes from "./modules/organizer/organizer.routes.js";
 import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js";
+import publicEventRoutes from './modules/events/events.routes.js';
 import eventSearchRoutes from "./modules/event-search/event-search.routes.js";
 import eventStatsRoutes from "./modules/event-stats/event-stats.routes.js";
 import eventWeatherRoutes from "./modules/event-weather/event-weather.routes.js";
@@ -36,6 +37,8 @@ app.get("/api/test", (req: Request, res: Response) => {
 });
 
 // --- 模組路由註冊 ---
+// 公開活動模組
+app.use('/api/v1/events', publicEventRoutes);
 
 // 產品模組
 app.use("/api/v1/products", productRoutes);
