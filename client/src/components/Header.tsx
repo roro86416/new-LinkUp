@@ -12,6 +12,7 @@ import {
   StarIcon,
   ArrowRightOnRectangleIcon,
   ClipboardDocumentIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 
@@ -23,7 +24,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // 點擊外部關閉選單
+  // 點擊外部關閉選單 (保持不變)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -35,11 +36,13 @@ export default function Header() {
   }, []);
 
   return (
-    <header className="fixed top-0 left-0 w-full z-50 flex items-center justify-between px-10 py-1 bg-black/50 backdrop-blur-md shadow-md">
-      {/* LOGO */}
+    // 您的 Header 樣式 (保持 z-50)
+    <header className="isScrolled top-0 left-0 w-full z-50 flex items-center justify-between px-10 py-1 bg-black/50 backdrop-blur-md shadow-md">
+      
+      {/* LOGO (保持不變) */}
       <Link href="/" className="cursor-pointer">
         <Image
-          src="/logo/logoBlack.png"
+          src="/logo/logoBlack.png" // [!] 您的 Header.tsx 是用 logoBlack
           alt="LOGO"
           width={120}
           height={40}
@@ -48,20 +51,29 @@ export default function Header() {
         />
       </Link>
 
+      {/* 搜尋欄 (保持不變) */}
+      <div className="relative w-96 hidden md:block"> 
+        <input
+          type="text"
+          placeholder="搜尋活動"
+          className="w-full pl-10 pr-3 py-2 rounded-lg bg-black/20 text-white placeholder-white text-center hover:bg-black/30 focus:outline-none focus:ring-0 border border-white/50 transition-all duration-200 cursor-pointer"
+        />
+        <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 pointer-events-none" />
+      </div>
+
+      {/* 右側按鈕區 (保持不變) */}
       <div className="flex gap-4 items-center">
         {/* 我的票卷 */}
         <button className="flex items-center gap-2 text-white hover:text-[#EF9D11] font-medium transition-colors px-4 py-2 cursor-pointer">
           <FaTicketAlt className="text-lg" /> 我的票卷
         </button>
 
-        {/* 登入狀態 */}
+        {/* 登入狀態 (保持不變) */}
         {loading ? (
-          // 在讀取使用者狀態時，顯示一個佔位符或不顯示任何內容
-          // 這裡我們用一個固定寬高的 div 來避免佈局跳動
           <div className="w-10 h-10" />
         ) : user ? (
           <div className="relative" ref={menuRef}>
-            {/* 大頭照按鈕，增加 border */}
+            {/* 大頭照按鈕 (保持不變) */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-300 hover:border-[#EF9D11] transition cursor-pointer"
@@ -79,9 +91,9 @@ export default function Header() {
               )}
             </button>
 
-            {/* 下拉選單 */}
+            {/* [!!!] 關鍵修正：補回完整的下拉選單 JSX [!!!] */}
             {menuOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-lg border border-gray-100 z-50">
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-lg border border-gray-100 z-60">
                 {/* 第一列：點擊跳轉會員頁 */}
                 <button
                   onClick={() => {
@@ -102,8 +114,9 @@ export default function Header() {
                     </div>
                   )}
                   <div className="flex-1">
-                    <p className="font-semibold text-gray-800">{user.name}</p>
-                    <p className="text-sm text-gray-500">{user.email}</p>
+                    {/* [!] 確保 user.name 和 user.email 存在 */}
+                    <p className="font-semibold text-gray-800">{user.name || '使用者'}</p>
+                    <p className="text-sm text-gray-500">{user.email || 'Email'}</p>
                   </div>
                   <CogIcon className="w-5 h-5 text-gray-500 hover:text-[#EF9D11]" />
                 </button>

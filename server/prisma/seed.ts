@@ -1,36 +1,23 @@
 // prisma/seed.ts
 import { PrismaClient } from "../src/generated/prisma/client.js";
 import bcrypt from "bcrypt";
+import { eventsByCategory } from "./mock-events.js";
+import { Prisma } from "../src/generated/prisma/client.js";
 
-
-
-// 活動類別（不指定 id，讓 DB 自動生成）
+// (您原有的 categories 陣列保持不變)
 const categories = [
-  "課程",
-  "展覽",
-  "派對",
-  "聚會",
-  "市集",
-  "比賽",
-  "表演",
-  "研討會",
-  "分享會",
-  "見面會",
-  "宣傳活動",
-  "導覽",
-  "體驗",
+  "課程", "展覽", "派對", "聚會", "市集", "比賽",
+  "表演", "研討會", "分享會", "見面會", "宣傳活動", "導覽", "體驗",
 ].map((name) => ({ name }));
 
 const prisma = new PrismaClient();
 
-// 建立管理員帳號的函式
+// (您原有的 seedAdmin 函式保持不變)
 async function seedAdmin() {
   console.log("🌱 正在開始管理員 Seeding...");
-
   const adminEmail = "admin@example.com";
-  const adminPassword = "password123"; // 請在正式環境使用更安全的密碼
+  const adminPassword = "password123"; 
 
-  // 檢查管理員是否已存在
   const existingAdmin = await prisma.admin.findUnique({
     where: { email: adminEmail },
   });
@@ -50,7 +37,7 @@ async function seedAdmin() {
   }
 }
 
-// 固定 organizer/user ID，用來對應 service 中 MOCK_ORGANIZER_ID
+// (您原有的 ID 保持不變)
 const ORGANIZER_ID = "00000000-0000-0000-0000-000000000001";
 const USER_ID = "00000000-0000-0000-0000-000000000002";
 
@@ -75,16 +62,16 @@ async function main() {
     create: {
       id: USER_ID,
       email: "demo@linkup.test",
-      password_hash: "mock_hash", // 這裡放假的密碼雜湊
+      password_hash: "mock_hash", 
       name: "Demo Organizer User",
-      role: "ORGANIZER",
+      role: "ORGANIZER", // [!] 確保 Role ENUM 在 schema 中已定義
       is_active: true,
     },
   });
 
   // 3️⃣ 建立測試用 Organizer
   console.log("🏢 建立測試用 Organizer...");
-  await prisma.organizer.upsert({
+  const organizer = await prisma.organizer.upsert({
     where: { id: ORGANIZER_ID },
     update: {},
     create: {
@@ -94,10 +81,71 @@ async function main() {
       is_verified: true,
     },
   });
+  console.log("✅ Mock Organizer 資料已建立:", organizer.id);
 
-  console.log("✅ Mock Organizer 資料已建立:", ORGANIZER_ID);
+  // -----------------------------------------------
+  // 4. 新增：迴圈建立活動
+  // -----------------------------------------------
+  console.log("🎟️  正在建立活動假資料...");
+  
+  // [!] 為了避免重複建立，我們先刪除所有 "舊的" 假活動
+  // (這是一個更穩健的 seeding 做法)
+  await prisma.ticketType.deleteMany({}); // (必須先刪除子表)
+  await prisma.event.deleteMany({
+    where: { organizer_id: organizer.id } // 只刪除這個假主辦方的活動
+  });
+  console.log("🧹 已清除舊的假活動...");
+
+  for (const categoryName in eventsByCategory) {
+    const eventsToCreate = eventsByCategory[categoryName];
+
+    if (eventsToCreate.length === 0) {
+      console.warn(`⚠️  分類 "${categoryName}" 沒有假資料，已跳過。`);
+      continue;
+    }
+
+    // (A) 從資料庫找出這個 "分類名稱" 對應的 "category.id"
+    const category = await prisma.category.findFirst({ // (已修正為 findFirst)
+      where: { name: categoryName },
+    });
+
+    if (!category) {
+      console.warn(`❌ 錯誤：在資料庫中找不到分類 "${categoryName}"，跳過此分類下的活動。`);
+      continue;
+    }
+
+    // (B) 遍歷這個分類下的所有活動，並建立它們
+    for (const eventData of eventsToCreate) {
+      
+      const data = eventData as any;
+      
+      const completeEventData: Prisma.EventCreateInput = {
+        ...data,
+        latitude: new Prisma.Decimal(data.latitude),
+        longitude: new Prisma.Decimal(data.longitude),
+        organizer: {
+          connect: { id: organizer.id }
+        },
+        category: {
+          connect: { id: category.id }
+        },
+        ticketTypes: data.ticketTypes 
+      };
+
+      // [!!!] 
+      // [!!!] 關鍵修正：
+      // [!!!] 將 "upsert" 改為 "create"
+      // [!!!]
+      await prisma.event.create({
+        data: completeEventData,
+      });
+
+      console.log(`  - 成功建立活動: ${eventData.title} (分類: ${categoryName})`);
+    }
+  }
 }
 
+// (您原有的 main() 呼叫保持不變)
 main()
   .then(async () => {
     await prisma.$disconnect();
