@@ -25,6 +25,7 @@ interface AdminUserContextType {
   loading: boolean;
   login: (token: string) => void;
   logout: () => void;
+  updateAdminUser: (updates: Partial<AdminUser>) => void;
 }
 
 const AdminUserContext = createContext<AdminUserContextType | undefined>(undefined);
@@ -57,6 +58,15 @@ export const AdminUserProvider = ({ children }: { children: ReactNode }) => {
       logout();
     }
   }, [logout]);
+
+  // 更新 Admin 使用者資料
+  const updateAdminUser = useCallback((updates: Partial<AdminUser>) => {
+    setAdminUser(prevUser => {
+      if (!prevUser) return null;
+      const updatedUser = { ...prevUser, ...updates };
+      return updatedUser;
+    });
+  }, []);
 
   // 初始化檢查 token
   useEffect(() => {
@@ -97,7 +107,7 @@ export const AdminUserProvider = ({ children }: { children: ReactNode }) => {
   }, [logout]);
 
   return (
-    <AdminUserContext.Provider value={{ adminUser, loading, login, logout }}>
+    <AdminUserContext.Provider value={{ adminUser, loading, login, logout, updateAdminUser }}>
       {children}
     </AdminUserContext.Provider>
   );

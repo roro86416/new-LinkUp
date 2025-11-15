@@ -2,6 +2,7 @@ import { useState, useEffect, ChangeEvent, useMemo, useCallback } from "react";
 import { EnvelopeIcon, CheckCircleIcon, XCircleIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import { useUser } from "../../../context/auth/UserContext";
+import { useFavorites } from "./FavoritesContext"; // This import is correct
 import { apiClient } from "../../../api/auth/apiClient";
 import toast from 'react-hot-toast';
 
@@ -47,6 +48,7 @@ const inputFieldClasses = "peer w-full h-full bg-white text-gray-900 font-sans f
 export default function AccountSettings() {
   const router = useRouter();
   const { user, logout, updateUser } = useUser();
+  const { clearAllFavorites } = useFavorites(); // This line causes the error if not wrapped
 
   const [activeTab, setActiveTab] = useState<TabType>("基本資料");
   const [loading, setLoading] = useState(true);
@@ -278,6 +280,14 @@ export default function AccountSettings() {
           toast.error('刪除帳號時發生未知錯誤');
         }
       }
+    }
+  };
+
+  // 帳號安全 - 清除所有收藏
+  const handleClearFavorites = () => {
+    if (window.confirm('您確定要清除所有收藏的活動嗎？此操作無法復原。')) {
+      clearAllFavorites();
+      toast.success('已清除所有收藏的活動。');
     }
   };
 
@@ -531,6 +541,19 @@ export default function AccountSettings() {
                       您的郵箱已安全驗證。
                     </div>
                   )}
+                </div>
+              </div>
+              <div className="p-6 rounded-xl border border-gray-200 bg-gray-50/50 shadow-sm">
+                <h4 className="text-lg font-semibold text-gray-800 mb-6 border-l-4 border-orange-500 pl-3">管理收藏</h4>
+                <div
+                  className="flex flex-col sm:flex-row items-center justify-between p-5 rounded-lg border border-gray-300 bg-white shadow-sm">
+                  <p className="text-gray-700 mb-4 sm:mb-0 text-base">
+                    清除所有收藏的活動。
+                  </p>
+                  <button onClick={handleClearFavorites}
+                    className="bg-yellow-500 text-white font-semibold py-2.5 px-6 rounded-xl shadow-lg hover:bg-yellow-600 transition duration-150 focus:outline-none focus:ring-4 focus:ring-yellow-300 w-full sm:w-auto text-base cursor-pointer">
+                    清除所有收藏
+                  </button>
                 </div>
               </div>
               <div className="p-6 rounded-xl border border-red-600 bg-red-50/50 shadow-sm">

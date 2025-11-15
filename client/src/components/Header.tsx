@@ -47,17 +47,17 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 flex items-center justify-between px-10 py-1 shadow-md ${isAdmin ? 'bg-black backdrop-blur-md' : 'bg-black/50 backdrop-blur-md'
+      className={`fixed top-0 left-0 w-full z-50 flex items-center justify-between px-10 py-1 shadow-md ${isAdmin ? 'bg-white backdrop-blur-md' : 'bg-black/50 backdrop-blur-md'
         }`}
     >
       {/* LOGO */}
       <Link href="/" className="cursor-pointer">
         <Image
-          src="/logo/logoBlack.png"
+          src={isAdmin ? "/logo/logoColor.png" : "/logo/logoBlack.png"}
           alt="LOGO"
           width={120}
           height={40}
-          className="invert brightness-200"
+          className={isAdmin ? "" : "invert brightness-200"}
           style={{ width: 'auto' }}
         />
       </Link>
@@ -89,8 +89,11 @@ export default function Header() {
                   className="w-full h-full object-cover rounded-full"
                 />
               ) : (
-                <div className="w-full h-full bg-gray-500 flex items-center justify-center text-white text-xl font-bold">
-                  {user.name?.[0]?.toUpperCase()}
+                <div
+                  className={`w-full h-full flex items-center justify-center text-white text-xl font-bold ${isAdmin ? 'bg-red-900' : 'bg-gray-500'
+                    }`}
+                >
+                  {user.name?.[0]?.toUpperCase() || '?'}
                 </div>
               )}
             </button>

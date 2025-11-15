@@ -31,8 +31,6 @@ export default function Sidebar({ type, activeMenu, onMenuChange, currentUser, l
       : [
 
         { label: '後台總覽', icon: <FiBarChart2 /> },
-        { label: '主辦方管理', icon: <AiOutlineSetting /> },
-        { label: '活動管理', icon: <AiOutlineSetting /> },
         { label: '交易管理', icon: <FiPackage /> },
         { label: '通知管理', icon: <AiOutlineInbox /> }, // 
         { label: '系統公告管理', icon: <AiOutlineSetting /> },
@@ -47,7 +45,7 @@ export default function Sidebar({ type, activeMenu, onMenuChange, currentUser, l
         ) : currentUser?.avatar ? (
           <img src={currentUser.avatar} alt="avatar" className="w-full h-full rounded-full object-cover" />
         ) : (
-          <div className="w-full h-full rounded-full bg-gray-500 flex items-center justify-center text-white text-5xl font-bold">
+          <div className="w-full h-full rounded-full bg-red-900 flex items-center justify-center text-white text-5xl font-bold">
             {currentUser?.name?.[0]?.toUpperCase() || '?'}
           </div>
         )}

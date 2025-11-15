@@ -63,9 +63,19 @@ function MemberContainer({ children, type, getActiveMenu, handleMenuChange }: Co
 }
 
 function AdminContainer({ children, type, getActiveMenu, handleMenuChange }: ContainerProps) {
-  const { adminUser, loading } = useAdminUser();
-  // 後台目前不支援上傳頭像
-  const handleAvatarChange = useCallback(() => { }, []);
+  const { adminUser, updateAdminUser, loading } = useAdminUser();
+
+  // 啟用後台大頭貼更換功能
+  const handleAvatarChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const newAvatar = reader.result as string;
+      if (updateAdminUser) updateAdminUser({ avatar: newAvatar });
+    };
+    reader.readAsDataURL(file);
+  }, [updateAdminUser]);
 
   return (
     <LayoutRenderer
@@ -85,16 +95,14 @@ function LayoutRenderer({ type, currentUser, loading, getActiveMenu, handleMenuC
   const renderContent = () => {
     if (type === 'member') {
       switch (getActiveMenu()) {
-        case '帳號設定': return <AccountSettings />;
         case '訊息管理': return <Messages />;
+        case '帳號設定': return <AccountSettings />;
         case '我的收藏': return <Favorites />;
         default: return <div>請選擇一個頁面</div>;
       }
     } else { // admin
       switch (getActiveMenu()) {
         case '後台總覽': return <AdminDashboard />;
-        case '主辦方管理': return <AdminUsers />;
-        case '活動管理': return <AdminUsers />;
         case '交易管理': return <AdminTransaction />;
         case '通知管理': return <AdminNotifications />; // 渲染通知管理內容
         case '系統公告管理': return <AdminAnnouncements />;
@@ -104,7 +112,7 @@ function LayoutRenderer({ type, currentUser, loading, getActiveMenu, handleMenuC
   };
 
   return (
-    <div className="bg-[#f5f5f5] flex gap-6 min-h-screen p-12 justify-center">
+    <div className="bg-[#f5f5f5] flex gap-6 min-h-screen p-6 justify-center">
       <Sidebar
         type={type}
         activeMenu={getActiveMenu()}
@@ -127,8 +135,8 @@ export default function UserLayout({ type, children }: UserLayoutProps) {
   const getActiveMenu = useCallback(() => {
     const section = searchParams.get('section');
     const validSections = type === 'member'
-      ? ['帳號設定', '訊息管理', '我的收藏'] // 會員選單
-      : ['後台總覽', '主辦方管理', '活動管理', '交易管理', '通知管理', '系統公告管理']; // 管理員選單
+      ? ['帳號設定', '訊息管理', '我的收藏']
+      : ['後台總覽', '交易管理', '通知管理', '系統公告管理']; // ⭐️ 移除主辦方和活動管理
     const defaultSection = type === 'member' ? '帳號設定' : '後台總覽';
     return validSections.find(s => s === section) || defaultSection;
   }, [searchParams, type]);

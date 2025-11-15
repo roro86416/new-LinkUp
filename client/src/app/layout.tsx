@@ -2,6 +2,7 @@ import './globals.css';
 import { UserProvider } from '../context/auth/UserContext';
 import { ModalProvider } from '../context/auth/ModalContext';
 import { AdminUserProvider } from '../context/auth/AdminUserContext';
+import { FavoritesProvider } from '../components/content/member/FavoritesContext';
 import HeaderWrapper from './HeaderWrapper';
 import Footer from '../components/Footer';
 import LoginModal from '../components/modals/auth/LoginModal';
@@ -25,17 +26,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <AdminUserProvider>
           <UserProvider>
             <ModalProvider>
-              <HeaderWrapper />
-              <main className="w-full justify-center m-0 p-0 min-h-screen">
-                {children}
-              </main>
-              <LoginModal />
-              <EmailLoginModal />
-              <RegisterModal />
-              <ForgotPasswordModal />
-              <PasswordSentModal />
-              <AdminLoginModal />
-              <Footer />
+              <FavoritesProvider>
+                <HeaderWrapper />
+                <main className="w-full justify-center m-0 p-0 min-h-screen">
+                  {children}
+                </main>
+                <LoginModal />
+                <EmailLoginModal />
+                <RegisterModal />
+                <ForgotPasswordModal />
+                <PasswordSentModal />
+                <AdminLoginModal />
+                <Footer />
+              </FavoritesProvider>
             </ModalProvider>
           </UserProvider>
         </AdminUserProvider>

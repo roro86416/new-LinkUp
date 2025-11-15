@@ -25,7 +25,9 @@ function MemberAuth({ children }: { children: ReactNode }) {
   }
 
   // 使用者已登入，渲染會員中心佈局
-  return <UserLayout type="member">{children}</UserLayout>;
+  return (
+    <UserLayout type="member">{children}</UserLayout>
+  );
 }
 
 export default function Layout({ children }: { children: ReactNode }) {

@@ -32,17 +32,12 @@ export default function RegisterModal() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   if (!isRegisterOpen) return null;
 
   const handleRegister = async () => {
-    if (!agree) {
-      setMessage('⚠️ 請先勾選同意條款');
-      return;
-    }
     if (!email || !password) {
       setMessage('⚠️ 請填寫完整資訊');
       return;
@@ -130,36 +125,10 @@ export default function RegisterModal() {
           </button>
         </div>
 
-        <label className="flex items-center gap-2 mb-4 text-gray-700 text-sm select-none">
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={agree}
-              onChange={() => setAgree(!agree)}
-              className="peer appearance-none w-4 h-4 border border-gray-300 rounded bg-white checked:bg-[#EF9D11] cursor-pointer"
-            />
-            <svg
-              className="absolute left-0 top-0 w-4 h-4 text-white pointer-events-none opacity-0 peer-checked:opacity-100"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          我已詳細並同意{' '}
-          <span className="text-[#EF9D11] cursor-pointer">使用者條款</span> &{' '}
-          <span className="text-[#EF9D11] cursor-pointer">隱私權保護政策</span>
-        </label>
-
         <button
           onClick={handleRegister}
-          disabled={!agree || loading}
-          className={`w-full py-2 rounded-lg transition-colors cursor-pointer ${agree ? 'bg-[#EF9D11] hover:bg-[#d9890e] text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-            }`}
+          disabled={loading}
+          className="w-full py-2 rounded-lg transition-colors cursor-pointer bg-[#EF9D11] hover:bg-[#d9890e] text-white disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed mb-4"
         >
           {loading ? '註冊中...' : '註冊'}
         </button>

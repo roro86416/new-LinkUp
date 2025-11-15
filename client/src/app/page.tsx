@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect, Fragment } from 'react';
 import { useUser } from '../context/auth/UserContext'; // ⭐️ 引入 useUser
+import { useFavorites, FavoriteEvent } from '../components/content/member/FavoritesContext'; // ⭐️ 1. 引入我們的收藏 Context
 import { useRouter } from 'next/navigation';//是 Next.js 13+（App Router） 才有的用法，用來在 前端元件裡實現頁面導向（跳轉）
 import { useModal } from '../context/auth/ModalContext'; // ⭐️ 引入 useModal
 import { Listbox, Transition } from '@headlessui/react';
+import toast from 'react-hot-toast'; // ⭐️ 修正：匯入 toast
 // ⭐️ 修正：替換所有 react-icons，改用 Heroicons
 import {
   MagnifyingGlassIcon, // 替代 AiOutlineSearch
@@ -84,10 +86,10 @@ export default function HomePage() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false); // ✅ 新增 isMounted 狀態
-  const { user, updateUser } = useUser(); // ⭐️ 取得使用者資訊和更新函式
-  const [favorites, setFavorites] = useState<Set<number>>(new Set()); // 移除模擬資料，預設為空
+  const { user } = useUser(); // ⭐️ 取得使用者資訊
   const router = useRouter();
   const { openLogin } = useModal(); // ⭐️ 取得開啟登入 Modal 的函式
+  const { favoriteEvents, addFavoriteEvent, removeFavoriteEvent } = useFavorites(); // ⭐️ 2. 使用中央收藏系統
 
   const locations = ['台北市', '新北市', '台中市', '台南市', '高雄市'];
 
@@ -100,11 +102,11 @@ export default function HomePage() {
   ];
 
   // 熱門活動資料 (4筆)
-  const popularEvents = [
-    { id: 1, title: '城市光影攝影展', date: 'Oct 20, 2025', desc: '集結頂尖攝影師，捕捉城市中最動人的光影瞬間。', img: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80' },
-    { id: 2, title: '沉浸式藝術體驗', date: 'Oct 21, 2025', desc: '結合聲光與數位藝術，帶您進入前所未有的奇幻世界。', img: 'https://images.unsplash.com/photo-1547891654-e66ed7ebb968?auto=format&fit=crop&w=800&q=80' },
-    { id: 3, title: '戶外爵士音樂節', date: 'Oct 22, 2025', desc: '在星空下享受慵懶的爵士樂，品味生活的美好。', img: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80' },
-    { id: 4, title: '未來科技高峰會', date: 'Oct 23, 2025', desc: '與科技巨頭一同探討 AI、元宇宙與區塊鏈的未來。', img: 'https://images.unsplash.com/photo-1639322537228-f710d846310a?auto=format&fit=crop&w=800&q=80' },
+  const popularEvents: Omit<FavoriteEvent, 'location' | 'isUpcoming' | 'organizerName'>[] = [
+    { id: 1, title: '城市光影攝影展', date: 'Oct 20, 2025' },
+    { id: 2, title: '沉浸式藝術體驗', date: 'Oct 21, 2025' },
+    { id: 3, title: '戶外爵士音樂節', date: 'Oct 22, 2025' },
+    { id: 4, title: '未來科技高峰會', date: 'Oct 23, 2025' },
   ];
 
   // 最新上架資料 (4筆)
@@ -153,17 +155,24 @@ export default function HomePage() {
     return () => clearTimeout(t);
   }, []);
 
-  // ✅ 切換收藏狀態
-  const toggleFavorite = (eventId: number) => {
-    setFavorites(prevFavorites => {
-      const newFavorites = new Set(prevFavorites);
-      if (newFavorites.has(eventId)) {
-        newFavorites.delete(eventId);
-      } else {
-        newFavorites.add(eventId);
-      }
-      return newFavorites;
-    });
+  // ⭐️ 3. 修改點擊處理邏輯
+  const handleFavoriteToggle = (event: { id: number; title: string; date: string; }) => {
+    const isFavorited = favoriteEvents.some(fav => fav.id === event.id);
+
+    if (isFavorited) {
+      removeFavoriteEvent(event.id);
+      toast.success('已取消收藏');
+    } else {
+      // 將首頁的活動資料轉換成符合收藏系統的格式
+      const eventToSave: FavoriteEvent = {
+        ...event,
+        location: '地點待定', // 補上缺少的欄位
+        isUpcoming: true,    // 補上缺少的欄位
+        organizerName: '主辦方待定' // 補上缺少的欄位
+      };
+      addFavoriteEvent(eventToSave);
+      toast.success('已成功收藏！');
+    }
   };
 
   return (
@@ -233,7 +242,7 @@ export default function HomePage() {
               className="relative rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300 shadow-lg"
             >
               <img
-                src={event.img}
+                src={`https://picsum.photos/seed/${event.id}/800/600`}
                 alt={event.title}
                 className="w-full h-56 object-cover"
               />
@@ -241,7 +250,6 @@ export default function HomePage() {
               <div className="absolute bottom-0 left-0 right-0 p-5 text-white bg-black/30">
                 <h3 className="text-2xl font-bold">{event.title}</h3>
                 <p className="text-base mt-1">{event.date}</p>
-                <p className="text-sm mt-2">{event.desc}</p>
               </div>
             </div>
           ))}
@@ -263,12 +271,13 @@ export default function HomePage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation(); // 避免觸發卡片點擊
-                  toggleFavorite(event.id);
+                  handleFavoriteToggle(event);
                 }}
                 className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
                 aria-label="收藏"
               >
-                {favorites.has(event.id) ? (
+                {/* 直接從 context 判斷是否已收藏 */}
+                {favoriteEvents.some(fav => fav.id === event.id) ? (
                   <HeartIconSolid className="w-5 h-5 text-red-500" />
                 ) : (
                   <HeartIconOutline className="w-5 h-5 text-white" />
@@ -367,12 +376,13 @@ export default function HomePage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation(); // 避免觸發卡片點擊
-                  toggleFavorite(event.id);
+                  handleFavoriteToggle(event);
                 }}
                 className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
                 aria-label="收藏"
               >
-                {favorites.has(event.id) ? (
+                {/* 直接從 context 判斷是否已收藏 */}
+                {favoriteEvents.some(fav => fav.id === event.id) ? (
                   <HeartIconSolid className="w-5 h-5 text-red-500" />
                 ) : (
                   <HeartIconOutline className="w-5 h-5 text-white" />
