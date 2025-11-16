@@ -50,7 +50,7 @@ export default function Header() {
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 flex items-center justify-between px-10 py-1 shadow-md ${isAdmin ? 'bg-white backdrop-blur-md' : 'bg-black/50 backdrop-blur-md'
+      className={`fixed top-0 left-0 w-full z-[99] flex items-center justify-between px-10 py-1 shadow-md ${isAdmin ? 'bg-white backdrop-blur-md' : 'bg-black/50 backdrop-blur-md'
         }`}
     >
       {/* LOGO */}

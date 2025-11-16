@@ -12,9 +12,13 @@ export default function HeaderWrapper() {
     return null;
   }
 
+  // ⭐️ 修正：
+  // 1. 在非首頁時，動態加入一個與 Header 等高的 div (h-16 約 64px) 來推開下方內容。
+  // 2. 在首頁時，不加入這個 div，讓 Header 直接疊在 Banner 上。
   return (
-    <div className={!isHome ? 'mb-16' : ''}>
+    <>
       <Header />
-    </div>
+      {!isHome && <div className="h-16" />}
+    </>
   );
 }

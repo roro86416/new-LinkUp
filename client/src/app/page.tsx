@@ -2,6 +2,8 @@
 import { useState, useEffect, Fragment } from 'react';
 import { useUser } from '../context/auth/UserContext'; // ⭐️ 引入 useUser
 import { useFavorites, FavoriteEvent } from '../components/content/member/FavoritesContext'; // ⭐️ 1. 引入我們的收藏 Context
+// ⭐️ 匯入共用型別
+import { Banner } from '../types'; // 此路徑是正確的
 import { useRouter } from 'next/navigation';//是 Next.js 13+（App Router） 才有的用法，用來在 前端元件裡實現頁面導向（跳轉）
 import { useModal } from '../context/auth/ModalContext'; // ⭐️ 引入 useModal
 import { Listbox, Transition } from '@headlessui/react';
@@ -133,27 +135,43 @@ export default function HomePage() {
     { id: 20, title: '植栽與花藝設計', date: 'Jan 20, 2026', desc: '學習如何用綠色植物與美麗花朵點綴您的生活空間。', img: 'https://images.unsplash.com/photo-1587334274328-64186a80aeee?auto=format&fit=crop&w=800&q=80' },
   ];
 
-  const bannerImages = [
-    'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&h=1080&w=1920',
-    'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1920&q=80',
-    'https://images.pexels.com/photos/247599/pexels-photo-247599.jpeg?auto=compress&cs=tinysrgb&h=1080&w=1920',
-  ];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % bannerImages.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, []);
+  // ⭐️ 新增: Banner 狀態
+  // ⭐️ 修正：使用函式初始化，並在客戶端掛載後才讀取
+  const [bannerItems, setBannerItems] = useState<Banner[]>(() => {
+    // 在伺服器端或客戶端首次渲染時，永遠回傳空陣列
+    if (typeof window === 'undefined') {
+      return [];
+    }
+    try {
+      const savedBanners = localStorage.getItem('home_banners');
+      const banners = savedBanners ? JSON.parse(savedBanners) : [];
+      // ⭐️ 修正：移除 imageUrl 的過濾，因為後台儲存時已經透過 `isActive` 過濾了
+      return banners as Banner[];
+    } catch (error) {
+      console.error("讀取 Banner 資料失敗:", error);
+      return [];
+    }
+  });
 
   // ✅ 在元件掛載後將 isMounted 設為 true
   useEffect(() => {
     // 將 setState 非同步化以避免在 effect 中同步 setState 導致 cascading renders
-    const t = setTimeout(() => {
-      setIsMounted(true);
-    }, 0);
+    const t = setTimeout(() => setIsMounted(true), 0);
     return () => clearTimeout(t);
   }, []);
+
+  useEffect(() => {
+    // ⭐️ 修正：如果沒有圖片或只有一張，則不啟動計時器
+    if (bannerItems.length <= 1) {
+      return;
+    }
+
+    const timer = setInterval(() => {
+      // ⭐️ 修正：使用 bannerItems.length 而不是 bannerImages.length
+      setCurrentSlide((prev) => (prev + 1) % bannerItems.length);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [bannerItems.length]); // ⭐️ 修正：當 banner 數量變化時，重新設定計時器
 
   // ⭐️ 3. 修改點擊處理邏輯
   const handleFavoriteToggle = (event: { id: number; title: string; date: string; }) => {
@@ -178,21 +196,45 @@ export default function HomePage() {
   return (
     <div className="relative min-h-screen text-gray-900 bg-white overflow-x-hidden">
       {/* Banner */}
-      <section className="relative w-full h-[400px] overflow-hidden">
-        <img src={bannerImages[currentSlide]} alt="banner" className="w-full h-full object-cover" />
-
+      {/* ⭐️ 修正：修改輪播圖結構 */}
+      <section className="relative w-full h-[400px] overflow-hidden bg-gray-200 group">
+        <div
+          className="flex h-full transition-transform duration-500 ease-in-out"
+          style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+        >
+          {/* ⭐️ 修正：只有在 isMounted 為 true 時才渲染 Banner */}
+          {isMounted && bannerItems.length > 0 ? (
+            bannerItems.map((banner) => (
+              <a
+                key={banner.id}
+                href={banner.linkUrl || '#'}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full h-full flex-shrink-0"
+              >
+                <img src={banner.imageUrl} alt={banner.title} className="w-full h-full object-cover" />
+              </a>
+            ))
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-gray-500">
+              <p>目前沒有可顯示的公告</p>
+            </div>
+          )}
+        </div>
 
         {/* 搜尋欄 + 按鈕 */}
         <div className="absolute inset-0 flex flex-col items-center justify-center z-40 gap-4">
-          <div className="relative w-96">
+          {/* ⭐️ 修正：使用 label 包裹，並為 icon 加上 cursor-pointer */}
+          <label htmlFor="banner-search" className="relative w-96 drop-shadow-lg cursor-text">
             <input
+              id="banner-search"
               type="text"
               placeholder="搜尋活動"
-              className="w-full pl-10 pr-3 py-3 rounded-lg bg-black/20 text-white placeholder-white text-center hover:bg-black/30 focus:outline-none focus:ring-0 border border-white transition-all duration-200 cursor-pointer"
+              className="w-full pl-10 pr-3 py-3 rounded-lg bg-black/40 text-white placeholder-gray-200 text-center backdrop-blur-sm hover:bg-black/50 focus:outline-none border border-white/50 transition-all duration-200"
             />
 
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white pointer-events-none" />
-          </div>
+            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white cursor-pointer" />
+          </label>
 
           <div className="flex gap-2 flex-wrap justify-center">
             {/* <button className="..."> <FaBriefcase className="text-lg" /> 舉辦活動 </button> */}
@@ -201,18 +243,23 @@ export default function HomePage() {
         </div>
 
         {/* 左右箭頭 (保持不變) */}
-        <div
-          className="absolute inset-y-0 left-4 flex items-center z-50 cursor-pointer"
-          onClick={() => setCurrentSlide((prev) => (prev - 1 + bannerImages.length) % bannerImages.length)}
-        >
-          <span className="text-white text-3xl select-none drop-shadow-md">‹</span>
-        </div>
-        <div
-          className="absolute inset-y-0 right-4 flex items-center z-50 cursor-pointer"
-          onClick={() => setCurrentSlide((prev) => (prev + 1) % bannerImages.length)}
-        >
-          <span className="text-white text-3xl select-none drop-shadow-md">›</span>
-        </div>
+        {/* ⭐️ 修正：只有在 isMounted 為 true 且圖片大於一張時才渲染箭頭 */}
+        {isMounted && bannerItems.length > 1 && (
+          <div className="absolute inset-0 flex items-center justify-between px-4 z-50 pointer-events-none">
+            <div
+              className="p-2 rounded-full bg-black/30 hover:bg-black/50 text-white cursor-pointer transition-opacity opacity-0 group-hover:opacity-100 pointer-events-auto"
+              onClick={() => setCurrentSlide((prev) => (prev - 1 + bannerItems.length) % bannerItems.length)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+            </div>
+            <div
+              className="p-2 rounded-full bg-black/30 hover:bg-black/50 text-white cursor-pointer transition-opacity opacity-0 group-hover:opacity-100 pointer-events-auto"
+              onClick={() => setCurrentSlide((prev) => (prev + 1) % bannerItems.length)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+            </div>
+          </div>
+        )}
       </section>
 
       {/* 類別按鈕 */}

@@ -1,34 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import Image from 'next/image';
 import {
   TrashIcon,
   PhotoIcon,
   ArrowUpIcon,
   ArrowDownIcon
 } from '@heroicons/react/24/outline';
-
-// --------------------- 類型定義 ---------------------
-interface Banner {
-  id: number;
-  title: string;
-  imageUrl: string; // 模擬圖片 URL
-  linkUrl: string;
-  isActive: boolean;
-}
-
+// ⭐️ 匯入共用型別
+import { Banner } from '../../../types';
 type BannerValue = Banner[keyof Banner];
 
 // --------------------- 顏色與樣式變數 ---------------------
 const primaryBgColor = 'bg-[#EF9D11]';
 const primaryTextColor = 'text-orange-600';
 
-// --------------------- 模擬資料 ---------------------
-const initialBanners: Banner[] = [
-  { id: 1, title: '年度活動盛大開啟', imageUrl: 'https://via.placeholder.com/800x200?text=Banner+1', linkUrl: '/event/annual', isActive: true },
-  { id: 2, title: '線上課程優惠中', imageUrl: 'https://via.placeholder.com/800x200?text=Banner+2', linkUrl: '/courses/sale', isActive: true },
-  { id: 3, title: '加入我們的VIP會員', imageUrl: '', linkUrl: '/join/vip', isActive: true },
-];
 
 // ... (BannerCard 組件保持不變) ...
 
@@ -50,11 +37,21 @@ const BannerCard: React.FC<BannerCardProps> = ({
   onMove
 }) => {
 
-  // 模擬圖片上傳行為
+  // 圖片上傳行為：轉換為 Base64
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const mockUrl = URL.createObjectURL(e.target.files[0]);
-      onUpdate(index, 'imageUrl', mockUrl);
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        // reader.result 包含 Base64 字串
+        onUpdate(index, 'imageUrl', reader.result as string);
+      };
+      // 檢查檔案大小 (例如: 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('圖片檔案過大，請選擇小於 2MB 的圖片。');
+        return;
+      }
+      reader.readAsDataURL(file);
     }
   };
 
@@ -62,7 +59,7 @@ const BannerCard: React.FC<BannerCardProps> = ({
     <div className="border border-gray-200 rounded-lg shadow-md bg-white p-5 transition duration-300 hover:shadow-lg">
       <div className="flex justify-between items-start mb-4 border-b pb-3">
         <h3 className={`text-xl font-semibold ${primaryTextColor}`}>
-          Banner {index + 1} / 3
+          Banner {index + 1}
         </h3>
         <div className="flex space-x-2">
           <button
@@ -97,9 +94,10 @@ const BannerCard: React.FC<BannerCardProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-2">圖片預覽 (建議 4:1 比例)</label>
           <div className="relative border-2 border-dashed border-gray-300 rounded-lg overflow-hidden aspect-[4/1] flex items-center justify-center bg-gray-50">
             {banner.imageUrl ? (
-              <img
+              <Image
                 src={banner.imageUrl}
                 alt={banner.title || "Banner 圖片"}
+                fill
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -154,7 +152,7 @@ const BannerCard: React.FC<BannerCardProps> = ({
                 onChange={(e) => onUpdate(index, 'isActive', e.target.checked)}
                 className="sr-only peer"
               />
-              <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#EF9D11]`}></div>
+              <div className={`w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:start-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#EF9D11]`}></div>
             </label>
           </div>
         </div>
@@ -166,7 +164,27 @@ const BannerCard: React.FC<BannerCardProps> = ({
 // --------------------- 主頁面組件 ---------------------
 
 export default function BannerManagement() {
-  const [banners, setBanners] = useState<Banner[]>(initialBanners);
+  // ⭐️ 修正：使用函式初始化，避免在 effect 中同步 setState
+  const [banners, setBanners] = useState<Banner[]>(() => {
+    // 確保只在客戶端執行，避免在 SSR 時出錯
+    if (typeof window === 'undefined') {
+      return [];
+    }
+    try {
+      const savedBanners = localStorage.getItem('home_banners');
+      if (savedBanners) {
+        return JSON.parse(savedBanners) as Banner[];
+      } else {
+        // 如果 localStorage 是空的，設定一個預設的 Banner
+        return [
+          { id: 1, title: '年度活動盛大開啟', imageUrl: 'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&h=1080&w=1920', linkUrl: '/event/annual', isActive: true },
+        ];
+      }
+    } catch (error) {
+      console.error("讀取 Banner 資料失敗:", error);
+      return [];
+    }
+  });
 
   const handleUpdate = (index: number, key: keyof Banner, value: BannerValue) => {
     setBanners(prevBanners =>
@@ -199,18 +217,27 @@ export default function BannerManagement() {
     }
 
     const newBanner: Banner = {
-      id: Date.now(),
+      // ⭐️ 修正：使用更可靠的方式產生唯一 ID
+      // 透過尋找現有 banners 中最大的 ID 並加 1，確保 ID 永不重複
+      // Math.max(...banners.map(b => b.id), 0) 會找到目前最大的 ID，如果 banners 是空的，則回傳 0
+      id: Math.max(...banners.map(b => b.id), 0) + 1,
       title: '',
       imageUrl: '',
       linkUrl: '',
-      isActive: false,
+      isActive: true,
     };
     setBanners(prevBanners => [...prevBanners, newBanner]);
   };
 
   const handleSave = () => {
-    console.log('Saved Banners Data:', banners);
-    alert('Banner 變更已成功保存！');
+    try {
+      // 只儲存啟用的 Banner
+      const activeBanners = banners.filter(b => b.isActive);
+      localStorage.setItem('home_banners', JSON.stringify(activeBanners));
+      alert(`Banner 變更已成功保存！\n共儲存了 ${activeBanners.length} 張啟用的 Banner。`);
+    } catch (error) {
+      alert('儲存失敗，可能是 localStorage 容量已滿。');
+    }
   };
 
   return (
@@ -223,7 +250,7 @@ export default function BannerManagement() {
           系統公告 (Banner) 管理
         </h1>
         <p className="text-gray-500 mt-1">
-          設定首頁輪播的三張 Banner。請注意，輪播順序由卡片的排列順序決定。
+          設定首頁輪播 Banner (最多 3 張)。只有「啟用」的 Banner 會顯示在首頁，輪播順序由卡片排列順序決定。
         </p>
       </div>
 
@@ -250,7 +277,7 @@ export default function BannerManagement() {
             onClick={handleAddBanner}
             className={`flex items-center px-6 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:bg-gray-100 transition duration-150`}
           >
-            + 新增 Banner ({banners.length} / 3)
+            + 新增 Banner (目前 {banners.length} / 最多 3)
           </button>
         </div>
       )}

@@ -32,7 +32,7 @@ export default function MemberNotificationBell() {
     try {
       const data = localStorage.getItem('demo_notifications');
       return data ? JSON.parse(data) : [];
-    } catch (error) {
+    } catch {
       return [];
     }
   });
@@ -117,7 +117,7 @@ export default function MemberNotificationBell() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={handleToggle}
-        className="relative p-2 rounded-full text-white transition-colors hover:bg-white/10"
+        className="relative p-2 rounded-full text-white transition-colors hover:bg-white/10 cursor-pointer"
         aria-label="通知中心"
       >
         <BellIcon className="h-6 w-6" />
