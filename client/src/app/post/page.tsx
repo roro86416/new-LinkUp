@@ -1,5 +1,5 @@
-import Slider from"../post-component/layouts/FeatureSlider"
-import Header from "../post-component/layouts/header"
+import Slider from"./post-component/layouts/FeatureSlider"
+import Header from "./post-component/layouts/header"
 
 
 export const metadata = {

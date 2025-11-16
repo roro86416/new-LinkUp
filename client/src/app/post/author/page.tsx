@@ -1,7 +1,7 @@
 // "use client";
 
 import Breadcrumb from "../post-component/layouts/Breadcrumb";
-import PostCard from "../post-component/posts/postcard"
+// import PostCard from "../post-component/card/Gridcard"
 import { Author } from "../post-component/type/author"
 interface AuthorPageProps {
   params: { id: string };
@@ -32,11 +32,11 @@ export default async function AuthorPage({ params }: AuthorPageProps) {
       <p className="mt-2 text-gray-700">{author.bio}</p>
 
       <h2 className="text-2xl font-semibold mt-6">投稿文章</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
+      {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
         {author.posts.map((post) => (
           <PostCard key={post.id} post={post} />
         ))}
-      </div>
+      </div> */}
     </div>
   );
 }

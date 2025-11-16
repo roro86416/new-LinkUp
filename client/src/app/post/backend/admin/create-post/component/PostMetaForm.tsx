@@ -1,86 +1,43 @@
 "use client";
-
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { postSchema, PostSchemaType } from "../../../types/postschema"; // ← 依你專案路徑調整
-
+import { useFormContext } from "react-hook-form";
 
 export default function PostMetaForm() {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<PostSchemaType>({
-    resolver: zodResolver(postSchema),
-    defaultValues: {
-      title: "",
-      tags: "",
-      category: "",
-      link: "",
-    },
-  });
-
-  const onSubmit = (data: PostSchemaType) => {
-    console.log("表單送出成功：", data);
-  };
+  const { register, formState: { errors } } = useFormContext();
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="border p-6 rounded-xl bg-white shadow-sm flex flex-col gap-5"
-    >
-      <h2 className="text-xl font-semibold text-gray-700">Post Details</h2>
+    <div className="border p-6 rounded-xl bg-white shadow-sm flex flex-col gap-5">
+      <h2 className="text-xl font-semibold text-gray-700">文章資訊</h2>
 
-      <div>
-        <input
-          {...register("title")}
-          placeholder="Enter post title"
-          className="border p-3 rounded-lg w-full"
-        />
-        {errors.title && (
-          <p className="text-red-500 text-sm">{errors.title.message}</p>
-        )}
-      </div>
+      <input
+        type="text"
+        {...register("title")}
+        placeholder="文章標題"
+        className="border p-3 rounded-lg"
+      />
+      {errors.title && <p className="text-red-500">{String(errors.title.message)}</p>}
 
-      <div>
-        <input
-          {...register("tags")}
-          placeholder="Tags (comma separated)"
-          className="border p-3 rounded-lg w-full"
-        />
-        {errors.tags && (
-          <p className="text-red-500 text-sm">{errors.tags.message}</p>
-        )}
-      </div>
+      <input
+        type="text"
+        {...register("tags")}
+        placeholder="標籤 (逗號分隔)"
+        className="border p-3 rounded-lg"
+      />
+      {errors.tags && <p className="text-red-500">{String(errors.tags.message)}</p>}
 
-      <div>
-        <input
-          {...register("category")}
-          placeholder="Category"
-          className="border p-3 rounded-lg w-full"
-        />
-        {errors.category && (
-          <p className="text-red-500 text-sm">{errors.category.message}</p>
-        )}
-      </div>
+      <input
+        type="text"
+        {...register("category")}
+        placeholder="分類"
+        className="border p-3 rounded-lg"
+      />
+      {errors.category && <p className="text-red-500">{String(errors.category.message)}</p>}
 
-      <div>
-        <input
-          {...register("link")}
-          placeholder="Optional event link"
-          className="border p-3 rounded-lg w-full"
-        />
-        {errors.link && (
-          <p className="text-red-500 text-sm">{errors.link.message}</p>
-        )}
-      </div>
-
-      <button
-        type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded-lg"
-      >
-        Submit
-      </button>
-    </form>
+      <input
+        type="text"
+        {...register("link")}
+        placeholder="活動連結（選填）"
+        className="border p-3 rounded-lg"
+      />
+    </div>
   );
 }

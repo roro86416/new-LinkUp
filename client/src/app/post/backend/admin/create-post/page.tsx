@@ -1,36 +1,55 @@
 "use client";
-import CoverUploader from "./component/CoverUploader";
-import PostMetaForm from "./component/PostMetaForm";
-import PostContentForm from "./component/PostEditor";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { postSchema, PostSchemaType } from "../../types/postschema";
 
+import { FormProvider, useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { postSchema } from "../../types/postschema";
+
+import ContentForm from "./component/PostEditor";
+import CoverForm from "./component/CoverUploader";
+import PostMetaForm from "./component/PostMetaForm";
+
+type PostFormData = z.infer<typeof postSchema>;
 
 export default function CreatePostPage() {
-  const form = useForm<PostSchemaType>({
-  resolver: zodResolver(postSchema),
-  defaultValues: {
-    coverImage: "",
-    title: "",
-    tags: "",
-    category: "",
-    link: "",
-    content: "",
-    images: [],
-  }
-});
+  const form = useForm<PostFormData>({
+    resolver: zodResolver(postSchema),
+    defaultValues: {
+      title: "",
+      coverImage: "",
+      tags: "",
+      category: "",
+      link: "",
+      content: {
+        blocks: [],   // ← 必須這樣初始化
+      },
+    },
+  });
+
+  const onSubmit = (data: PostFormData) => {
+    console.log("📌 最終送出的文章資料：", data);
+  };
 
   return (
-    <div className="flex flex-col gap-8 p-6 max-w-5xl mx-auto">
-      {/* 區塊一：標題圖片 */}
-      <CoverUploader />
+    <FormProvider {...form}>
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-10 p-6 max-w-3xl mx-auto"
+      >
+        <h1 className="text-2xl font-bold">新增文章</h1>
 
-      {/* 區塊二：創作標題區塊 */}
-      <PostMetaForm />
+        <CoverForm />
+        <PostMetaForm />
+        <ContentForm />
 
-      {/* 區塊三：文章內容區塊 */}
-      <PostContentForm />
-    </div>
+        {/* 全頁面只有這一個按鈕 */}
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 w-full"
+        >
+          送出文章
+        </button>
+      </form>
+    </FormProvider>
   );
 }

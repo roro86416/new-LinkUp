@@ -2,7 +2,13 @@
 import Link from "next/link";
 import { useBreadcrumb } from "../../hooks/useBreadcrumb";
 
-export default function Breadcrumb() {
+
+
+interface BreadcrumbProps {
+  paths: { name: string; href: string }[];
+}
+
+export default function Breadcrumb({ paths }: BreadcrumbProps) {
   const breadcrumbs = useBreadcrumb();
 
   return (

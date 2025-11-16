@@ -1,8 +1,8 @@
 import { notFound } from "next/navigation";
-import Breadcrumb from "../post-component/layouts/Breadcrumb";
-import ArticleHeader from "./postHeader";
-import ArticleContent from "./postContent";
-import CommentSection from "./CommentList";
+import Breadcrumb from "../../post-component/layouts/Breadcrumb";
+import ArticleHeader from "../postHeader";
+import ArticleContent from "../postContent";
+import CommentSection from "../CommentList";
 
 interface Article {
   title: string;
@@ -15,6 +15,11 @@ interface Article {
   tags: { name: string }[];
   eventLink?: string;
 }
+
+interface CategoryPageProps {
+  paths: { name: string; href: string }[];
+}
+
 
 export default async function ArticlePage({
   params,

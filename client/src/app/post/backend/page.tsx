@@ -1,4 +1,4 @@
-// 'use client';
+'use client';
 // backend/page.tsx
 import { redirect } from "next/navigation";
 

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { postSchema } from "../types/postschema";
 import { z } from "zod";
 
-type PostFormData = z.infer<typeof PostSchema>;
+type PostFormData = z.infer<typeof postSchema>;
 
 export default function CreatePostForm() {
   const {
@@ -12,7 +12,7 @@ export default function CreatePostForm() {
     handleSubmit,
     formState: { errors },
   } = useForm<PostFormData>({
-    resolver: zodResolver(PostSchema),
+    resolver: zodResolver(postSchema),
   });
 
   const onSubmit = (data: PostFormData) => {
