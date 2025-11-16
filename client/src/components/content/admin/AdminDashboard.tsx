@@ -168,7 +168,7 @@ export default function Dashboard() {
 
   return (
     <div className="w-full mx-auto pb-12">
-      {/* 匯出按鈕 */}
+      {/* 頁首區域：匯出按鈕 */}
       <div className="flex justify-end mb-4">
         <span className="flex items-center gap-1 text-yellow-700 cursor-pointer font-semibold hover:text-orange-600 transition-colors">
           <ArrowDownTrayIcon className="w-5 h-5" /> 匯出報表

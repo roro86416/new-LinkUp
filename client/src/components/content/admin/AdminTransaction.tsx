@@ -14,7 +14,6 @@ import React, { useState } from 'react';
 // 因為 Heroicons 已經為它們提供了正確的 TypeScript 類型。
 
 // --------------------- 顏色與樣式變數 ---------------------
-const primaryColor = '#EF9D11'; // 主題橘
 const primaryBgColor = 'bg-[#EF9D11]';
 const primaryTextColor = 'text-orange-600';
 

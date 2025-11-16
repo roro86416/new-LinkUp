@@ -8,6 +8,7 @@ import {
   ChevronRightIcon,
   PaperAirplaneIcon,
   EyeIcon,
+  TrashIcon,
   EyeSlashIcon,
 } from '@heroicons/react/24/outline';
 
@@ -16,12 +17,11 @@ type NotificationType = '活動提醒' | '報名成功' | '系統公告' | '活�
 
 interface SentNotification {
   id: string;
-  recipientId: string;
   recipientName: string;
   title: string;
   type: NotificationType;
   sentAt: string;
-  isRead: boolean;
+  isRead: boolean; // 保持此欄位以與 localStorage 的結構相容，但在本組件中不使用
 }
 
 const templates = {
@@ -37,43 +37,58 @@ const NotificationList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState<{ type: NotificationType | 'ALL'; status: 'ALL' | 'READ' | 'UNREAD' }>({ type: 'ALL', status: 'ALL' });
+  const [filterType, setFilterType] = useState<NotificationType | 'ALL'>('ALL');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 5;
+  const itemsPerPage = 8; // 增加每頁顯示數量
 
-  // ⭐️ 資料獲取：使用 useEffect 從後端 API 獲取資料
-  const fetchNotifications = useCallback(async () => {
+  // ⭐️ 資料獲取：改為從 localStorage 讀取
+  const loadNotifications = useCallback(() => {
     setIsLoading(true);
     setError(null);
     try {
-      // 將篩選條件轉為 URL 查詢參數
-      const params = new URLSearchParams({
-        page: String(currentPage),
-        limit: String(itemsPerPage),
-        type: filter.type,
-        status: filter.status,
-        search: searchTerm,
+      const data = localStorage.getItem('demo_notifications');
+      const allItems: SentNotification[] = data ? JSON.parse(data) : [];
+
+      // 模擬後端篩選和搜尋
+      const lowerSearchTerm = searchTerm.toLowerCase();
+      const filteredItems = allItems.filter(n => {
+        const typeMatch = filterType === 'ALL' || n.type === filterType;
+        const searchMatch = !lowerSearchTerm || n.title.toLowerCase().includes(lowerSearchTerm);
+        return typeMatch && searchMatch;
       });
-      // 模擬 API 請求
-      const response = await fetch(`/api/admin/notifications?${params.toString()}`);
-      if (!response.ok) {
-        throw new Error('無法獲取通知資料');
-      }
-      const data = await response.json(); // 假設後端回傳 { items: [], total: 0 }
-      setNotifications(data.items);
-      setTotalItems(data.total);
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
-      setError(errorMessage);
+
+      setTotalItems(filteredItems.length);
+      // 模擬後端分頁
+      const paginatedItems = filteredItems.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+      setNotifications(paginatedItems);
+    } catch (e) {
+      setError('讀取通知時發生錯誤。');
+      console.error(e);
     } finally {
       setIsLoading(false);
     }
-  }, [currentPage, filter, searchTerm]);
+  }, [currentPage, filterType, searchTerm, itemsPerPage]);
 
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    loadNotifications();
+    window.addEventListener('notifications-updated', loadNotifications);
+    return () => window.removeEventListener('notifications-updated', loadNotifications);
+  }, [loadNotifications]);
+
+  // ⭐️ 新增：刪除通知的處理函式
+  const handleDelete = useCallback((id: string, title: string) => {
+    if (window.confirm(`確定要刪除通知：「${title}」嗎？`)) {
+      const existingNotifications: SentNotification[] = JSON.parse(localStorage.getItem('demo_notifications') || '[]');
+      const updatedNotifications = existingNotifications.filter(n => n.id !== id);
+      localStorage.setItem('demo_notifications', JSON.stringify(updatedNotifications));
+
+      // 觸發列表重新載入
+      loadNotifications();
+      // 觸發其他組件（如鈴鐺）更新
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
+    }
+  }, [loadNotifications]);
 
   const styles = {
     '活動提醒': 'bg-yellow-100 text-yellow-800',
@@ -92,49 +107,38 @@ const NotificationList = () => {
           <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
-            placeholder="搜尋接收者或標題..."
+            placeholder="搜尋標題..."
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
               setCurrentPage(1); // 搜尋時回到第一頁
             }}
-            className="w-full border border-gray-300 rounded-lg py-2 pl-10 pr-4 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition text-gray-700 placeholder-gray-400"
+            className="w-full border border-gray-300 rounded-lg py-2.5 pl-10 pr-4 focus:ring-2  transition text-gray-700 placeholder-gray-400 h"
           />
         </div>
         <div className="flex items-center gap-4">
           <FunnelIcon className="h-5 w-5 text-gray-500" />
           <select
-            value={filter.type}
+            value={filterType}
             onChange={(e) => {
-              setFilter(f => ({ ...f, type: e.target.value as NotificationType | 'ALL' }));
+              setFilterType(e.target.value as NotificationType | 'ALL');
               setCurrentPage(1); // 篩選時回到第一頁
             }}
-            className="border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition text-gray-700"
+            className="border border-gray-300 rounded-lg py-2.5 px-3 focus:ring-2 text-gray-700 "
           >
             <option value="ALL">所有類型</option>
             {Object.keys(styles).map(type => <option key={type} value={type}>{type}</option>)}
-          </select>
-          <select
-            value={filter.status}
-            onChange={(e) => {
-              setFilter(f => ({ ...f, status: e.target.value as 'ALL' | 'READ' | 'UNREAD' }));
-              setCurrentPage(1); // 篩選時回到第一頁
-            }}
-            className="border border-gray-300 rounded-lg py-2 px-3 focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition text-gray-700"
-          >
-            <option value="ALL">所有狀態</option>
-            <option value="UNREAD">未讀</option>
-            <option value="READ">已讀</option>
           </select>
         </div>
       </div>
 
       <div className="mt-6 bg-white shadow-md rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* ⭐️ 加上滾輪 */}
+        <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                {['接收者', '標題', '類型', '發送時間', '狀態'].map(header => (
+                {['接收者', '標題', '類型', '發送時間', '操作'].map(header => (
                   <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{header}</th>
                 ))}
               </tr>
@@ -153,11 +157,8 @@ const NotificationList = () => {
                     <td className="px-6 py-4 max-w-sm truncate text-sm text-gray-800">{n.title}</td>
                     <td className="px-6 py-4 whitespace-nowrap"><span className={`px-3 py-1 rounded-full text-xs font-medium ${styles[n.type]}`}>{n.type}</span></td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{n.sentAt}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {n.isRead ?
-                        <span className="flex items-center gap-1.5 text-gray-500"><EyeIcon className="h-4 w-4" />已讀</span> :
-                        <span className="flex items-center gap-1.5 text-orange-600 font-semibold"><EyeSlashIcon className="h-4 w-4" />未讀</span>
-                      }
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <button onClick={() => handleDelete(n.id, n.title)} className="p-1.5 rounded-md text-red-500 hover:bg-red-100 transition-colors" title="刪除通知"><TrashIcon className="h-5 w-5" /></button>
                     </td>
                   </tr>
                 ))
@@ -170,9 +171,9 @@ const NotificationList = () => {
       <div className="mt-4 flex justify-between items-center">
         <span className="text-sm text-gray-700">共 {totalItems} 筆紀錄</span>
         <div className="flex items-center gap-2">
-          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"><ChevronLeftIcon className="h-5 w-5" /></button>
-          <span className="text-sm">第 {currentPage} / {totalPages || 1} 頁</span>
-          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"><ChevronRightIcon className="h-5 w-5" /></button>
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"><ChevronLeftIcon className="h-5 w-5 text-gray-600" /></button>
+          <span className="text-sm text-gray-700">第 {currentPage} / {totalPages || 1} 頁</span>
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage >= totalPages} className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"><ChevronRightIcon className="h-5 w-5 text-gray-600" /></button>
         </div>
       </div>
     </div>
@@ -196,29 +197,29 @@ const NotificationTemplates = () => {
 
   // ⭐️ 資料操作：修改 handleSend 以呼叫後端 API
   const handleSend = async () => {
+    const notificationData = {
+      id: `notif_${Date.now()}`, // 產生一個獨特的 ID
+      recipientName: '所有會員', // ⭐️ 修正：固定接收者
+      title: title,
+      content: content,
+      type: template,
+      sentAt: new Date().toISOString(), // 使用 ISO 格式以方便排序和解析
+      isRead: false,
+    };
+
     setIsSending(true);
-    try {
-      const response = await fetch('/api/admin/notifications/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // 這邊需要從 "發送對象" select 中獲取真實的 recipient
-          recipient: 'all', // 範例：所有會員
-          title,
-          content,
-          type: template,
-        }),
-      });
-      if (!response.ok) {
-        throw new Error('發送失敗');
-      }
-      alert('通知已成功發送！');
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`發送失敗：${errorMessage}`);
-    } finally {
-      setIsSending(false);
-    }
+    // 模擬 API 呼叫延遲
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // --- 核心修改：將通知寫入 localStorage ---
+    const existingNotifications = JSON.parse(localStorage.getItem('demo_notifications') || '[]');
+    const newNotifications = [notificationData, ...existingNotifications];
+    localStorage.setItem('demo_notifications', JSON.stringify(newNotifications));
+
+    // --- 核心修改：發送事件以觸發列表更新 ---
+    window.dispatchEvent(new CustomEvent('notifications-updated'));
+    alert(`展示通知「${title}」已發送！\n您可以在「通知管理」頁籤看到剛剛發送的紀錄。`);
+    setIsSending(false);
   };
 
   return (
@@ -231,20 +232,9 @@ const NotificationTemplates = () => {
             id="template"
             value={template}
             onChange={handleTemplateChange}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 text-gray-700"
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-2   text-gray-700  px-4 py-2.5"
           >
             {Object.keys(templates).map(name => <option key={name} value={name}>{name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label htmlFor="recipient" className="block text-sm font-medium text-gray-700">發送對象</label>
-          <select
-            id="recipient"
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 text-gray-700"
-          >
-            <option>所有會員</option>
-            <option>特定活動參與者 (e.g. 夏日音樂節)</option>
-            <option>特定會員 (e.g. 王小明)</option>
           </select>
         </div>
         <div>
@@ -254,7 +244,7 @@ const NotificationTemplates = () => {
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 text-gray-700"
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700 hover:border-orange-400 transition-colors px-4 py-2.5"
           />
         </div>
         <div>
@@ -264,7 +254,7 @@ const NotificationTemplates = () => {
             rows={10}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 text-gray-700"
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700 hover:border-orange-400 transition-colors p-2.5"
           ></textarea>
           <p className="mt-2 text-xs text-gray-500">提示：您可以使用 `{'{變數}'}` 來插入動態內容，如 `{'{活動名稱}'}`。</p>
         </div>
@@ -310,48 +300,38 @@ const CustomNotification = () => {
       alert('標題和內容不可為空！');
       return;
     }
+    const notificationData = {
+      id: `notif_${Date.now()}`,
+      recipientName: '所有會員', // ⭐️ 修正：固定接收者
+      title: title,
+      content: content,
+      type: '系統公告' as NotificationType,
+      sentAt: new Date().toISOString(),
+      isRead: false,
+    };
+
     setIsSending(true);
-    try {
-      const response = await fetch('/api/admin/notifications/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          recipient: 'all', // 範例
-          title,
-          content,
-          type: '系統公告', // 自訂通知可以預設為某個類型
-        }),
-      });
-      if (!response.ok) {
-        throw new Error('發送失敗');
-      }
-      alert('自訂通知已成功發送！');
-      // 清空表單
-      setTitle('');
-      setContent('');
-    } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-      alert(`發送失敗：${errorMessage}`);
-    } finally {
-      setIsSending(false);
-    }
+    // 模擬 API 呼叫延遲
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // --- 核心修改：寫入 localStorage (與模板發送邏輯相同) ---
+    const existingNotifications = JSON.parse(localStorage.getItem('demo_notifications') || '[]');
+    const newNotifications = [notificationData, ...existingNotifications];
+    localStorage.setItem('demo_notifications', JSON.stringify(newNotifications));
+
+    // --- 核心修改：發送事件以觸發列表更新 ---
+    window.dispatchEvent(new CustomEvent('notifications-updated'));
+    alert(`展示通知「${title}」已發送！\n您可以在「通知管理」頁籤看到剛剛發送的紀錄。`);
+    // 清空表單
+    setTitle('');
+    setContent('');
+    setIsSending(false);
   };
 
   return (
     <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* 左側：編輯區 */}
       <div className="space-y-6">
-        <div>
-          <label htmlFor="recipient" className="block text-sm font-medium text-gray-700">發送對象</label>
-          <select
-            id="recipient"
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 text-gray-700"
-          >
-            <option>所有會員</option>
-            <option>特定活動參與者 (e.g. 夏日音樂節)</option>
-            <option>特定會員 (e.g. 王小明)</option>
-          </select>
-        </div>
         <div>
           <label htmlFor="custom-title" className="block text-sm font-medium text-gray-700">通知標題</label>
           <input
@@ -360,7 +340,7 @@ const CustomNotification = () => {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="請輸入自訂通知標題"
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 text-gray-700 placeholder-gray-400"
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700 placeholder-gray-400 hover:border-orange-400 transition-colors px-4 py-2.5"
           />
         </div>
         <div>
@@ -371,7 +351,7 @@ const CustomNotification = () => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="請輸入自訂通知內容..."
-            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 text-gray-700 placeholder-gray-400"
+            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700 placeholder-gray-400 hover:border-orange-400 transition-colors p-2.5"
           ></textarea>
         </div>
         <div className="text-right">

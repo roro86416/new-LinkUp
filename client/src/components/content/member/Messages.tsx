@@ -1,127 +1,80 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
+// ⭐️ 匯入新的 Modal 組件
+import NotificationDetailModal from './NotificationDetailModal';
+import {
+  ClockIcon,
+  CheckCircleIcon,
+  MegaphoneIcon,
+  ExclamationTriangleIcon,
+} from '@heroicons/react/24/outline';
 
 // ----------------------------------------------------
 // 1. 類型定義 (Type Definitions)
 // ----------------------------------------------------
 
-// 定義訊息資料的結構
-interface Message {
-  id: number;
-  type: 'registration_success' | 'payment_reminder' | 'attendance_notice' | 'event_reminder';
+// ⭐️ 類型與後台通知系統同步
+interface Notification {
+  id: string;
+  type: '活動提醒' | '報名成功' | '系統公告' | '活動變更';
   title: string;
   content: string;
-  date: string;
+  sentAt: string;
   isRead: boolean;
-  eventName: string;
 }
 
 // 定義 MessageCard 組件的 Props 結構
 interface MessageCardProps {
-  message: Message;
-  // onToggleRead 接收訊息 ID (number) 並返回 void
-  onToggleRead: (id: number) => void;
-  // onDelete 接收訊息 ID (number) 和標題 (string) 並返回 void
-  onDelete: (id: number, title: string) => void;
+  message: Notification;
+  onToggleRead: (id: string) => void;
+  onDelete: (id: string, title: string) => void;
 }
 
 // ----------------------------------------------------
 // 2. 模擬資料與配置 (Initial State & Config)
 // ----------------------------------------------------
 
-// 模擬資料 (Initial Mock Data) - 使用 Message[] 類型
-const initialMessageData: Message[] = [
-  { id: 1, type: 'registration_success', title: '恭喜！您已成功報名「智慧城市研討會」', content: '您已成功報名 2025/11/15 舉辦的「智慧城市研討會」。請留意後續通知，活動出席通知將於活動前一天發送。', date: '2025/10/25 10:30', isRead: false, eventName: '智慧城市研討會' },
-  { id: 2, type: 'payment_reminder', title: '【重要】「AI 工作坊」繳款期限將至！', content: '您的活動「AI 工作坊」繳款期限為 2025/11/02，請盡快完成繳費，以免影響報名資格。', date: '2025/10/30 14:00', isRead: false, eventName: 'AI 工作坊' },
-  { id: 3, type: 'attendance_notice', title: '「網頁設計趨勢」活動出席通知', content: '您報名的活動將於明天 2025/10/31 舉行！請提前準備好您的電子票券。地點：台北國際會議中心。', date: '2025/10/30 08:00', isRead: false, eventName: '網頁設計趨勢' },
-  { id: 4, type: 'event_reminder', title: '活動提醒：「資料分析入門」將在一小時後開始！', content: '「資料分析入門」將於 15:00 開始，請您立即前往線上會議室或活動地點。', date: '2025/10/29 14:00', isRead: true, eventName: '資料分析入門' },
-  { id: 5, type: 'payment_reminder', title: '「商業攝影教學」繳款已過期通知', content: '很抱歉，您的活動「商業攝影教學」繳款期限已過，您的報名資格已取消。', date: '2025/10/28 16:20', isRead: true, eventName: '商業攝影教學' },
-  { id: 6, type: 'registration_success', title: '報名成功：數位行銷大師班', content: '您已成功報名 2025/12/01 的「數位行銷大師班」。', date: '2025/10/27 09:00', isRead: true, eventName: '數位行銷大師班' },
-  { id: 7, type: 'event_reminder', title: '倒數一天：「區塊鏈技術應用」', content: '您報名的「區塊鏈技術應用」活動將於明天開始，請做好最後準備！', date: '2025/10/29 10:00', isRead: false, eventName: '區塊鏈技術應用' },
-];
-
-// 圖標和顏色配置 (使用 inline SVG 保持單一檔案)
-const getTypeConfig = (type: Message['type']) => {
-  const iconBaseProps = { className: "h-6 w-6" };
-  const svgPathMap = {
-    'registration_success': {
-      path: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
-      color: "text-green-500",
-      label: '報名成功',
-    },
-    'payment_reminder': {
-      path: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
-      color: "text-red-500",
-      label: '繳費提醒',
-    },
-    'attendance_notice': {
-      path: "M12 19l9 2-9-18-9 18 9-2zm0 0v-8",
-      color: "text-gray-500", // 出席通知改為中性灰色
-      label: '出席通知',
-    },
-    'event_reminder': {
-      path: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
-      color: "text-yellow-500",
-      label: '活動提醒',
-    },
-  };
-
-  const config = svgPathMap[type];
-
-  if (!config) {
-    return { icon: null, label: '一般通知' };
-  }
-
-  const Icon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...iconBaseProps} className={`${iconBaseProps.className} ${config.color}`}>
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={config.path} />
-    </svg>
-  );
-
-  return { icon: <Icon />, label: config.label };
+// ⭐️ 新的類型配置，包含圖示和顏色
+const typeConfigs: { [key: string]: { icon: React.ElementType; color: string; label: string; } } = {
+  '活動提醒': { icon: ClockIcon, color: 'text-yellow-600', label: '活動提醒' },
+  '報名成功': { icon: CheckCircleIcon, color: 'text-green-600', label: '報名成功' },
+  '系統公告': { icon: MegaphoneIcon, color: 'text-blue-600', label: '系統公告' },
+  '活動變更': { icon: ExclamationTriangleIcon, color: 'text-red-600', label: '活動變更' },
 };
 
 // ----------------------------------------------------
 // 3. 組件：訊息卡片 (Message Card Component)
 // ----------------------------------------------------
 
+// ⭐️ 重新設計卡片 UI，使其樣式與「我的收藏」卡片一致
 const MessageCard: React.FC<MessageCardProps> = ({ message, onToggleRead, onDelete }) => {
-  const { icon, label } = getTypeConfig(message.type);
-  const isReadClass = message.isRead ? 'bg-white border-l-4 border-l-gray-300' : 'bg-orange-50 border-l-4 border-l-orange-500';
+  const config = typeConfigs[message.type] || { icon: MegaphoneIcon, color: 'text-gray-600', label: '一般通知' };
+  const Icon = config.icon;
+  const isReadClass = message.isRead ? 'bg-white' : 'bg-orange-50';
   const readToggleText = message.isRead ? '標記為未讀' : '標記為已讀';
 
   return (
-    <div id={`message-${message.id}`}
-      className={`message-card p-5 rounded-xl shadow-md transition duration-200 ease-in-out ${isReadClass} hover:translate-y-[-2px] hover:shadow-xl`}>
-
-      <div className="flex items-start justify-between">
-        {/* 左側內容 */}
-        <div className="flex-grow min-w-0 pr-4">
-          <div className="flex items-center space-x-3 mb-2">
-            {icon}
-            <h2 className="text-lg font-semibold text-gray-900 truncate">
-              {message.title}
-            </h2>
-            {!message.isRead && (
-              <span className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0" title="未讀訊息"></span>
-            )}
-          </div>
-          <p className="text-sm text-gray-600 mb-2 whitespace-normal">{message.content}</p>
-          <div className="text-xs text-gray-400 mt-1 flex items-center space-x-3">
-            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full font-medium">{label}</span>
-            <span>{message.date}</span>
-          </div>
+    <div
+      id={`message-${message.id}`}
+      className={`message-card p-4 rounded-xl shadow-md flex items-start justify-between hover:shadow-lg transition duration-200 border-l-4 border-orange-400 ${isReadClass} cursor-pointer`}
+    >
+      {/* 左側內容 */}
+      <div className="flex-grow min-w-0 pr-4">
+        <h3 className="text-lg font-semibold text-gray-900 truncate">{message.title}</h3>
+        <p className="text-sm text-gray-600 mt-1 truncate">{message.content.replace(/\n/g, ' ')}</p>
+        <div className="flex items-center space-x-3 mt-2 text-xs text-gray-500">
+          <span className="font-bold">{new Date(message.sentAt).toLocaleDateString()}</span>
+          <span className={`px-2 py-0.5 rounded-full font-medium ${config.color} ${message.isRead ? 'bg-gray-100' : 'bg-orange-100'}`}>{config.label}</span>
         </div>
+      </div>
 
-        {/* 右側操作按鈕 */}
-        <div className="flex flex-col space-y-2 flex-shrink-0">
-          <button onClick={() => onToggleRead(message.id)} className="text-xs font-medium text-orange-600 hover:text-orange-800 transition duration-150 p-1 rounded-md hover:bg-orange-50 whitespace-nowrap">
-            {readToggleText}
-          </button>
-          <button onClick={() => onDelete(message.id, message.title)}
-            className="text-xs font-medium text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-md hover:bg-red-50">
-            刪除
-          </button>
-        </div>
+      {/* 右側操作按鈕 */}
+      <div className="flex flex-col items-end space-y-2 flex-shrink-0">
+        <button onClick={(e) => { e.stopPropagation(); onToggleRead(message.id); }} className="text-sm font-medium text-orange-600 hover:text-orange-800 p-1 rounded-lg hover:bg-orange-50 transition whitespace-nowrap">
+          {readToggleText}
+        </button>
+        <button onClick={(e) => { e.stopPropagation(); onDelete(message.id, message.title); }} className="text-sm font-medium text-red-500 hover:text-red-700 p-1 rounded-lg hover:bg-red-50 transition">
+          刪除
+        </button>
       </div>
     </div>
   );
@@ -132,11 +85,45 @@ const MessageCard: React.FC<MessageCardProps> = ({ message, onToggleRead, onDele
 // 4. 主組件 (App Component)
 // ----------------------------------------------------
 
-const App: React.FC = () => {
-  // 使用 Message[] 作為 useState 的類型
-  const [messageData, setMessageData] = useState<Message[]>(initialMessageData);
+const Messages: React.FC = () => {
+  // ⭐️ 狀態從 localStorage 讀取
+  // ⭐️ 修正：使用 useState 的函式初始化，避免在 effect 中同步設定狀態
+  const [messageData, setMessageData] = useState<Notification[]>(() => {
+    if (typeof window === 'undefined') {
+      return [];
+    }
+    try {
+      const data = localStorage.getItem('demo_notifications');
+      return data ? JSON.parse(data) : [];
+    } catch (error) {
+      console.error("Failed to parse notifications from localStorage", error);
+      return [];
+    }
+  });
   const [currentFilter, setCurrentFilter] = useState<'all' | 'unread' | 'read'>('all');
   const [currentSearchTerm, setCurrentSearchTerm] = useState('');
+  // ⭐️ 新增 state 來控制 Modal
+  const [viewingNotification, setViewingNotification] = useState<Notification | null>(null);
+
+  // ⭐️ 封裝讀取邏輯，現在只用於事件監聽觸發的更新
+  const loadMessages = useCallback(() => {
+    const data = localStorage.getItem('demo_notifications');
+    setMessageData(data ? JSON.parse(data) : []);
+  }, []);
+
+  // ⭐️ 修正：useEffect 現在只負責設定事件監聽
+  useEffect(() => {
+    // 監聽由其他分頁（如後台）觸發的 storage 變化
+    window.addEventListener('storage', loadMessages);
+    // 監聽由同頁面其他組件（如鈴鐺）觸發的自訂事件
+    window.addEventListener('notifications-updated', loadMessages);
+
+    // 組件卸載時清除監聽器
+    return () => {
+      window.removeEventListener('storage', loadMessages);
+      window.removeEventListener('notifications-updated', loadMessages);
+    };
+  }, [loadMessages]);
 
   // Tab 定義 (使用 useMemo 來確保計數只在 messageData 變化時重新計算)
   const tabs = useMemo(() => [
@@ -145,7 +132,7 @@ const App: React.FC = () => {
     { id: 'read', name: '已讀', count: messageData.filter(m => m.isRead).length },
   ], [messageData]);
 
-  // 篩選和搜尋邏輯 (使用 useMemo 來避免不必要的重複計算)
+  // 篩選和搜尋邏輯
   const filteredMessages = useMemo(() => {
     let list = messageData;
     const lowerSearchTerm = currentSearchTerm.toLowerCase().trim();
@@ -161,29 +148,34 @@ const App: React.FC = () => {
     if (lowerSearchTerm) {
       list = list.filter(m =>
         m.title.toLowerCase().includes(lowerSearchTerm) ||
-        m.content.toLowerCase().includes(lowerSearchTerm) ||
-        m.eventName.toLowerCase().includes(lowerSearchTerm)
+        m.content.toLowerCase().includes(lowerSearchTerm)
       );
     }
 
     return list;
   }, [messageData, currentFilter, currentSearchTerm]);
 
-
   // 處理函數
-  const toggleReadStatus = useCallback((id: number) => {
-    setMessageData(prevData => prevData.map(msg =>
-      msg.id === id ? { ...msg, isRead: !msg.isRead } : msg
-    ));
-  }, []);
+  const toggleReadStatus = useCallback((id: string) => {
+    const updatedData = messageData.map(msg =>
+      msg.id === id ? { ...msg, isRead: !msg.isRead } : msg,
+    );
+    setMessageData(updatedData);
+    localStorage.setItem('demo_notifications', JSON.stringify(updatedData));
+    // ⭐️ 發送自訂事件，通知鈴鐺等組件更新
+    window.dispatchEvent(new CustomEvent('notifications-updated'));
+  }, [messageData]);
 
-  const deleteMessage = useCallback((id: number, title: string) => {
+  const deleteMessage = useCallback((id: string, title: string) => {
     // 使用 window.confirm 替代 alert/confirm (React 應用中應使用 Modal)
     if (window.confirm(`確定要刪除訊息：「${title}」嗎？`)) {
-      setMessageData(prevData => prevData.filter(msg => msg.id !== id));
-      console.log(`Message ID ${id} deleted.`);
+      const updatedData = messageData.filter(msg => msg.id !== id);
+      setMessageData(updatedData);
+      localStorage.setItem('demo_notifications', JSON.stringify(updatedData));
+      // ⭐️ 發送自訂事件，通知鈴鐺等組件更新
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
     }
-  }, []);
+  }, [messageData]);
 
   const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setCurrentSearchTerm(e.target.value);
@@ -193,9 +185,24 @@ const App: React.FC = () => {
     setCurrentFilter(filterId);
   }, []);
 
+  // ⭐️ 處理點擊卡片的函式
+  const handleCardClick = (notification: Notification) => {
+    setViewingNotification(notification);
+
+    // 如果是未讀的，則標示為已讀
+    if (!notification.isRead) {
+      const updatedData = messageData.map(n =>
+        n.id === notification.id ? { ...n, isRead: true } : n
+      );
+      setMessageData(updatedData);
+      localStorage.setItem('demo_notifications', JSON.stringify(updatedData));
+      // ⭐️ 發送自訂事件，通知鈴鐺等組件更新
+      window.dispatchEvent(new CustomEvent('notifications-updated'));
+    }
+  };
 
   return (
-    <div id="app" className="w-full mx-auto">
+    <div className="w-full mx-auto">
       <header>
         <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
           訊息管理
@@ -204,11 +211,11 @@ const App: React.FC = () => {
       </header>
 
       {/* 篩選器和搜尋框區域 */}
-      <div className=" p-4  mt-4 sticky top-0 z-10">
+      <div className="p-4 mt-4 sticky top-16 z-10 bg-white/80 backdrop-blur-sm -mx-4 border-b border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
 
           {/* 篩選 Tabs */}
-          <div className="flex-shrink-0 w-full sm:w-auto">
+          <div className="flex-shrink-0 w-full sm:w-auto order-2 sm:order-1">
             <div id="filter-tabs" className="inline-flex rounded-lg bg-gray-100 p-1">
               {tabs.map(tab => {
                 const isActive = tab.id === currentFilter;
@@ -227,7 +234,7 @@ const App: React.FC = () => {
           </div>
 
           {/* 搜尋框 */}
-          <div className="relative w-full sm:max-w-xs">
+          <div className="relative w-full sm:max-w-xs order-1 sm:order-2">
             <input type="text" id="search-input" placeholder="搜尋標題、內容或活動名稱..."
               className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm shadow-sm focus:ring-orange-500 focus:border-orange-500 transition duration-150"
               onChange={handleSearch}
@@ -241,28 +248,34 @@ const App: React.FC = () => {
       </div>
 
       {/* 訊息列表 */}
-      <div id="message-list" className={`message-list-container space-y-4 max-h-[70vh] overflow-y-auto pr-2 ${filteredMessages.length === 0 ? 'hidden' : 'block'}`}>
+      {/* ⭐️ 將列表改為網格佈局 */}
+      {/* ⭐️ 將網格改為單行列表，並使用 space-y */}
+      <div className="space-y-4 mt-6 max-h-[65vh] overflow-y-auto pr-2">
         {filteredMessages.map(message => (
-          <MessageCard
-            key={message.id}
-            message={message}
-            onToggleRead={toggleReadStatus}
-            onDelete={deleteMessage}
-          />
+          <div key={message.id} onClick={() => handleCardClick(message)}>
+            <MessageCard
+              message={message}
+              onToggleRead={toggleReadStatus}
+              onDelete={deleteMessage}
+            />
+          </div>
         ))}
       </div>
 
       {/* 空狀態/無結果提示 */}
-      <div id="empty-state" className={`text-center py-20 bg-white rounded-xl shadow-lg ${filteredMessages.length === 0 ? 'block' : 'hidden'}`}>
+      {filteredMessages.length === 0 && (<div className="text-center py-20 bg-gray-50 rounded-xl">
         <svg className="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
         <h3 className="mt-2 text-lg font-medium text-gray-900">沒有符合條件的訊息</h3>
         <p className="mt-1 text-sm text-gray-500">請嘗試更改篩選或搜尋條件。</p>
       </div>
+      )}
 
+      {/* ⭐️ 當 viewingNotification 有值時，渲染 Modal */}
+      {viewingNotification && <NotificationDetailModal notification={viewingNotification} onClose={() => setViewingNotification(null)} />}
     </div>
   );
 };
 
-export default App;
+export default Messages;

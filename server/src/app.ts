@@ -9,11 +9,9 @@ import memberProfileRoutes from "./modules/member/memberProfile/memberProfile.ro
 import adminAuthRoutes from "./modules/admin-auth/adminAuth.routes.js";
 import accountSettingsRoutes from "./modules/member/AccountSettings/accountSettings.routes.js";
 import adminMemberRoutes from "./modules/admin-member/member.routes.js";
-import adminNotificationRoutes from "./modules/notify/admin-notifications.routes.js"; // 👈 引入專用的後台通知路由
 import organizerRoutes from "./modules/organizer/organizer.routes.js";
 import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js";
-// import notificationRoutes from "./modules/notify/notifications.routes.js";
-import notificationTemplateRoutes from './modules/notify/notification-templates.routes.js';
+
 import { errorHandler } from "./middleware/error.middleware.js";
 
 dotenv.config();
@@ -62,15 +60,7 @@ app.use("/api/v1/organizer", organizerRoutes);
 // 模組四 (使用者購買票券) 路由 ->活動評論API
 app.use("/api/ratings", eventRatingsRoutes);
 
-// 使用者個人通知模組
-// app.use("/api/notifications", notificationRoutes);
 
-// ⭐️ 後台通知管理模組 (指向專用路由檔案)
-app.use("/api/admin/notifications", adminNotificationRoutes);
-
-
-// 通知模板管理模組
-app.use('/api/notification-templates', notificationTemplateRoutes);
 
 // --- 全域錯誤處理中介軟體 (必須放在所有路由之後) ---
 app.use(errorHandler);

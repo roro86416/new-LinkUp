@@ -37,6 +37,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <ForgotPasswordModal />
                 <PasswordSentModal />
                 <AdminLoginModal />
+                {/* ⭐️ 新增：為 Portal 準備一個掛載點 */}
+                <div id="modal-root"></div>
                 <Footer />
               </FavoritesProvider>
             </ModalProvider>
