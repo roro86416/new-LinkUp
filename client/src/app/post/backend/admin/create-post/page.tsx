@@ -2,16 +2,16 @@
 
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { postSchema } from "../../types/postschema";
+import { useRouter } from "next/navigation";
+import { postSchema, PostFormData } from "../../types/postschema";
 
 import ContentForm from "./component/PostEditor";
 import CoverForm from "./component/CoverUploader";
 import PostMetaForm from "./component/PostMetaForm";
 
-type PostFormData = z.infer<typeof postSchema>;
-
 export default function CreatePostPage() {
+  const router = useRouter();
+
   const form = useForm<PostFormData>({
     resolver: zodResolver(postSchema),
     defaultValues: {
@@ -21,13 +21,61 @@ export default function CreatePostPage() {
       category: "",
       link: "",
       content: {
-        blocks: [],   // ← 必須這樣初始化
+        blocks: [],
       },
     },
   });
 
-  const onSubmit = (data: PostFormData) => {
-    console.log("📌 最終送出的文章資料：", data);
+  const onSubmit = async (data: PostFormData) => {
+    const contentJSON = JSON.stringify(
+      data.content.blocks.map((block) => {
+        if (block.type === "paragraph") {
+          return { type: "text", content: block.text };
+        } else if (block.type === "image") {
+          return { type: "image", content: block.url };
+        }
+      })
+    );
+
+    const tagArray = data.tags
+      ? data.tags.split(",").map((t) => t.trim()).filter(Boolean)
+      : [];
+
+    const payload = {
+      title: data.title,
+      cover_image: data.coverImage || null,
+      category_id: Number(data.category) || null,
+      content: contentJSON,
+      tags: tagArray,
+      article_id: data.link || null,
+    };
+
+    console.log("📌 後端 payload:", payload);
+
+    try {
+      const res = await fetch("http://localhost:3001/post", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify(payload),
+});
+
+
+      const result = await res.json();
+
+      if (res.ok) {
+        console.log("文章上傳成功", result);
+
+        // 假設後端回傳新文章的 id
+        const newPostId = result.id;
+        if (newPostId) {
+          router.push(`/posts/${newPostId}`);
+        }
+      } else {
+        console.error("文章上傳失敗", result);
+      }
+    } catch (err) {
+      console.error("上傳錯誤", err);
+    }
   };
 
   return (
@@ -42,7 +90,6 @@ export default function CreatePostPage() {
         <PostMetaForm />
         <ContentForm />
 
-        {/* 全頁面只有這一個按鈕 */}
         <button
           type="submit"
           className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 w-full"

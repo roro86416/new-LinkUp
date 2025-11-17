@@ -13,6 +13,8 @@ import adminMemberRoutes from "./modules/admin-member/member.routes.js";
 import organizerRoutes from "./modules/organizer/organizer.routes.js";
 import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js";
 import uploadRoutes from "./modules/post/coverupload/coverupload.routes.js"
+import postRoute from "./modules/post/article/post.route.js"
+import imageRoutes from "./modules/post/image/image.route.js";
 
 
 dotenv.config();
@@ -21,7 +23,7 @@ const app: Express = express();
 
 // --- 全域中間件 ---
 app.use(express.json());
-
+app.use(express.urlencoded({ extended: true }));
 // --- CORS 設定（允許前端 localhost:3000 存取，含 cookies/token） ---
 app.use(
   cors({
@@ -29,6 +31,7 @@ app.use(
     credentials: true,
   })
 );
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")))
 
 
 
@@ -69,6 +72,10 @@ app.use("/api/v1/organizer", organizerRoutes);
 app.use("/api/ratings", eventRatingsRoutes);
 
 // 新增：圖片上傳 API
-app.use("/api/upload", uploadRoutes);
+app.use("/post/upload", uploadRoutes);
+
+app.use("/post", postRoute);
+
+app.use("/image", imageRoutes);
 
 export default app;

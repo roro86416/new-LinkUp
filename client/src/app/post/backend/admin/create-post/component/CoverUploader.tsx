@@ -52,6 +52,7 @@ export default function HeaderUpload() {
     [setRawFile, openCropperModal]
   );
 
+
   return (
     <div className="relative w-full border rounded-xl overflow-hidden bg-gray-100">
       {imageUrl && (
