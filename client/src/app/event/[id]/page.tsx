@@ -18,9 +18,35 @@ export default async function EventDetailPage({ params }: PageProps) {
       <Paper shadow="md" p={32} radius="md" withBorder>
 
         {/* ------------------------------------------------- */}
-        {/* 1. 活動標題區 */}
+        {/* 1. Breadcrumb（目前沒有實作，所以留空即可） */}
         {/* ------------------------------------------------- */}
-        <Stack gap="sm">
+
+        {/* ------------------------------------------------- */}
+        {/* 2. 活動 Cover（大 Banner 圖） ← ★ 新增區塊 */}
+        {/* ------------------------------------------------- */}
+        <Paper
+          mt="md"
+          radius="md"
+          withBorder
+          p={0}
+          style={{ overflow: "hidden" }}
+        >
+          <img
+            src="/placeholder-cover.jpg" 
+            alt="活動封面 event.cover_image"
+            style={{
+              width: "100%",
+              height: "320px",
+              objectFit: "cover",
+              display: "block",
+            }}
+          />
+        </Paper>
+
+        {/* ------------------------------------------------- */}
+        {/* 3. 活動標題區（大標 + 標籤 + 收藏數量） */}
+        {/* ------------------------------------------------- */}
+        <Stack gap="sm" mt="xl">
           <Title order={1}>活動標題 event.title</Title>
 
           <Group gap="xs">
@@ -34,7 +60,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         </Stack>
 
         {/* ------------------------------------------------- */}
-        {/* 2. 上方大卡片（左：活動資訊 / 右：主辦方） */}
+        {/* 4. 活動名片區（左：活動資訊 / 右：主辦方） */}
         {/* ------------------------------------------------- */}
         <Paper mt="xl" p={24} radius="md" withBorder>
           <Group justify="space-between" align="flex-start">
@@ -66,7 +92,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         </Paper>
 
         {/* ------------------------------------------------- */}
-        {/* 3. Tabs 區域（整段改用 EventTabs client component） */}
+        {/* 5. Tabs 區域（整段改用 EventTabs client component） */}
         {/* ------------------------------------------------- */}
         <EventTabs />
 

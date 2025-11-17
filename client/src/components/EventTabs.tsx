@@ -6,7 +6,7 @@ import { IconHeart, IconMail, IconShare } from "@tabler/icons-react";
 export default function EventTabs() {
   return (
     <Group justify="space-between" mt="xl" align="flex-start" w="100%">
-      <Tabs defaultValue="intro" w="100%">
+      <Tabs defaultValue="intro">
         <Tabs.List>
           <Tabs.Tab value="intro">活動介紹</Tabs.Tab>
           <Tabs.Tab value="weather">活動天氣</Tabs.Tab>
@@ -34,7 +34,8 @@ export default function EventTabs() {
           </Paper>
         </Tabs.Panel>
       </Tabs>
-
+      
+      {/* Tabs 右側動作按鈕 */}
       <Group>
         <Button variant="light">立即報名</Button>
         <Button variant="default"><IconHeart size={18} /></Button>
