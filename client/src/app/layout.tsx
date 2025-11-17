@@ -1,3 +1,5 @@
+//整個前端應用的 Root Layout（全域佈局）
+
 import './globals.css';
 import { UserProvider } from '../context/auth/UserContext';
 import { ModalProvider } from '../context/auth/ModalContext';

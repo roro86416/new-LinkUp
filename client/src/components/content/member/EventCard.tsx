@@ -1,8 +1,10 @@
+//顯示活動資訊並管理收藏狀態
+
 'use client';
 
 import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
 import { HeartIcon as HeartIconOutline } from '@heroicons/react/24/outline';
-import { useFavorites, FavoriteEvent } from '../../components/content/member/FavoritesContext'; // 確保路徑正確
+import { useFavorites, FavoriteEvent } from './FavoritesContext'; // 確保路徑正確
 import toast from 'react-hot-toast';
 
 // 假設你的活動卡片 props 結構如下

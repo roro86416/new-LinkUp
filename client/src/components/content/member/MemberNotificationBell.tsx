@@ -1,3 +1,5 @@
+//前端通知中心鈴鐺組件，負責顯示、標記已讀和打開通知詳情，並且支援狀態同步。
+
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';

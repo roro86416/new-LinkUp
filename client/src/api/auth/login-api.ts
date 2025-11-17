@@ -1,3 +1,5 @@
+//這支檔案是 登入 API 的專用函式。
+
 import { apiClient } from './apiClient';
 
 export interface LoginData {

@@ -1,3 +1,5 @@
+//完整的首頁
+
 'use client';
 import { useState, useEffect, Fragment } from 'react';
 import { useUser } from '../context/auth/UserContext'; // ⭐️ 引入 useUser

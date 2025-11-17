@@ -94,9 +94,6 @@ export default function TransactionManagement() {
             <AdjustmentsHorizontalIcon className="h-5 w-5 mr-2" />
             <span>進階篩選</span>
           </button>
-          <button className={`px-4 py-2 rounded-lg text-white ${primaryBgColor} hover:bg-blue-700 transition duration-150`}>
-            匯出 CSV_
-          </button>
         </div>
       </div>
 

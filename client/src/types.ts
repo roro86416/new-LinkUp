@@ -1,6 +1,4 @@
-/**
- * Banner 公告的資料結構
- */
+//管理前端通知鈴鐺或訊息中心的資料
 export interface Banner {
   id: number;
   title: string;

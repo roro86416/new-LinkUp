@@ -1,3 +1,5 @@
+//全頁訊息管理
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 // ⭐️ 匯入新的 Modal 組件
 import NotificationDetailModal from './NotificationDetailModal';
@@ -236,7 +238,7 @@ const Messages: React.FC = () => {
           {/* 搜尋框 */}
           <div className="relative w-full sm:max-w-xs order-1 sm:order-2">
             <input type="text" id="search-input" placeholder="搜尋標題、內容或活動名稱..."
-              className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm shadow-sm focus:ring-orange-500 focus:border-orange-500 transition duration-150"
+              className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm shadow-sm focus:ring-orange-500 focus:border-orange-500 transition duration-150 text-gray-700"
               onChange={handleSearch}
               value={currentSearchTerm} />
             {/* 搜尋圖標 */}

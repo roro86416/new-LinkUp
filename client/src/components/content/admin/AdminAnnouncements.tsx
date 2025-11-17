@@ -81,7 +81,7 @@ const BannerCard: React.FC<BannerCardProps> = ({
           <button
             onClick={() => onDelete(index)}
             disabled={total <= 1}
-            className="p-1 rounded-md text-red-500 hover:bg-red-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            className="p-1 rounded-md text-red-500 hover:bg-red-100 disabled:opacity-30 cursor-pointer disabled:cursor-not-allowed transition"
             title="刪除"
           >
             <TrashIcon className="h-5 w-5" />
@@ -125,21 +125,11 @@ const BannerCard: React.FC<BannerCardProps> = ({
               value={banner.title}
               onChange={(e) => onUpdate(index, 'title', e.target.value)}
               placeholder="輸入 Banner 標題"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-orange-500 focus:border-orange-500"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-orange-500 focus:border-orange-500 text-gray-700"
             />
           </div>
 
-          <div>
-            <label htmlFor={`link-${banner.id}`} className="block text-sm font-medium text-gray-700">點擊連結 (URL)</label>
-            <input
-              id={`link-${banner.id}`}
-              type="url"
-              value={banner.linkUrl}
-              onChange={(e) => onUpdate(index, 'linkUrl', e.target.value)}
-              placeholder="例如: /products/new-item"
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 focus:ring-orange-500 focus:border-orange-500"
-            />
-          </div>
+
 
           <div className="flex items-center justify-between pt-2">
             <span className="text-sm font-medium text-gray-700">
@@ -275,7 +265,7 @@ export default function BannerManagement() {
         <div className="flex justify-center mb-8 px-4">
           <button
             onClick={handleAddBanner}
-            className={`flex items-center px-6 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:bg-gray-100 transition duration-150`}
+            className={`flex items-center px-6 py-3 border-2 border-dashed border-gray-300 text-gray-600 rounded-lg hover:bg-gray-100 transition duration-150 cursor-pointer`}
           >
             + 新增 Banner (目前 {banners.length} / 最多 3)
           </button>
@@ -286,7 +276,7 @@ export default function BannerManagement() {
       <div className="sticky bottom-0 bg-white p-4 border-t border-gray-200 shadow-xl z-10 flex flex-col md:flex-row-reverse md:justify-start items-center">
         <button
           onClick={handleSave}
-          className={`w-full md:w-auto px-8 py-3 rounded-lg text-white font-semibold ${primaryBgColor} hover:bg-[#d9890e] transition duration-150 shadow-md order-1`}
+          className={`w-full md:w-auto px-8 py-3 rounded-lg text-white font-semibold ${primaryBgColor} hover:bg-[#d9890e] transition duration-150 shadow-md order-1 cursor-pointer`}
         >
           儲存所有變更
         </button>

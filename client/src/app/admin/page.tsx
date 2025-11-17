@@ -1,3 +1,5 @@
+//管理員後台主頁面內容切換元件
+
 'use client';
 
 import { useSearchParams } from 'next/navigation';
@@ -5,7 +7,6 @@ import { ReactNode } from 'react';
 
 // 引入所有後台內容元件
 import AdminDashboard from '../../components/content/admin/AdminDashboard';
-import AdminUsers from '../../components/content/admin/AdminUsers';
 import AdminTransaction from '../../components/content/admin/AdminTransaction';
 import AdminNotifications from '../../components/content/admin/AdminNotifications'; // 引入新的通知管理元件
 import AdminAnnouncements from '../../components/content/admin/AdminAnnouncements';
@@ -18,12 +19,6 @@ export default function AdminPage() {
     switch (section) {
       case '後台總覽':
         return <AdminDashboard />;
-      case '主辦方管理':
-        // 這裡可以放主辦方管理的元件，暫時使用 AdminUsers
-        return <AdminUsers />;
-      case '活動管理':
-        // 這裡可以放活動管理的元件，暫時使用 AdminUsers
-        return <AdminUsers />;
       case '交易管理':
         return <AdminTransaction />;
       case '通知管理':

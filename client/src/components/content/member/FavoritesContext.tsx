@@ -1,3 +1,5 @@
+//FavoritesContext.tsx = 資料 / 邏輯層（State + 方法）
+
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';

@@ -1,3 +1,5 @@
+//系統管理員的權限保護與頁面佈局元件（Admin Auth + Layout）
+
 'use client';
 
 import { ReactNode, useEffect, useCallback } from 'react';

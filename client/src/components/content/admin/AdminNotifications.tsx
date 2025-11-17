@@ -158,7 +158,7 @@ const NotificationList = () => {
                     <td className="px-6 py-4 whitespace-nowrap"><span className={`px-3 py-1 rounded-full text-xs font-medium ${styles[n.type]}`}>{n.type}</span></td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{n.sentAt}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <button onClick={() => handleDelete(n.id, n.title)} className="p-1.5 rounded-md text-red-500 hover:bg-red-100 transition-colors" title="刪除通知"><TrashIcon className="h-5 w-5" /></button>
+                      <button onClick={() => handleDelete(n.id, n.title)} className="p-1.5 rounded-md text-red-500 hover:bg-red-100 transition-colors cursor-pointer" title="刪除通知"><TrashIcon className="h-5 w-5" /></button>
                     </td>
                   </tr>
                 ))
@@ -171,9 +171,9 @@ const NotificationList = () => {
       <div className="mt-4 flex justify-between items-center">
         <span className="text-sm text-gray-700">共 {totalItems} 筆紀錄</span>
         <div className="flex items-center gap-2">
-          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"><ChevronLeftIcon className="h-5 w-5 text-gray-600" /></button>
+          <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"><ChevronLeftIcon className="h-5 w-5 text-gray-600 cursor-pointer" /></button>
           <span className="text-sm text-gray-700">第 {currentPage} / {totalPages || 1} 頁</span>
-          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage >= totalPages} className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"><ChevronRightIcon className="h-5 w-5 text-gray-600" /></button>
+          <button onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={currentPage >= totalPages} className="p-2 rounded-md hover:bg-gray-100 disabled:opacity-50"><ChevronRightIcon className="h-5 w-5 text-gray-600 cursor-pointer" /></button>
         </div>
       </div>
     </div>
@@ -262,7 +262,7 @@ const NotificationTemplates = () => {
           <button
             onClick={handleSend}
             disabled={isSending}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 transition disabled:bg-gray-400 cursor-pointer disabled:cursor-not-allowed"
           >
             <PaperAirplaneIcon className="h-5 w-5" />
             {isSending ? '發送中...' : '發送通知'}
@@ -358,7 +358,7 @@ const CustomNotification = () => {
           <button
             onClick={handleSend}
             disabled={isSending}
-            className="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-600 text-white font-semibold rounded-lg shadow-md hover:bg-orange-700 transition disabled:bg-gray-400 cursor-pointer disabled:cursor-not-allowed "
           >
             <PaperAirplaneIcon className="h-5 w-5" />
             {isSending ? '發送中...' : '發送通知'}

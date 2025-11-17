@@ -1,3 +1,6 @@
+//「我的收藏頁面組件」，功能是用來 顯示使用者收藏的活動列表、管理取消收藏、以及搜尋收藏活動。
+//Favorites.tsx / App = 視圖 / UI層（畫面 + 使用 Context 的資料）
+
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useFavorites, FavoriteEvent } from './FavoritesContext';
 import toast from 'react-hot-toast';
@@ -142,7 +145,7 @@ const App: React.FC = () => {
           <input
             type="text"
             placeholder="搜尋收藏的活動..."
-            className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm shadow-sm focus:ring-orange-500 focus:border-orange-500 transition"
+            className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm shadow-sm focus:ring-orange-500 focus:border-orange-500 transition text-gray-700"
             onChange={handleSearch}
             value={currentSearchTerm}
           />

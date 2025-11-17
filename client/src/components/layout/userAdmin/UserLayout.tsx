@@ -1,3 +1,5 @@
+//統一控制左側選單和右側內容區的渲染邏輯
+
 'use client';
 
 import { ReactNode, useCallback } from 'react';
@@ -13,7 +15,6 @@ import Favorites from '../../content/member/Favorites';
 
 // 管理員內容頁面
 import AdminDashboard from '../../content/admin/AdminDashboard';
-import AdminUsers from '../../content/admin/AdminUsers';
 import AdminTransaction from '../../content/admin/AdminTransaction';
 import AdminNotifications from '../../content/admin/AdminNotifications'; // 引入新的通知管理元件
 import AdminAnnouncements from '../../content/admin/AdminAnnouncements';

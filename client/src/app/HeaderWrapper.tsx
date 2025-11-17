@@ -1,3 +1,5 @@
+//負責在不同頁面控制 Header 顯示與排版
+
 'use client';
 
 import { usePathname } from 'next/navigation';
