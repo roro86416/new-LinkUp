@@ -74,3 +74,106 @@ export const listPublicEvents = async (
 
   return formattedEvents;
 };
+/**
+ * [公開] 獲取單一活動的詳細資料 (用於活動詳細頁)
+ * 包含：票種(TicketTypes) 和 週邊商品(Products)
+ */
+export const getPublicEventById = async (eventId: number) => {
+  
+  // 1. 執行查詢
+  const event = await prisma.event.findUnique({
+    where: { 
+      id: eventId,
+      status: EventStatus.APPROVED, // [!] 確保活動是已批准的
+    },
+    include: {
+      // (A) 串聯主辦方 -> 使用者 (為了名稱)
+      organizer: { 
+        include: {
+          user: { 
+            select: {
+              name: true, 
+              avatar: true, // [!] 我們也把主辦方頭像一起抓回來
+            }
+          }
+        }
+      },
+      // (B) 串聯所有票種 (為了票券列表)
+      ticketTypes: { 
+        where: {
+          sale_end_time: { gt: new Date() } // [!] 只抓取還在販售的票
+        },
+        orderBy: {
+          price: 'asc'
+        }
+      },
+      // (C) [!!!] 串聯「商品連結表 (productLinks)」 -> 「商品 (product)」
+      //     這就是您的「商城」資料
+      productLinks: { 
+        where:{
+          product:{
+            is_published:true
+          }
+        },
+        include:{
+          product:true,
+        }
+      },
+      // (D) (可選) 串聯其他您需要的資料
+      // guests: true,
+      // attachments: true,
+      // tags: { include: { tag: true } },
+    }
+  });
+
+  // 2. 如果找不到活動，拋出錯誤
+  if (!event) {
+    throw new Error("找不到活動或活動未開放");
+  }
+
+  // 3. 將 Prisma 回傳的複雜資料，「格式化」成前端需要的樣子
+  
+  // (A) 格式化主辦方
+  const organizerInfo = {
+    name: event.organizer?.user?.name || '主辦單位',
+    avatar: event.organizer?.user?.avatar || null,
+  };
+
+  // (B) 格式化票種
+  const formattedTicketTypes = event.ticketTypes.map(tt => ({
+    id: tt.id,
+    name: tt.name,
+    price: tt.price.toNumber(),
+    total_quantity: tt.total_quantity,
+    sale_end_time: tt.sale_end_time.toISOString(),
+  }));
+
+  // (C) 格式化商品 (您的商城)
+  const formattedProducts = event.productLinks
+    .map(link => link.product) // 取出 product 物件
+    .filter(product => product != null) // 過濾掉 product == null 的情況
+    .map(product => ({
+      id: product!.id,
+      name: product!.name,
+      description: product!.description,
+      base_price: product!.base_price.toNumber(),
+      image_url: product!.image_url,
+    }));
+
+  // 4. 組合並回傳最終資料
+  return {
+    // (活動主要資料)
+    id: event.id,
+    title: event.title,
+    subtitle: event.subtitle,
+    description: event.description,
+    cover_image: event.cover_image,
+    start_time: event.start_time.toISOString(),
+    end_time: event.end_time.toISOString(),
+    location_name: event.location_name,
+    address: event.address,
+    organizer: organizerInfo,
+    ticketTypes: formattedTicketTypes,
+    products: formattedProducts, 
+  };
+};

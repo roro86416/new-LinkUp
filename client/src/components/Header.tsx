@@ -91,7 +91,6 @@ export default function Header() {
               )}
             </button>
 
-            {/* [!!!] 關鍵修正：補回完整的下拉選單 JSX [!!!] */}
             {menuOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-lg border border-gray-100 z-60">
                 {/* 第一列：點擊跳轉會員頁 */}
@@ -122,15 +121,30 @@ export default function Header() {
                 </button>
 
                 {/* 其他選單 */}
-                <button className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer">
+                <button 
+                onClick={() => {
+                    router.push('/member'); // 跳轉會員頁
+                    setMenuOpen(false);     // 關閉下拉選單
+                  }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer">
                   <ClipboardDocumentIcon className="w-5 h-5 pointer-events-none" />
                   訂單管理
                 </button>
-                <button className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer">
+                <button
+                onClick={() => {
+                    router.push('/member/messages'); // 跳轉會員頁
+                    setMenuOpen(false);     // 關閉下拉選單
+                  }}
+                   className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer">
                   <InboxIcon className="w-5 h-5 pointer-events-none" />
                   訊息管理
                 </button>
-                <button className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer">
+                <button 
+                onClick={() => {
+                    router.push('/member/favorites'); // 跳轉會員頁
+                    setMenuOpen(false);     // 關閉下拉選單
+                  }}
+                className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer">
                   <StarIcon className="w-5 h-5 pointer-events-none" />
                   我的收藏
                 </button>

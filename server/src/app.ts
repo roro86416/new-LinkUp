@@ -13,6 +13,9 @@ import organizerRoutes from "./modules/organizer/organizer.routes.js";
 import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js";
 import publicEventRoutes from './modules/events/events.routes.js';
 dotenv.config();
+import cartRoutes from './modules/cart/cart.routes.js'; 
+import orderRoutes from './modules/orders/orders.routes.js';
+import { startOrderScheduler } from "./tasks/orderScheduler.js"; // 倒計時
 
 const app: Express = express();
 
@@ -27,17 +30,8 @@ app.use(
   })
 );
 
-// --- 測試用路由 ---
-app.get("/api/test", (req: Request, res: Response) => {
-  res.json({ message: "愛來自 LinkUp 伺服器! 🚀" });
-});
-
-// --- 模組路由註冊 ---
 // 公開活動模組
 app.use('/api/v1/events', publicEventRoutes);
-
-// 產品模組
-app.use("/api/v1/products", productRoutes);
 
 // 登入註冊模組
 app.use("/api/auth", authRoutes);
@@ -49,7 +43,7 @@ app.use("/api/admin", adminAuthRoutes);
 app.use("/api/admin/members", adminMemberRoutes);
 
 // 會員資料模組
-app.use("/api/member", memberProfileRoutes); // 維持 /api/member 作為基礎路徑
+app.use("/api/member", memberProfileRoutes); 
 
 // 帳號設定模組
 app.use("/api/member/account-settings", accountSettingsRoutes);
@@ -57,7 +51,18 @@ app.use("/api/member/account-settings", accountSettingsRoutes);
 // --- （未使用的主辦方模組預留）---
 app.use("/api/v1/organizer", organizerRoutes);
 
-// 模組四 (使用者購買票券) 路由 ->活動評論API
+// 產品模組
+app.use("/api/v1/products", productRoutes);
+
+// 購物車模組
+app.use("/api/v1/cart", cartRoutes);
+
+// 訂單模組
+app.use("/api/v1/orders", orderRoutes);
+
+// (使用者購買票券) 路由 ->活動評論API
 app.use("/api/ratings", eventRatingsRoutes);
+
+startOrderScheduler();
 
 export default app;

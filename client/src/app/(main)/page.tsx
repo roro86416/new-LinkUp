@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, Fragment } from 'react';
-import { useUser } from '../context/auth/UserContext';
-import { useModal } from '../context/auth/ModalContext';
+import { useUser } from '../../context/auth/UserContext';
+import { useModal } from '../../context/auth/ModalContext';
 import { Listbox, Transition } from '@headlessui/react';
 import {
   MagnifyingGlassIcon,
@@ -27,8 +27,8 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/effect-fade';
 
-import EventCard, { type EventCardData } from '../components/card/EventCard'; 
-import { getEvents } from '../api/event-api'; 
+import EventCard, { type EventCardData } from '../../components/card/EventCard'; 
+import { getEvents } from '../../api/event-api'; 
 
 // HomePage
 export default function HomePage() {

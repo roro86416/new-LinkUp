@@ -1,8 +1,6 @@
 import './globals.css';
 import { UserProvider } from '../context/auth/UserContext';
 import { ModalProvider } from '../context/auth/ModalContext';
-import HeaderWrapper from '../components/layout/HeaderWrapper';
-import Footer from '../components/Footer';
 import LoginModal from '../components/modals/auth/LoginModal';
 import EmailLoginModal from '../components/modals/auth/EmailLoginModal';
 import RegisterModal from '../components/modals/auth/RegisterModal';
@@ -28,7 +26,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <UserProvider>
           <ModalProvider>
-            <HeaderWrapper />
             <main className="w-full justify-center m-0 p-0 min-h-screen">
               {children}
             </main>
@@ -38,7 +35,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <ForgotPasswordModal />
             <PasswordSentModal />
             <AdminLoginModal />
-            <Footer />
           </ModalProvider>
         </UserProvider>
       </body>
