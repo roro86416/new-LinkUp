@@ -10,6 +10,7 @@ import ForgotPasswordModal from '../components/modals/auth/ForgotPasswordModal';
 import PasswordSentModal from '../components/modals/auth/PasswordSentModal';
 import AdminLoginModal from '../components/modals/auth/AdminLoginModal';
 import { Toaster } from 'react-hot-toast';
+import MantineProviders from '../providers/MantineProviders'
 
 export const metadata = {
   title: 'LinkUp 報名系統',
@@ -29,9 +30,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <UserProvider>
           <ModalProvider>
             <HeaderWrapper />
-            <main className="w-full justify-center m-0 p-0 min-h-screen">
-              {children}
-            </main>
+              <MantineProviders>
+                <main className="w-full justify-center m-0 p-0 min-h-screen">
+                  {children}
+                </main>
+              </MantineProviders>
             <LoginModal />
             <EmailLoginModal />
             <RegisterModal />
