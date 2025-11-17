@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import {
   TrashIcon,
@@ -92,7 +92,7 @@ const BannerCard: React.FC<BannerCardProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">圖片預覽 (建議 4:1 比例)</label>
-          <div className="relative border-2 border-dashed border-gray-300 rounded-lg overflow-hidden aspect-[4/1] flex items-center justify-center bg-gray-50">
+          <div className="relative border-2 border-dashed border-gray-300 rounded-lg overflow-hidden aspect-4/1 flex items-center justify-center bg-gray-50">
             {banner.imageUrl ? (
               <Image
                 src={banner.imageUrl}
@@ -235,7 +235,7 @@ export default function BannerManagement() {
       const activeBanners = banners.filter(b => b.isActive);
       localStorage.setItem('home_banners', JSON.stringify(activeBanners));
       alert(`Banner 變更已成功保存！\n共儲存了 ${activeBanners.length} 張啟用的 Banner。`);
-    } catch (error) {
+    } catch {
       alert('儲存失敗，可能是 localStorage 容量已滿。');
     }
   };

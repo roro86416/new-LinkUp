@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useFavorites, FavoriteEvent } from './FavoritesContext';
+import toast from 'react-hot-toast';
 
 // ----------------------------------------------------
 // 1. 類型定義 (Type Definitions)
@@ -98,6 +99,7 @@ const App: React.FC = () => {
     // ⚠️ 替換掉 alert/confirm
     if (window.confirm(`確定要取消收藏活動：「${title}」嗎？`)) {
       removeEvent(id);
+      toast.error('已取消收藏');
     }
   }, [removeEvent]);
 

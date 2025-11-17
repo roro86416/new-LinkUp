@@ -179,7 +179,7 @@ export default function HomePage() {
 
     if (isFavorited) {
       removeFavoriteEvent(event.id);
-      toast.success('已取消收藏');
+      toast.error('已取消收藏');
     } else {
       // 將首頁的活動資料轉換成符合收藏系統的格式
       const eventToSave: FavoriteEvent = {
