@@ -23,6 +23,11 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "plus.unsplash.com", // 有些 unsplash 也從這送
       },
+      {
+        protocol: "https",
+        hostname: "images.pexels.com", 
+      },
+
       // (未來如果您有其他圖片網域，例如 S3，也可以加在這裡)
     ],
   },
