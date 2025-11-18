@@ -101,12 +101,6 @@ export default function EventTabs({ eventId }: EventTabsProps) {
       </Tabs>
 
       {/* Right side buttons */}
-</Text>
-          </Paper>
-        </Tabs.Panel>
-      </Tabs>
-
-      {/* Right side buttons */}
       <Group>
         <Button variant="light">立即報名</Button>
         <Button variant="default"><IconHeart size={18} /></Button>
