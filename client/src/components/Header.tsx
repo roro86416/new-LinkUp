@@ -13,6 +13,7 @@ import {
   StarIcon,
   ArrowRightOnRectangleIcon,
   ClipboardDocumentIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
@@ -37,7 +38,7 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // 點擊外部關閉選單
+  // 點擊外部關閉選單 (保持不變)
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -65,6 +66,17 @@ export default function Header() {
         />
       </Link>
 
+      {/* 搜尋欄 (保持不變) */}
+      <div className="relative w-96 hidden md:block"> 
+        <input
+          type="text"
+          placeholder="搜尋活動"
+          className="w-full pl-10 pr-3 py-2 rounded-lg bg-black/20 text-white placeholder-white text-center hover:bg-black/30 focus:outline-none focus:ring-0 border border-white/50 transition-all duration-200 cursor-pointer"
+        />
+        <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 pointer-events-none" />
+      </div>
+
+      {/* 右側按鈕區 (保持不變) */}
       <div className="flex gap-4 items-center">
         {/* 我的票卷 */}
         {!isAdmin && (
@@ -76,10 +88,8 @@ export default function Header() {
           </button>
         )}
 
-        {/* 登入狀態 */}
+        {/* 登入狀態 (保持不變) */}
         {loading ? (
-          // 在讀取使用者狀態時，顯示一個佔位符或不顯示任何內容
-          // 這裡我們用一個固定寬高的 div 來避免佈局跳動
           <div className="w-10 h-10" />
         ) : user ? (
           // ⭐️ 步驟 2: 將鈴鐺和頭像包在一起

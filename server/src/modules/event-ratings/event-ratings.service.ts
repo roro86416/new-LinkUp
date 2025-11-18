@@ -1,8 +1,8 @@
 // service是後端程式之一，其功能是商業邏輯層，進行資料處理、與資料庫互動；在我們的專案就是與Prisma互動: 執行 Prisma 寫入、驗證、錯誤處理
 
 // src/modules/event-ratings/event-ratings.service.ts
-import prisma from "../../utils/prisma-only"; // 不要建立新的 new PrismaClient()，用統一的 Prisma Client 實例
-import { CreateRatingInput, UpdateRatingInput } from "./event-ratings.schema";
+import prisma from "../../utils/prisma-only.js"; // 不要建立新的 new PrismaClient()，用統一的 Prisma Client 實例
+import { CreateRatingInput, UpdateRatingInput } from "./event-ratings.schema.js";
 
 /**
  * @param data 評論內容（來自 controller 層）
@@ -72,7 +72,14 @@ export async function getRatingsService(eventId: number) {
       },
     });
 
-    return ratings;
+    // 2️⃣ 計算平均分數
+    const avgRating =
+      ratings.length > 0
+        ? ratings.reduce((sum, r) => sum + r.rating, 0) / ratings.length
+        : 0;
+
+    // 3️⃣ 回傳結果
+    return { ratings, averageRating: avgRating };
   } catch (error) {
     console.error("❌ Prisma getRatingsService 錯誤：", error);
     throw new Error("資料庫查詢失敗");
@@ -116,5 +123,32 @@ export async function updateRatingService({ ratingId, data }: UpdateRatingInput)
   } catch (error: any) {
     console.error("❌ Prisma updateRatingService 錯誤：", error);
     throw new Error("資料庫寫入失敗");
+  }
+}
+
+// =======================================================================
+// 🧩 刪除評論 Service
+export async function deleteRatingService(ratingId: number) {
+  try {
+    // 1️⃣ 確認該評論是否存在
+    const existingRating = await prisma.eventRating.findUnique({
+      where: { id: ratingId },
+    });
+
+    if (!existingRating) {
+      // 拋出錯誤給 controller 捕捉
+      throw new Error("NOT_FOUND");
+    }
+
+    // 2️⃣ 刪除評論
+    await prisma.eventRating.delete({
+      where: { id: ratingId },
+    });
+
+    // 回傳成功訊息
+    return true;
+  } catch (error) {
+    console.error("❌ Prisma deleteRatingService 錯誤：", error);
+    throw error;
   }
 }

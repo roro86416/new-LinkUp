@@ -12,6 +12,10 @@ import accountSettingsRoutes from "./modules/member/AccountSettings/accountSetti
 import adminMemberRoutes from "./modules/admin-member/member.routes.js";
 import organizerRoutes from "./modules/organizer/organizer.routes.js";
 import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js";
+import publicEventRoutes from './modules/events/events.routes.js';
+import eventSearchRoutes from "./modules/event-search/event-search.routes.js";
+import eventStatsRoutes from "./modules/event-stats/event-stats.routes.js";
+import eventWeatherRoutes from "./modules/event-weather/event-weather.routes.js";
 import uploadRoutes from "./modules/post/coverupload/coverupload.routes.js"
 import postRoute from "./modules/post/article/post.route.js"
 import imageRoutes from "./modules/post/image/image.route.js";
@@ -22,7 +26,7 @@ import { errorHandler } from "./middleware/error.middleware.js";
 dotenv.config();
 
 const app: Express = express();
-
+console.log("CWB_API_KEY:", process.env.CWB_API_KEY);
 // --- 全域中間件 ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -47,7 +51,9 @@ app.get("/api/test", (req: Request, res: Response) => {
   res.json({ message: "愛來自 LinkUp 伺服器! 🚀" });
 });
 
-// --- 模組路import uploadRoutes from "./modules/post/coverupload/coverupload.Schema.js"由註冊 ---
+// --- 模組路由註冊 ---
+// 公開活動模組
+app.use('/api/v1/events', publicEventRoutes);
 
 // 產品模組
 app.use("/api/v1/products", productRoutes);
@@ -72,16 +78,22 @@ app.use("/api/v1/organizer", organizerRoutes);
 
 // 模組四 (使用者購買票券) 路由 ->活動評論API
 app.use("/api/ratings", eventRatingsRoutes);
+// 活動搜尋與篩選模組 
+app.use("/api/events", eventSearchRoutes);
+// 活動統計模組 (Event Stats)
+app.use("/api/events", eventStatsRoutes);
+// 查詢活動當地天氣
+app.use("/api/events", eventWeatherRoutes);
 
 
-
-// --- 全域錯誤處理中介軟體 (必須放在所有路由之後) ---
-app.use(errorHandler);
 // 新增：圖片上傳 API
 app.use("/post/upload", uploadRoutes);
 
 app.use("/post", postRoute);
 
 app.use("/image", imageRoutes);
+
+// --- 全域錯誤處理中介軟體 (必須放在所有路由之後) ---
+app.use(errorHandler);
 
 export default app;

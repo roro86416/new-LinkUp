@@ -14,6 +14,8 @@ import ForgotPasswordModal from '../components/modals/auth/ForgotPasswordModal';
 import PasswordSentModal from '../components/modals/auth/PasswordSentModal';
 import AdminLoginModal from '../components/modals/auth/AdminLoginModal';
 import { Toaster } from 'react-hot-toast';
+import MantineProviders from '../providers/MantineProviders'
+import '@mantine/core/styles.css'; // 讓Mantine的CSS生效，才會有排版效果
 
 export const metadata = {
   title: 'LinkUp 報名系統',
