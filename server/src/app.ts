@@ -1,6 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 
 // 模組匯入
 import productRoutes from "./modules/product/products.routes.js";
@@ -11,6 +12,10 @@ import accountSettingsRoutes from "./modules/member/AccountSettings/accountSetti
 import adminMemberRoutes from "./modules/admin-member/member.routes.js";
 import organizerRoutes from "./modules/organizer/organizer.routes.js";
 import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js";
+import uploadRoutes from "./modules/post/coverupload/coverupload.routes.js"
+import postRoute from "./modules/post/article/post.route.js"
+import imageRoutes from "./modules/post/image/image.route.js";
+
 
 import { errorHandler } from "./middleware/error.middleware.js";
 
@@ -20,7 +25,7 @@ const app: Express = express();
 
 // --- 全域中間件 ---
 app.use(express.json());
-
+app.use(express.urlencoded({ extended: true }));
 // --- CORS 設定（允許前端 localhost:3000 存取，含 cookies/token） ---
 app.use(
   cors({
@@ -28,13 +33,21 @@ app.use(
     credentials: true,
   })
 );
+app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")))
+
+
+
+// --- 靜態檔案服務設定 (重要：讓上傳的圖片可以公開訪問) ---
+// 設定 /uploads 路徑對應到專案根目錄下的 'uploads' 資料夾
+// 這樣前端就可以透過 http://localhost:3001/uploads/檔名 來存取圖片
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // --- 測試用路由 ---
 app.get("/api/test", (req: Request, res: Response) => {
   res.json({ message: "愛來自 LinkUp 伺服器! 🚀" });
 });
 
-// --- 模組路由註冊 ---
+// --- 模組路import uploadRoutes from "./modules/post/coverupload/coverupload.Schema.js"由註冊 ---
 
 // 產品模組
 app.use("/api/v1/products", productRoutes);
@@ -64,5 +77,11 @@ app.use("/api/ratings", eventRatingsRoutes);
 
 // --- 全域錯誤處理中介軟體 (必須放在所有路由之後) ---
 app.use(errorHandler);
+// 新增：圖片上傳 API
+app.use("/post/upload", uploadRoutes);
+
+app.use("/post", postRoute);
+
+app.use("/image", imageRoutes);
 
 export default app;
