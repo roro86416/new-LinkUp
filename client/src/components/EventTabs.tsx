@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Paper, Tabs, Title, Text, Group, Loader } from "@mantine/core";
+import { Paper, Tabs, Title, Text, Group, Loader, Avatar, Rating, Divider, } from "@mantine/core";
 
 /* Props：接受 eventId、eventDescription */
 interface EventTabsProps {
@@ -20,10 +20,29 @@ type Weather = {
   windDirection?: string | null;
 };
 
-export default function EventTabs({ eventId, description }: EventTabsProps) {
+/* ⭐ 評論資料型別 */
+interface Review {
+  id: number;
+  rating: number;
+  comment: string;
+  created_at: string;
+  user: {
+    name: string;
+    avatar: string | null;
+  };
+}
+
+/* ---------------- Component ---------------- */
+export default function EventTabs({ eventId, description }: EventTabsProps) {/* 天氣 */
   const [weather, setWeather] = useState<Weather | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  /* ⭐ 評論狀態 */
+  const [reviews, setReviews] = useState<Review[]>([]);
+  const [avgRating, setAvgRating] = useState<number | null>(null);
+  const [loadingReviews, setLoadingReviews] = useState<boolean>(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   /* -----------------------------
    * 天氣 API 串接
@@ -58,7 +77,40 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {
     fetchWeather();
   }, [eventId]);
 
+    /* -----------------------------
+   * ⭐ 評論 API 串接
+   * ----------------------------- */
+  useEffect(() => {
+    if (!eventId) return;
 
+    async function fetchReviews() {
+      try {
+        setLoadingReviews(true);
+        setReviewError(null);
+
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/ratings/${eventId}`
+        );
+
+        const json = await res.json();
+        if (!json.success) {
+          setReviewError("評論資料取得失敗");
+          return;
+        }
+
+        setReviews(json.data);
+        setAvgRating(json.averageRating ?? null);
+      } catch (err) {
+        setReviewError("無法連接伺服器");
+      } finally {
+        setLoadingReviews(false);
+      }
+    }
+
+    fetchReviews();
+  }, [eventId]);
+
+    /* ---------------- JSX ---------------- */
   return (
     <Tabs defaultValue="intro" mt="xl">
       <Tabs.List>
@@ -100,11 +152,64 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {
         </Paper>
       </Tabs.Panel>
 
-      {/* ---------------- Comments（之後再串）---------------- */}
+      {/* ---------------- ⭐ Comments (GET) ---------------- */}
       <Tabs.Panel value="comments" pt="md">
-        <Paper p={24} withBorder radius="md" mt="md">
+        <Paper p={24} withBorder radius="md">
           <Title order={4}>評論區</Title>
-          <Text mt="sm">評論功能將在下一步串接。</Text>
+
+          {/* 平均評分 */}
+          {avgRating !== null && (
+            <Group mt="md">
+              <Rating value={avgRating} fractions={2} readOnly />
+              <Text size="sm">平均評分：{avgRating}</Text>
+            </Group>
+          )}
+
+          {/* Loading */}
+          {loadingReviews && <Loader mt="md" />}
+
+          {/* Error */}
+          {reviewError && (
+            <Text c="red" mt="md">
+              {reviewError}
+            </Text>
+          )}
+
+          {/* 評論列表 */}
+          {!loadingReviews &&
+            reviews.map((r) => (
+              <Paper key={r.id} shadow="xs" p="md" mt="md" radius="md">
+                <Group align="flex-start">
+                  {/* 大頭貼 */}
+                  <Avatar
+                    src={
+                      r.user.avatar ??
+                      "https://cdn-icons-png.flaticon.com/512/149/149071.png"
+                    }
+                    radius="xl"
+                    size="lg"
+                  />
+
+                  {/* 右側內容 */}
+                  <div style={{ flex: 1 }}>
+                    <Group justify="space-between">
+                      <Text fw={600}>{r.user.name}</Text>
+                      <Rating value={r.rating} readOnly />
+                    </Group>
+
+                    <Text mt="sm">{r.comment}</Text>
+
+                    <Text size="xs" mt="xs" c="gray.6">
+                      {new Date(r.created_at).toLocaleString("zh-TW")}
+                    </Text>
+                  </div>
+                </Group>
+              </Paper>
+            ))}
+
+          {!loadingReviews && reviews.length === 0 && (
+            <Text mt="md">尚無評論</Text>
+          )}
         </Paper>
       </Tabs.Panel>
     </Tabs>
