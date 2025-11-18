@@ -20,13 +20,12 @@ export default function CreatePostPage() {
       tags: "",
       category: "",
       link: "",
-      content: {
-        blocks: [],
-      },
+      content: { blocks: [] },
     },
   });
 
   const onSubmit = async (data: PostFormData) => {
+    // --- content blocks ---
     const contentJSON = JSON.stringify(
       data.content.blocks.map((block) => {
         if (block.type === "paragraph") {
@@ -37,35 +36,36 @@ export default function CreatePostPage() {
       })
     );
 
+    // --- tags ---
     const tagArray = data.tags
       ? data.tags.split(",").map((t) => t.trim()).filter(Boolean)
       : [];
 
+    // --- category 只要字串 ---
+    const categoryValue = data.category ? data.category.trim() : "";
+
+    // --- 最終 payload（完全符合後端 createPost） ---
     const payload = {
       title: data.title,
-      cover_image: data.coverImage || null,
-      category_id: Number(data.category) || null,
+      coverImage: data.coverImage || null,
+      category: categoryValue, // 字串
       content: contentJSON,
       tags: tagArray,
-      article_id: data.link || null,
     };
 
-    console.log("📌 後端 payload:", payload);
+    console.log("📌 送到後端的 payload:", payload);
 
     try {
       const res = await fetch("http://localhost:3001/post", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify(payload),
-});
-
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
 
       const result = await res.json();
 
       if (res.ok) {
         console.log("文章上傳成功", result);
-
-        // 假設後端回傳新文章的 id
         const newPostId = result.id;
         if (newPostId) {
           router.push(`/posts/${newPostId}`);
@@ -74,7 +74,7 @@ export default function CreatePostPage() {
         console.error("文章上傳失敗", result);
       }
     } catch (err) {
-      console.error("上傳錯誤", err);
+      console.error("❌ 上傳錯誤", err);
     }
   };
 

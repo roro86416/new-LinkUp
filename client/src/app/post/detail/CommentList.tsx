@@ -1,6 +1,12 @@
 "use client";
 import { useState } from "react";
 
+interface CommentSectionProps {
+  articleId: number;
+  isAuthenticated: boolean;
+  currentUserId: string;
+}
+
 export default function CommentSection() {
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<string[]>([]);
