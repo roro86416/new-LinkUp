@@ -55,7 +55,7 @@ export default function CoverForm() {
 
   // 處理重新上傳
   const handleReupload = () => {
-    resetImage(); 
+    resetImage();
     setValue("coverImage", "", { shouldValidate: true, shouldDirty: true });
     // 注意：resetImage 必須將 rawFile 設為 null，以關閉任何殘餘的預覽。
   };
@@ -68,7 +68,7 @@ export default function CoverForm() {
 
 
   // ⭐️ 修正顯示：現在我們只依賴 hook-form 中的 coverImage 值
-  const displayImageUrl = currentCoverImage; 
+  const displayImageUrl = currentCoverImage;
 
   return (
     <>
@@ -78,9 +78,8 @@ export default function CoverForm() {
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={`relative w-full h-[300px] border-2 border-dashed rounded-lg flex items-center justify-center 
-                    text-gray-500 transition-all duration-300 ${
-                      isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"
-                    }`}
+                    text-gray-500 transition-all duration-300 ${isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50"
+          }`}
       >
         {uploading && (
           <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white z-10">
@@ -91,24 +90,24 @@ export default function CoverForm() {
         {/* ⭐️ 核心顯示邏輯：只顯示單張圖片並居中填滿 */}
         {displayImageUrl ? (
           <>
-            <img 
-              src={displayImageUrl} 
-              alt="封面圖預覽" 
+            <img
+              src={displayImageUrl}
+              alt="封面圖預覽"
               // 修正圖片顯示比例和位置的關鍵 CSS
-              className="absolute inset-0 w-full h-full object-cover rounded-lg" 
+              className="absolute inset-0 w-full h-full object-cover rounded-lg"
             />
             {/* 重新上傳和刪除按鈕 */}
             <div className="absolute top-4 right-4 flex gap-2 z-10">
-              <button 
+              <button
                 type="button" // 必須設置 type="button" 避免觸發表單提交
-                onClick={handleReupload} 
+                onClick={handleReupload}
                 className="flex items-center gap-1 px-3 py-1 bg-white text-gray-700 rounded-full shadow-md hover:bg-gray-100 transition"
               >
                 <RefreshCcw size={16} /> 重新上傳
               </button>
-              <button 
+              <button
                 type="button"
-                onClick={handleDeleteImage} 
+                onClick={handleDeleteImage}
                 className="p-1 bg-red-500 text-white rounded-full shadow-md hover:bg-red-600 transition"
               >
                 <Trash2 size={16} />

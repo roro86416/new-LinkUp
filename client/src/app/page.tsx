@@ -2,13 +2,13 @@
 
 'use client';
 import { useState, useEffect, Fragment } from 'react';
-import { popularEvents, newlyAddedEvents, browseEvents } from '../components/HomeCard/data'; // ⭐️ 引入活動資料
+import { popularEvents, newlyAddedEvents, browseEvents } from './event/data'; // ⭐️ 引入活動資料
 import { useUser } from '../context/auth/UserContext'; // ⭐️ 引入 useUser
 import { useFavorites, FavoriteEvent } from '../components/content/member/FavoritesContext'; // ⭐️ 1. 引入我們的收藏 Context
 // ⭐️ 匯入共用型別
 import { Banner } from '../types'; // 此路徑是正確的
 import { useRouter } from 'next/navigation';//是 Next.js 13+（App Router） 才有的用法，用來在 前端元件裡實現頁面導向（跳轉）
-import { useModal } from '../context/auth/ModalContext'; // ⭐️ 引入 useModal
+import Link from 'next/link'; // ⭐️ 引入 Link 元件
 import { Listbox, Transition } from '@headlessui/react';
 import toast from 'react-hot-toast'; // ⭐️ 修正：匯入 toast
 // ⭐️ 修正：替換所有 react-icons，改用 Heroicons
@@ -92,8 +92,7 @@ export default function HomePage() {
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false); // ✅ 新增 isMounted 狀態
   const { user } = useUser(); // ⭐️ 取得使用者資訊
-  const router = useRouter();
-  const { openLogin } = useModal(); // ⭐️ 取得開啟登入 Modal 的函式
+  const router = useRouter(); // ⭐️ 取得 router 實例
   const { favoriteEvents, addFavoriteEvent, removeFavoriteEvent } = useFavorites(); // ⭐️ 2. 使用中央收藏系統
 
   const locations = ['台北市', '新北市', '台中市', '台南市', '高雄市'];
@@ -255,21 +254,24 @@ export default function HomePage() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {popularEvents.map((event) => (
-            <div
+            <Link
               key={event.id}
-              className="relative rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300 shadow-lg"
+              href={`/event/${event.id}`}
+              className="block group"
             >
-              <img
-                src={`https://picsum.photos/seed/${event.id}/800/600`}
-                alt={event.title}
-                className="w-full h-56 object-cover"
-              />
-              {/* 文字區 */}
-              <div className="absolute bottom-0 left-0 right-0 p-5 text-white bg-black/30">
-                <h3 className="text-2xl font-bold">{event.title}</h3>
-                <p className="text-base mt-1">{event.date}</p>
+              <div className="relative rounded-xl overflow-hidden hover:scale-105 transition-transform duration-300 shadow-lg">
+                <img
+                  src={event.img} // ⭐️ 使用 data.ts 中的真實圖片
+                  alt={event.title}
+                  className="w-full h-56 object-cover"
+                />
+                {/* 文字區 */}
+                <div className="absolute bottom-0 left-0 right-0 p-5 text-white bg-gradient-to-t from-black/60 to-transparent">
+                  <h3 className="text-2xl font-bold">{event.title}</h3>
+                  <p className="text-base mt-1">{event.date}</p>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
@@ -281,33 +283,36 @@ export default function HomePage() {
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {newlyAddedEvents.map((event) => (
-            <div
+            <Link
               key={event.id}
-              className="bg-white/30 backdrop-blur-md rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300 shadow-lg relative group"
+              href={`/event/${event.id}`}
+              className="block group"
             >
-
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // 避免觸發卡片點擊
-                  handleFavoriteToggle(event);
-                }}
-                className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
-                aria-label="收藏"
-              >
-                {/* 直接從 context 判斷是否已收藏 */}
-                {favoriteEvents.some(fav => fav.id === event.id) ? (
-                  <HeartIconSolid className="w-5 h-5 text-red-500" />
-                ) : (
-                  <HeartIconOutline className="w-5 h-5 text-white" />
-                )}
-              </button>
-              <img src={event.img} alt={event.title} className="w-full h-40 object-cover" />
-              <div className="p-4">
-                <h3 className="text-lg font-bold text-gray-900">{event.title}</h3>
-                <p className="text-sm text-gray-700">{event.date}</p>
-                <p className="text-sm text-gray-800">{event.desc}</p>
+              <div className="bg-white rounded-xl overflow-hidden hover:scale-105 transition-transform duration-300 shadow-lg relative">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault(); // ⭐️ 阻止 Link 的導航行為
+                    e.stopPropagation();
+                    handleFavoriteToggle(event);
+                  }}
+                  className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
+                  aria-label="收藏"
+                >
+                  {/* 直接從 context 判斷是否已收藏 */}
+                  {favoriteEvents.some(fav => fav.id === event.id) ? (
+                    <HeartIconSolid className="w-5 h-5 text-red-500" />
+                  ) : (
+                    <HeartIconOutline className="w-5 h-5 text-white" />
+                  )}
+                </button>
+                <img src={event.img} alt={event.title} className="w-full h-40 object-cover" />
+                <div className="p-4">
+                  <h3 className="text-lg font-bold text-gray-900 truncate">{event.title}</h3>
+                  <p className="text-sm text-gray-700">{event.date}</p>
+                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">{event.desc}</p>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
@@ -386,33 +391,37 @@ export default function HomePage() {
         {/* 活動列表 */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
           {browseEvents.map((event) => (
-            <div
+            <Link
               key={event.id}
-              className="bg-white/30 backdrop-blur-md rounded-xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300 shadow-lg relative group"
+              href={`/event/${event.id}`}
+              className="block group"
             >
-              {/* ⭐️ 新增：收藏按鈕 */}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation(); // 避免觸發卡片點擊
-                  handleFavoriteToggle(event);
-                }}
-                className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
-                aria-label="收藏"
-              >
-                {/* 直接從 context 判斷是否已收藏 */}
-                {favoriteEvents.some(fav => fav.id === event.id) ? (
-                  <HeartIconSolid className="w-5 h-5 text-red-500" />
-                ) : (
-                  <HeartIconOutline className="w-5 h-5 text-white" />
-                )}
-              </button>
-              <img src={event.img} alt={event.title} className="w-full h-40 object-cover" />
-              <div className="p-4">
-                <h3 className="text-lg font-bold text-gray-900">{event.title}</h3>
-                <p className="text-sm text-gray-700">{event.date}</p>
-                <p className="text-sm text-gray-800">{event.desc}</p>
+              <div className="bg-white rounded-xl overflow-hidden hover:scale-105 transition-transform duration-300 shadow-lg relative">
+                {/* ⭐️ 新增：收藏按鈕 */}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault(); // ⭐️ 阻止 Link 的導航行為
+                    e.stopPropagation();
+                    handleFavoriteToggle(event);
+                  }}
+                  className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
+                  aria-label="收藏"
+                >
+                  {/* 直接從 context 判斷是否已收藏 */}
+                  {favoriteEvents.some(fav => fav.id === event.id) ? (
+                    <HeartIconSolid className="w-5 h-5 text-red-500" />
+                  ) : (
+                    <HeartIconOutline className="w-5 h-5 text-white" />
+                  )}
+                </button>
+                <img src={event.img} alt={event.title} className="w-full h-40 object-cover" />
+                <div className="p-4">
+                  <h3 className="text-lg font-bold text-gray-900 truncate">{event.title}</h3>
+                  <p className="text-sm text-gray-700">{event.date}</p>
+                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">{event.desc}</p>
+                </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>

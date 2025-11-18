@@ -10,6 +10,16 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+
+  images: {
+    // Next.js 16 (Turbopack) 必須使用 remotePatterns
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+    ],
+  },
 };
 
 export default nextConfig;
