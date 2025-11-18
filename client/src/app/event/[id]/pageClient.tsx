@@ -147,10 +147,6 @@ export default function EventDetailPageClient({
                 {event.location_name}
               </Text>
 
-              <Text fw={500} mt="md">
-                {event.description}
-              </Text>
-
               <Button mt="md" variant="light">
                 進入活動商城
               </Button>
@@ -167,7 +163,7 @@ export default function EventDetailPageClient({
         </Paper>
 
         {/* Tabs 區域 */}
-        <EventTabs eventId={event.id} />
+        <EventTabs eventId={event.id} description={event.description} />
       </Paper>
     </Container>
   );
