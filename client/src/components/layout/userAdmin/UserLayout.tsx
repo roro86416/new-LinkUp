@@ -12,6 +12,8 @@ import { useAdminUser, AdminUser } from '../../../context/auth/AdminUserContext'
 import AccountSettings from '../../content/member/AccountSettings';
 import Messages from '../../content/member/Messages';
 import Favorites from '../../content/member/Favorites';
+import MyCoupons from '../../content/member/MyCoupons'; // ⭐️ 引入 MyCoupons
+import LotteryPage from '../../content/member/Game/LotteryPage'; // 1. 引入抽獎遊戲頁面
 
 // 管理員內容頁面
 import AdminDashboard from '../../content/admin/AdminDashboard';
@@ -99,6 +101,8 @@ function LayoutRenderer({ type, currentUser, loading, getActiveMenu, handleMenuC
         case '訊息管理': return <Messages />;
         case '帳號設定': return <AccountSettings />;
         case '我的收藏': return <Favorites />;
+        case '我的折價卷': return <MyCoupons />; // ⭐️ 新增渲染邏輯
+        case '幸運摸彩': return <LotteryPage />; // 3. 新增渲染邏輯
         default: return <div>請選擇一個頁面</div>;
       }
     } else { // admin
@@ -122,8 +126,8 @@ function LayoutRenderer({ type, currentUser, loading, getActiveMenu, handleMenuC
         loading={loading}
         onAvatarChange={handleAvatarChange}
       />
-      <div className="bg-white rounded-md p-6 w-[952px]">
-        {children || renderContent()}
+      <div className="bg-white rounded-md p-6 w-[952px] flex justify-center">
+        {renderContent()}
       </div>
     </div>
   );
@@ -136,7 +140,7 @@ export default function UserLayout({ type, children }: UserLayoutProps) {
   const getActiveMenu = useCallback(() => {
     const section = searchParams.get('section');
     const validSections = type === 'member'
-      ? ['帳號設定', '訊息管理', '我的收藏']
+      ? ['帳號設定', '訊息管理', '我的收藏', '我的折價卷', '幸運摸彩'] // ⭐️ 將 '我的折價卷' 加入
       : ['後台總覽', '交易管理', '通知管理', '系統公告管理']; // ⭐️ 移除主辦方和活動管理
     const defaultSection = type === 'member' ? '帳號設定' : '後台總覽';
     return validSections.find(s => s === section) || defaultSection;
