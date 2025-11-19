@@ -1,111 +1,189 @@
-// client/src/app/(organizer)/events/[eventId]/page.tsx
-'use client';
-
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import {
-  OrganizerEventForm,
-  EventFormValues,
-} from '../../../../components/organizer/OrganizerEventForm';
-import { apiFetch } from '../../../../utils/api';
-import type {
+  Badge,
+  Box,
+  Card,
+  Divider,
+  Group,
+  Image,
+  Stack,
+  Text,
+  Title,
+  Button,
+} from '@mantine/core';
+import Link from 'next/link';
+import {
+  API_BASE_URL,
   OrganizerEvent,
-  OrganizerEventsResponse,
-} from '../../../../types/organizer';
+  formatDateTime,
+  statusToLabel,
+} from '../eventTypes';
 
-export default function EditEventPage() {
-  const { eventId } = useParams<{ eventId: string }>();
-  const router = useRouter();
-  const [event, setEvent] = useState<OrganizerEvent | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // 因為後端沒有 GET /events/:id，只好先拿列表再找那一筆
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await apiFetch<OrganizerEventsResponse>(
-          '/api/v1/organizer/events'
-        );
-        const found = res.data.find(
-          (e) => e.id === Number(eventId)
-        );
-        if (!found) {
-          alert('找不到這個活動');
-          router.push('/organizer/events');
-          return;
-        }
-        setEvent(found);
-      } catch (err) {
-        console.error(err);
-        alert('載入活動資料失敗');
-        router.push('/organizer/events');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    load();
-  }, [eventId, router]);
-
-  const handleSubmit = async (values: EventFormValues) => {
-    if (!event) return;
-
-    const body = {
-      title: values.title,
-      subtitle: values.subtitle || null,
-      description: values.description,
-      cover_image: values.cover_image,
-      start_time: new Date(values.start_time).toISOString(),
-      end_time: new Date(values.end_time).toISOString(),
-      location_name: values.location_name,
-      address: values.address,
-      latitude: 25.033964,
-      longitude: 121.564468,
-      status: values.status,
-      event_type: values.event_type,
-      online_event_url: null,
-      category_id: event.category_id ?? 1,
-    };
-
-    await apiFetch(`/api/v1/organizer/events/${event.id}`, {
-      method: 'PUT',
-      body: JSON.stringify(body),
-    });
-
-    alert('儲存成功');
-    router.push('/organizer/events');
+interface PageProps {
+  params: {
+    eventId: string;
   };
+}
 
-  if (loading) {
-    return (
-      <div className="px-8 py-6">
-        <p>載入中…</p>
-      </div>
-    );
+async function fetchEventDetail(id: number): Promise<OrganizerEvent | null> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/organizer/events`, {
+    cache: 'no-store',
+  });
+
+  if (!res.ok) {
+    console.error('載入活動列表失敗');
+    return null;
   }
 
-  if (!event) return null;
+  const json = await res.json();
+  const list = (json.data ?? []) as OrganizerEvent[];
+  return list.find((e) => e.id === id) ?? null;
+}
 
-  const initialValues: Partial<EventFormValues> = {
-    title: event.title,
-    subtitle: event.subtitle ?? '',
-    description: event.description,
-    cover_image: event.cover_image,
-    start_time: event.start_time.slice(0, 16), // 轉成 datetime-local 格式
-    end_time: event.end_time.slice(0, 16),
-    location_name: event.location_name,
-    address: event.address,
-    status: event.status,
-    event_type: event.event_type,
-  };
+export default async function OrganizerEventDetailPage({ params }: PageProps) {
+  const id = Number(params.eventId);
+  const event = !Number.isNaN(id) ? await fetchEventDetail(id) : null;
 
   return (
-    <div className="px-8 py-6">
-      <OrganizerEventForm
-        mode="edit"
-        initialValues={initialValues}
-        onSubmit={handleSubmit}
-      />
-    </div>
+    <Box p="xl">
+      {!event ? (
+        <Card shadow="sm" padding="xl" radius="md" withBorder>
+          <Stack gap="md">
+            <Title order={3}>找不到此活動</Title>
+            <Text c="dimmed" size="sm">
+              請確認網址是否正確，或回到活動列表重新選擇一筆活動。
+            </Text>
+            <Group>
+              <Button component={Link} href="/events" variant="light">
+                回活動列表
+              </Button>
+              <Button component={Link} href="/dashboard" variant="subtle">
+                回主辦方儀表板
+              </Button>
+            </Group>
+          </Stack>
+        </Card>
+      ) : (
+        <Stack gap="xl">
+          {/* 頂部：標題 + 狀態 + 操作 */}
+          <Group justify="space-between" align="flex-start">
+            <div>
+              <Title order={2}>{event.title}</Title>
+              {event.subtitle && (
+                <Text c="dimmed" mt={4}>
+                  {event.subtitle}
+                </Text>
+              )}
+
+              <Group mt="md" gap="xs">
+                <Badge
+                  variant="light"
+                  color={
+                    event.status === 'APPROVED'
+                      ? 'green'
+                      : event.status === 'PENDING'
+                      ? 'yellow'
+                      : 'red'
+                  }
+                >
+                  {statusToLabel(event.status)}
+                </Badge>
+
+                <Badge variant="outline">
+                  {event.event_type === 'ONLINE' ? '線上活動' : '實體活動'}
+                </Badge>
+              </Group>
+            </div>
+
+            <Group gap="xs">
+              <Button
+                variant="outline"
+                component={Link}
+                href={`/events/${event.id}/edit`}
+              >
+                編輯活動
+              </Button>
+              <Button component={Link} href="/events" variant="light">
+                回活動列表
+              </Button>
+            </Group>
+          </Group>
+
+          {/* 主要內容卡片 */}
+          <Card shadow="sm" padding="lg" radius="md" withBorder>
+            <Stack gap="lg">
+              {/* 封面 */}
+              {event.cover_image && (
+                <Image
+                  src={event.cover_image}
+                  alt={event.title}
+                  radius="md"
+                  mah={320}
+                  fit="cover"
+                />
+              )}
+
+              {/* 時間 + 地點 */}
+              <Group align="flex-start" grow>
+                <Stack gap={4}>
+                  <Text size="sm" c="dimmed">
+                    活動時間
+                  </Text>
+                  <Text fw={500}>
+                    {formatDateTime(event.start_time)}
+                    <br />~ {formatDateTime(event.end_time)}
+                  </Text>
+                </Stack>
+
+                <Stack gap={4}>
+                  <Text size="sm" c="dimmed">
+                    活動地點
+                  </Text>
+                  <Text fw={500}>{event.location_name}</Text>
+                  <Text size="sm" c="dimmed">
+                    {event.address}
+                  </Text>
+                </Stack>
+
+                {event.event_type === 'ONLINE' && event.online_event_url && (
+                  <Stack gap={4}>
+                    <Text size="sm" c="dimmed">
+                      線上活動連結
+                    </Text>
+                    <Text
+                      size="sm"
+                      component="a"
+                      href={event.online_event_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      c="blue"
+                    >
+                      {event.online_event_url}
+                    </Text>
+                  </Stack>
+                )}
+              </Group>
+
+              <Divider />
+
+              {/* 活動說明 */}
+              <Stack gap={6}>
+                <Text size="sm" c="dimmed">
+                  活動說明
+                </Text>
+                <Text size="sm" style={{ whiteSpace: 'pre-wrap' }}>
+                  {event.description}
+                </Text>
+              </Stack>
+
+              {/* 預留：未來可以放報名統計、票種資訊等等 */}
+              <Divider />
+              <Text size="xs" c="dimmed">
+                ※ 之後可以在此區塊加上報名人數、票券設定、銷售統計等資訊。
+              </Text>
+            </Stack>
+          </Card>
+        </Stack>
+      )}
+    </Box>
   );
 }

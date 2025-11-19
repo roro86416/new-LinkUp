@@ -1,4 +1,3 @@
-// client/src/app/(organizer)/layout.tsx
 'use client';
 
 import { AppShell, Burger, Group, NavLink, Title } from '@mantine/core';
@@ -15,31 +14,12 @@ export default function OrganizerLayout({
   const [opened, { toggle }] = useDisclosure();
   const pathname = usePathname();
 
- const navLinks = [
-  // 儀表板
-  { icon: IoGrid, label: '總覽', href: '/dashboard' },
-
-  // 活動列表（這裡要用 /events，不是 /organizer/events）
-  {
-    icon: IoCalendar,
-    label: '活動列表',
-    href: '/events',
-  },
-
-  // 建立活動
-  {
-    icon: IoAdd,
-    label: '建立活動',
-    href: '/events/new',
-  },
-
-  // 帳戶設定（之後要做的）
-  {
-    icon: IoSettings,
-    label: '帳戶設定',
-    href: '/settings',
-  },
-];
+  const navLinks = [
+    { icon: IoGrid, label: '總覽', href: '/dashboard' },
+    { icon: IoCalendar, label: '活動列表', href: '/events' },
+    { icon: IoAdd, label: '建立活動', href: '/events/new' },
+    { icon: IoSettings, label: '帳戶設定', href: '/settings' },
+  ];
 
   return (
     <AppShell
@@ -62,11 +42,11 @@ export default function OrganizerLayout({
         {navLinks.map((link) => (
           <NavLink
             key={link.label}
+            component={Link}
             href={link.href}
             label={link.label}
             leftSection={<link.icon size="1rem" />}
-            active={pathname?.startsWith(link.href)}
-            component={Link}
+            active={pathname === link.href || pathname?.startsWith(link.href)}
             onClick={toggle}
           />
         ))}
