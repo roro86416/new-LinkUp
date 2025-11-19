@@ -10,8 +10,10 @@ import LotteryGame from './LotteryGame';
  */
 const LotteryPage: React.FC = () => {
   return (
-    // 您可以在這裡加入頁面標題或其他外層結構
-    <LotteryGame />
+    // ⭐️ 新增：使用 flex 佈局讓內容水平和垂直置中
+    <div className="w-full h-full flex items-center justify-center">
+      <LotteryGame />
+    </div>
   );
 };
 

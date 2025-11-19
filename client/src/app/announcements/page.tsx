@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 // 引用共用型別 (請確認路徑是否正確指向 src/types.ts)
-import { Banner } from '../../types'; 
+import { Banner } from '../../types';
 import {
   MegaphoneIcon,
   ArrowLeftIcon,
@@ -39,21 +39,21 @@ export default function AnnouncementsPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
-        
+
         {/* 頁面標題區 */}
         <div className="flex items-center justify-between mb-8 border-b border-gray-200 pb-6">
           <div className="flex items-center gap-4">
-             <div className="p-3 bg-orange-100 rounded-full text-orange-600 shadow-sm">
-               <MegaphoneIcon className="w-8 h-8" />
-             </div>
-             <div>
-               <h1 className="text-3xl font-bold text-gray-900">最新公告</h1>
-               <p className="text-gray-500 text-sm mt-1">掌握平台最新活動與重要通知</p>
-             </div>
+            <div className="p-3 bg-orange-100 rounded-full text-orange-600 shadow-sm">
+              <MegaphoneIcon className="w-8 h-8" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">最新公告</h1>
+              <p className="text-gray-500 text-sm mt-1">掌握平台最新活動與重要通知</p>
+            </div>
           </div>
-          
-          <Link 
-            href="/" 
+
+          <Link
+            href="/"
             className="group flex items-center text-gray-500 hover:text-orange-600 transition-colors font-medium bg-white px-4 py-2 rounded-lg border border-gray-200 hover:border-orange-200 shadow-sm"
           >
             <ArrowLeftIcon className="w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1" />
@@ -64,16 +64,16 @@ export default function AnnouncementsPage() {
         {/* 列表內容區 */}
         {loading ? (
           <div className="text-center py-20">
-             <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-orange-200 border-t-orange-500"></div>
-             <p className="text-gray-400 mt-2">載入中...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-orange-200 border-t-orange-500"></div>
+            <p className="text-gray-400 mt-2">載入中...</p>
           </div>
         ) : announcements.length === 0 ? (
-           // 空狀態
-           <div className="bg-white rounded-2xl shadow-sm p-16 text-center border border-gray-100">
-             <MegaphoneIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-             <h3 className="text-xl font-semibold text-gray-900">目前沒有公告</h3>
-             <p className="text-gray-500 mt-2">請稍後再回來查看最新消息。</p>
-           </div>
+          // 空狀態
+          <div className="bg-white rounded-2xl shadow-sm p-16 text-center border border-gray-100">
+            <MegaphoneIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold text-gray-900">目前沒有公告</h3>
+            <p className="text-gray-500 mt-2">請稍後再回來查看最新消息。</p>
+          </div>
         ) : (
           // 公告列表
           <div className="space-y-4">
@@ -84,7 +84,8 @@ export default function AnnouncementsPage() {
               >
                 <div className="flex flex-col sm:flex-row h-full">
                   {/* 左側：圖片縮圖 (如果有圖的話) */}
-                  <div className="sm:w-48 h-48 sm:h-auto relative shrink-0 bg-gray-100 overflow-hidden">
+                  {/* ⭐️ 修改：將圖片高度從 h-48 調整為 h-36，並在 sm 斷點設為 h-full */}
+                  <div className="sm:min-w-72 h-36 sm:h-36 relative shrink-0 bg-gray-100 overflow-hidden">
                     {item.imageUrl ? (
                       <img
                         src={item.imageUrl}
@@ -110,17 +111,13 @@ export default function AnnouncementsPage() {
                     </div>
 
                     <div className="mt-auto flex items-center justify-end">
-                      {item.linkUrl && item.linkUrl !== '#' ? (
-                         <Link
-                           href={item.linkUrl}
-                           className="inline-flex items-center gap-1 text-sm font-semibold text-gray-600 hover:text-orange-600 transition-colors"
-                         >
-                           查看詳情 <ChevronRightIcon className="w-4 h-4" />
-                         </Link>
-                      ) : (
-                        <span className="text-sm text-gray-400 cursor-default">
-                          僅供參考
-                        </span>
+                      {item.linkUrl && item.linkUrl !== '#' && (
+                        <Link
+                          href={item.linkUrl}
+                          className="inline-flex items-center gap-1 text-sm font-semibold text-gray-600 hover:text-orange-600 transition-colors"
+                        >
+                          查看詳情 <ChevronRightIcon className="w-4 h-4" />
+                        </Link>
                       )}
                     </div>
                   </div>

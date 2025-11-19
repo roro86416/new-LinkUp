@@ -2,12 +2,12 @@
 
 import React, { ReactElement } from 'react';
 // [新增] 引入您指定的圖示庫
-import { 
-  AiOutlineSetting, 
-  AiOutlineInbox, 
-  AiOutlineStar, 
-  AiOutlineCamera, 
-  AiOutlineOrderedList 
+import {
+  AiOutlineSetting,
+  AiOutlineInbox,
+  AiOutlineStar,
+  AiOutlineCamera,
+  AiOutlineOrderedList
 } from 'react-icons/ai';
 import { BsGift, BsTicketPerforated } from 'react-icons/bs';
 import { FiPackage, FiBarChart2 } from 'react-icons/fi';
@@ -56,7 +56,7 @@ const Avatar = ({ loading, currentUser, onAvatarChange }: Pick<SidebarProps, 'lo
     ) : currentUser?.avatar ? (
       <img src={currentUser.avatar} alt="avatar" className="w-full h-full rounded-full object-cover" />
     ) : (
-      <div className="w-full h-full rounded-full bg-gray-400 flex items-center justify-center text-white text-5xl font-bold">
+      <div className="w-full h-full rounded-full bg-red-900 flex items-center justify-center text-white text-5xl font-bold">
         {currentUser?.name?.[0]?.toUpperCase() || '?'}
       </div>
     )}

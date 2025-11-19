@@ -31,20 +31,27 @@ export default function RegisterModal() {
   const { isRegisterOpen, closeRegister, openEmailLogin } = useModal();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   if (!isRegisterOpen) return null;
 
   const handleRegister = async () => {
-    if (!email || !password) {
+    if (!email || !password || !confirmPassword) {
       setMessage('⚠️ 請填寫完整資訊');
       return;
     }
     // ✅ 新增：客戶端密碼長度驗證
     if (password.length < 8) {
       setMessage('❌ 密碼長度至少需要 8 個字元');
+      return;
+    }
+    // ✅ 新增：驗證兩次密碼是否相符
+    if (password !== confirmPassword) {
+      setMessage('❌ 兩次輸入的密碼不相符');
       return;
     }
 
@@ -58,6 +65,7 @@ export default function RegisterModal() {
       setMessage('🎉 註冊成功！');
       setEmail('');
       setPassword('');
+      setConfirmPassword('');
 
       // 如果有 token，可以存起來
       if (result.token) localStorage.setItem('token', result.token);
@@ -122,6 +130,23 @@ export default function RegisterModal() {
             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
           >
             {showPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
+          </button>
+        </div>
+
+        <div className="relative w-full mb-3">
+          <input
+            type={showConfirmPassword ? 'text' : 'password'}
+            placeholder="再次輸入密碼"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-[#EF9D11]"
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
+          >
+            {showConfirmPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
           </button>
         </div>
 

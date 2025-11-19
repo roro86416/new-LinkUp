@@ -2,9 +2,11 @@
 
 import React from 'react';
 import { useCoupons, Coupon } from './CouponsContext';
-import { TicketIcon } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/navigation';
+import { TicketIcon, XMarkIcon } from '@heroicons/react/24/outline'; // 1. 引入 XMarkIcon
 
-const CouponCard: React.FC<{ coupon: Coupon }> = ({ coupon }) => {
+const CouponCard: React.FC<{ coupon: Coupon; onRemove: (id: string) => void }> = ({ coupon, onRemove }) => {
+  const router = useRouter();
   const isExpired = new Date(coupon.expiresAt) < new Date();
   const cardStyle = coupon.isUsed || isExpired
     ? 'grayscale opacity-60'
@@ -12,6 +14,14 @@ const CouponCard: React.FC<{ coupon: Coupon }> = ({ coupon }) => {
 
   return (
     <div className={`relative flex w-full max-w-sm overflow-hidden rounded-lg bg-white shadow-md transition-all duration-300 ${cardStyle}`}>
+      {/* 2. 新增刪除按鈕 */}
+      <button
+        onClick={() => onRemove(coupon.id)}
+        className="absolute top-2 right-2 p-1 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors z-10"
+        title="刪除此折價券"
+      >
+        <XMarkIcon className="h-5 w-5" />
+      </button>
       <div className="w-1/3 bg-orange-500 p-4 flex items-center justify-center">
         <div className="text-center text-white">
           <p className="text-sm">NT$</p>
@@ -33,7 +43,10 @@ const CouponCard: React.FC<{ coupon: Coupon }> = ({ coupon }) => {
           ) : isExpired ? (
             <span className="font-semibold text-red-500">已過期</span>
           ) : (
-            <button className="rounded-md bg-orange-500 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-orange-600">
+            <button
+              onClick={() => router.push('/')}
+              className="rounded-md bg-orange-500 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-orange-600"
+            >
               立即使用
             </button>
           )}
@@ -44,7 +57,7 @@ const CouponCard: React.FC<{ coupon: Coupon }> = ({ coupon }) => {
 };
 
 export default function MyCoupons() {
-  const { coupons, loading } = useCoupons();
+  const { coupons, loading, removeCoupon } = useCoupons(); // 3. 從 Context 取得 removeCoupon 方法
 
   if (loading) {
     return <div>讀取中...</div>;
@@ -58,7 +71,7 @@ export default function MyCoupons() {
       {coupons.length > 0 ? (
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-2">
           {coupons.map(coupon => (
-            <CouponCard key={coupon.id} coupon={coupon} />
+            <CouponCard key={coupon.id} coupon={coupon} onRemove={removeCoupon} />
           ))}
         </div>
       ) : (

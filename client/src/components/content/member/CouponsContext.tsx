@@ -17,6 +17,7 @@ export interface Coupon {
 interface CouponsContextType {
   coupons: Coupon[];
   addCoupon: (prize: { name: string; image: string }) => void;
+  removeCoupon: (couponId: string) => void;
   loading: boolean;
 }
 
@@ -57,7 +58,12 @@ export const CouponsProvider = ({ children }: { children: ReactNode }) => {
     toast.success(`恭喜！您獲得一張 ${prize.name}！`);
   }, []);
 
-  return <CouponsContext.Provider value={{ coupons, addCoupon, loading }}>{children}</CouponsContext.Provider>;
+  const removeCoupon = useCallback((couponId: string) => {
+    setCoupons(prev => prev.filter(coupon => coupon.id !== couponId));
+    toast.success('已刪除折價券');
+  }, []);
+
+  return <CouponsContext.Provider value={{ coupons, addCoupon, removeCoupon, loading }}>{children}</CouponsContext.Provider>;
 };
 
 export const useCoupons = () => {

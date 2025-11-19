@@ -8,20 +8,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Listbox, Transition } from '@headlessui/react';
 import toast from 'react-hot-toast';
-import EventCard, { EventCardData } from '../components/content/member/EventCard'; 
+import EventCard, { EventCardData } from '../components/content/member/EventCard';
 import { getEvents } from '../api/event-api';
-
-// 這裡借用 EventCard 的資料型別，如果您還沒搬移 EventCard，可以先用 any 或自己定義
-interface EventCardData {
-  id: number;
-  title: string;
-  cover_image: string; // 注意後端回傳的是 cover_image
-  start_time: string;
-  location_name: string;
-  description?: string;
-  organizerName?: string;
-  price?: number;
-}
 
 // Icons
 import {
@@ -91,11 +79,11 @@ export default function HomePage() {
       try {
         // 這裡我們抓取 "popular" 的前 3 筆活動放上 Banner
         const events = await getEvents('popular', 3);
-        
+
         // ⚠️ 關鍵：將 Event 格式轉換為 Banner 格式
         eventBanners = events.map((event) => ({
           // 為了避免 ID 與 localStorage 的公告 ID (通常是 1, 2, 3) 重複，我們給它加一個大數字
-          id: 10000 + event.id, 
+          id: 10000 + event.id,
           title: event.title,
           imageUrl: event.cover_image, // 對應後端欄位
           linkUrl: `/event/${event.id}`, // 點擊後跳轉到活動詳情
@@ -164,8 +152,6 @@ export default function HomePage() {
         id: event.id,
         title: event.title,
         date: new Date(event.start_time).toLocaleDateString(),
-        img: event.cover_image,
-        desc: '',
         location: event.location_name || '地點待定',
         isUpcoming: true,
         organizerName: event.organizerName || '主辦方'
@@ -183,7 +169,7 @@ export default function HomePage() {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            handleFavoriteToggle(event);
+            handleToggleFavorite(event);
           }}
           className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-black/20 hover:bg-black/40 transition-colors cursor-pointer"
         >
@@ -207,7 +193,7 @@ export default function HomePage() {
 
   return (
     <div className="relative min-h-screen text-gray-900 bg-white overflow-x-hidden">
-      
+
       {/* === 1. Banner 區塊 (保留組員的 Tailwind 寫法) === */}
       <section className="relative w-full h-[400px] overflow-hidden bg-gray-200 group">
         <div
@@ -237,7 +223,7 @@ export default function HomePage() {
 
         {/* 搜尋欄 (浮在 Banner 上) */}
         <div className="absolute inset-0 flex flex-col items-center justify-center z-30 pointer-events-none">
-           {/* pointer-events-auto 讓搜尋框可以被點擊 */}
+          {/* pointer-events-auto 讓搜尋框可以被點擊 */}
           <div className="relative w-96 pointer-events-auto">
             <input
               type="text"
@@ -286,7 +272,7 @@ export default function HomePage() {
               </ul>
             </div>
           </div>
-          
+
           {/* 右下角更多公告按鈕 */}
           <Link href="/announcements" className="flex items-center gap-1 text-sm text-gray-500 hover:text-orange-600 whitespace-nowrap ml-4">
             更多公告 <ArrowRightIcon className="w-3 h-3" />
@@ -315,7 +301,7 @@ export default function HomePage() {
           熱門活動
         </h2>
         {isLoadingEvents ? (
-           <div className="text-center py-12 text-gray-400">活動載入中...</div>
+          <div className="text-center py-12 text-gray-400">活動載入中...</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {popularEvents.map((event) => (
@@ -375,24 +361,24 @@ export default function HomePage() {
         </div>
       </section>
 
-     {/* 5. [修改] 瀏覽活動 - 使用新的 EventCard */}
+      {/* 5. [修改] 瀏覽活動 - 使用新的 EventCard */}
       <div className="px-4 md:px-16 py-12 bg-white">
-         {/* ... (下拉選單部分保留) ... */}
-         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
-             <span className="font-bold text-gray-900 text-2xl">瀏覽活動</span>
-             <Listbox value={location} onChange={setLocation}>
-                {/* ... */}
-                 <div className="relative w-32">
-                  <Listbox.Button className="relative w-full cursor-pointer rounded-lg bg-gray-100 py-2 pl-3 pr-10 text-left text-gray-700 shadow-sm hover:bg-gray-200 transition-colors">
-                    {location}
-                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                      <HiChevronDown className="h-5 w-5 text-gray-500" />
-                    </span>
-                  </Listbox.Button>
-                  {/* ... options ... */}
-                 </div>
-             </Listbox>
-         </div>
+        {/* ... (下拉選單部分保留) ... */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
+          <span className="font-bold text-gray-900 text-2xl">瀏覽活動</span>
+          <Listbox value={location} onChange={setLocation}>
+            {/* ... */}
+            <div className="relative w-32">
+              <Listbox.Button className="relative w-full cursor-pointer rounded-lg bg-gray-100 py-2 pl-3 pr-10 text-left text-gray-700 shadow-sm hover:bg-gray-200 transition-colors">
+                {location}
+                <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                  <HiChevronDown className="h-5 w-5 text-gray-500" />
+                </span>
+              </Listbox.Button>
+              {/* ... options ... */}
+            </div>
+          </Listbox>
+        </div>
 
         {isLoadingEvents ? <div className="text-center py-12">載入中...</div> : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
