@@ -14,6 +14,7 @@ import {
   Textarea,
   Button,
 } from "@mantine/core";
+import { useUser } from "../../src/context/auth/UserContext";
 
 interface EventTabsProps {
   eventId: number;
@@ -37,6 +38,7 @@ interface Review {
   comment: string;
   created_at: string;
   user: {
+    id: string;
     name: string;
     avatar: string | null;
   };
@@ -50,6 +52,7 @@ function getAuth() {
 }
 
 export default function EventTabs({ eventId, description }: EventTabsProps) {
+  const { user } = useUser(); // ⭐ 取出 user
   /* 天氣狀態 */
   const [weather, setWeather] = useState<Weather | null>(null);
   const [loadingWeather, setLoadingWeather] = useState(false);
@@ -149,9 +152,9 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            eventId: eventId,       // ⭐ 後端要求 eventId（number）
-            userId: user.userId,    // ⭐ 後端要求 userId（string）
-            score: newRating,       // ⭐ 後端 schema 是 score，不是 rating
+            eventId: eventId, // ⭐ 後端要求 eventId（number）
+            userId: user.userId, // ⭐ 後端要求 userId（string）
+            score: newRating, // ⭐ 後端 schema 是 score，不是 rating
             comment: newComment,
           }),
         }
@@ -174,6 +177,52 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {
       setReviewError("無法連接伺服器");
     } finally {
       setPosting(false);
+    }
+  }
+
+  /* ----------------⭐ DELETE 刪除自己評論 ---------------- */
+  async function handleDeleteReview(ratingId: number) {
+    const token =
+      typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    const user =
+      typeof window !== "undefined"
+        ? JSON.parse(localStorage.getItem("user") || "null")
+        : null;
+
+    if (!token || !user?.userId) {
+      setReviewError("請先登入才能刪除評論");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/ratings/${ratingId}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const json = await res.json();
+      if (!res.ok) {
+        setReviewError(json.message ?? "刪除失敗");
+        return;
+      }
+
+      // ⭐ 前端同步移除這筆評論
+      setReviews((prev) => prev.filter((r) => r.id !== ratingId));
+
+      // ⭐ 更新平均分數
+      setAvgRating((prev) => {
+        if (!prev) return null;
+        const remaining = reviews.filter((r) => r.id !== ratingId);
+        if (remaining.length === 0) return null;
+
+        const sum = remaining.reduce((a, b) => a + b.rating, 0);
+        return Number((sum / remaining.length).toFixed(1));
+      });
+    } catch (err) {
+      setReviewError("無法連接伺服器");
     }
   }
 
@@ -279,9 +328,20 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {
                   <div style={{ flex: 1 }}>
                     <Group justify="space-between">
                       <Text fw={600}>{r.user.name}</Text>
-                      <Rating value={r.rating} readOnly />
+                      {/* ⭐ 如果是自己的評論，就顯示刪除按鈕 */}
+                      {user?.userId === r.user.id  && (
+                        <Button
+                          color="red"
+                          size="xs"
+                          variant="light"
+                          onClick={() => handleDeleteReview(r.id)}
+                        >
+                          刪除
+                        </Button>
+                      )}
                     </Group>
 
+                    <Rating value={r.rating} readOnly />
                     <Text mt="sm">{r.comment}</Text>
 
                     <Text size="xs" mt="xs" c="gray.6">
