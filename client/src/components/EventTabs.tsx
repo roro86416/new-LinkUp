@@ -1,10 +1,20 @@
-// client/src/components/EventTabs.tsx
 "use client";
 
 import { useEffect, useState } from "react";
-import { Paper, Tabs, Title, Text, Group, Loader, Avatar, Rating, Divider, } from "@mantine/core";
+import {
+  Paper,
+  Tabs,
+  Title,
+  Text,
+  Group,
+  Loader,
+  Avatar,
+  Rating,
+  Divider,
+  Textarea,
+  Button,
+} from "@mantine/core";
 
-/* Props：接受 eventId、eventDescription */
 interface EventTabsProps {
   eventId: number;
   description: string;
@@ -20,7 +30,7 @@ type Weather = {
   windDirection?: string | null;
 };
 
-/* ⭐ 評論資料型別 */
+/* 評論資料型別 */
 interface Review {
   id: number;
   rating: number;
@@ -32,85 +42,142 @@ interface Review {
   };
 }
 
-/* ---------------- Component ---------------- */
-export default function EventTabs({ eventId, description }: EventTabsProps) {/* 天氣 */
-  const [weather, setWeather] = useState<Weather | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+/* 取得登入狀態（user + token） */
+function getAuth() {
+  const token = localStorage.getItem("token");
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  return { token, user };
+}
 
-  /* ⭐ 評論狀態 */
+export default function EventTabs({ eventId, description }: EventTabsProps) {
+  /* 天氣狀態 */
+  const [weather, setWeather] = useState<Weather | null>(null);
+  const [loadingWeather, setLoadingWeather] = useState(false);
+  const [weatherError, setWeatherError] = useState<string | null>(null);
+
+  /* 評論狀態 */
   const [reviews, setReviews] = useState<Review[]>([]);
   const [avgRating, setAvgRating] = useState<number | null>(null);
-  const [loadingReviews, setLoadingReviews] = useState<boolean>(false);
+  const [loadingReviews, setLoadingReviews] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
 
-  /* -----------------------------
-   * 天氣 API 串接
-   * ----------------------------- */
+  /* 新增評論 */
+  const [newRating, setNewRating] = useState<number>(0);
+  const [newComment, setNewComment] = useState<string>("");
+  const [posting, setPosting] = useState(false);
+
+  /* ---------------- WEATHER API ---------------- */
   useEffect(() => {
     if (!eventId) return;
 
     async function fetchWeather() {
       try {
-        setLoading(true);
-        setError(null);
+        setLoadingWeather(true);
+        setWeatherError(null);
 
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/events/${eventId}/weather`
         );
-
         const json = await res.json();
 
         if (!json.success) {
-          setError("天氣資料取得失敗");
+          setWeatherError("天氣資料取得失敗");
           return;
         }
 
         setWeather(json.data.weather);
       } catch (err) {
-        setError("無法連接伺服器");
+        setWeatherError("無法連接伺服器");
       } finally {
-        setLoading(false);
+        setLoadingWeather(false);
       }
     }
 
     fetchWeather();
   }, [eventId]);
 
-    /* -----------------------------
-   * ⭐ 評論 API 串接
-   * ----------------------------- */
-  useEffect(() => {
-    if (!eventId) return;
+  /* ---------------- REVIEWS GET API ---------------- */
+  async function fetchReviews() {
+    try {
+      setLoadingReviews(true);
+      setReviewError(null);
 
-    async function fetchReviews() {
-      try {
-        setLoadingReviews(true);
-        setReviewError(null);
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/ratings/${eventId}`
+      );
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/ratings/${eventId}`
-        );
-
-        const json = await res.json();
-        if (!json.success) {
-          setReviewError("評論資料取得失敗");
-          return;
-        }
-
-        setReviews(json.data);
-        setAvgRating(json.averageRating ?? null);
-      } catch (err) {
-        setReviewError("無法連接伺服器");
-      } finally {
-        setLoadingReviews(false);
+      const json = await res.json();
+      if (!json.success) {
+        setReviewError("評論資料取得失敗");
+        return;
       }
-    }
 
-    fetchReviews();
+      setReviews(json.data);
+      setAvgRating(json.averageRating ?? null);
+    } catch (err) {
+      setReviewError("無法連接伺服器");
+    } finally {
+      setLoadingReviews(false);
+    }
+  }
+
+  useEffect(() => {
+    if (eventId) fetchReviews();
   }, [eventId]);
 
-    /* ---------------- JSX ---------------- */
+  /* ----------------⭐ POST 新增評論 ---------------- */
+  async function handlePostReview() {
+    if (!newRating || newComment.trim() === "") return;
+
+    const { token, user } = getAuth();
+
+    if (!token || !user.userId) {
+      setReviewError("請先登入才能發表評論");
+      return;
+    }
+
+    try {
+      setPosting(true);
+      setReviewError(null);
+
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/ratings`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            eventId: eventId,       // ⭐ 後端要求 eventId（number）
+            userId: user.userId,    // ⭐ 後端要求 userId（string）
+            score: newRating,       // ⭐ 後端 schema 是 score，不是 rating
+            comment: newComment,
+          }),
+        }
+      );
+
+      const json = await res.json();
+
+      if (!json.data) {
+        setReviewError(json.message ?? "新增評論失敗");
+        return;
+      }
+
+      // 新增後重新拉取評論列表（最安全、避免重算錯誤）
+      await fetchReviews();
+
+      // 清空表單
+      setNewRating(0);
+      setNewComment("");
+    } catch (err) {
+      setReviewError("無法連接伺服器");
+    } finally {
+      setPosting(false);
+    }
+  }
+
+  /* ---------------- JSX UI ---------------- */
   return (
     <Tabs defaultValue="intro" mt="xl">
       <Tabs.List>
@@ -119,25 +186,21 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {/* 
         <Tabs.Tab value="comments">評論區</Tabs.Tab>
       </Tabs.List>
 
-      {/* ---------------- Intro：活動簡介 ---------------- */}
+      {/* 活動簡介 */}
       <Tabs.Panel value="intro" pt="md">
-        <Paper p={24} withBorder radius="md" mt="md">
+        <Paper p={24} withBorder radius="md">
           <Title order={4}>活動簡介</Title>
           <Text mt="sm">{description}</Text>
         </Paper>
       </Tabs.Panel>
 
-      {/* ---------------- Weather：活動天氣 ---------------- */}
+      {/* 活動天氣 */}
       <Tabs.Panel value="weather" pt="md">
-        <Paper p={24} withBorder radius="md" mt="md">
+        <Paper p={24} withBorder radius="md">
           <Title order={4}>活動天氣</Title>
 
-          {loading && <Loader mt="md" />}
-          {error && (
-            <Text c="red" mt="md">
-              {error}
-            </Text>
-          )}
+          {loadingWeather && <Loader mt="md" />}
+          {weatherError && <Text c="red">{weatherError}</Text>}
 
           {weather && (
             <div style={{ marginTop: "1rem" }}>
@@ -152,12 +215,12 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {/* 
         </Paper>
       </Tabs.Panel>
 
-      {/* ---------------- ⭐ Comments (GET) ---------------- */}
+      {/* ⭐ 評論區 */}
       <Tabs.Panel value="comments" pt="md">
         <Paper p={24} withBorder radius="md">
           <Title order={4}>評論區</Title>
 
-          {/* 平均評分 */}
+          {/* 平均分 */}
           {avgRating !== null && (
             <Group mt="md">
               <Rating value={avgRating} fractions={2} readOnly />
@@ -165,22 +228,45 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {/* 
             </Group>
           )}
 
-          {/* Loading */}
-          {loadingReviews && <Loader mt="md" />}
+          <Divider my="md" />
 
-          {/* Error */}
+          {/* 新增評論 */}
+          <Title order={5}>發表評論</Title>
+
+          <Rating mt="sm" value={newRating} onChange={setNewRating} />
+
+          <Textarea
+            mt="sm"
+            placeholder="寫下你的感想..."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            minRows={3}
+          />
+
+          <Button
+            mt="md"
+            loading={posting}
+            onClick={handlePostReview}
+            disabled={!newRating || newComment.trim() === ""}
+          >
+            發表評論
+          </Button>
+
           {reviewError && (
-            <Text c="red" mt="md">
+            <Text c="red" mt="sm">
               {reviewError}
             </Text>
           )}
 
+          <Divider my="lg" />
+
           {/* 評論列表 */}
+          {loadingReviews && <Loader mt="md" />}
+
           {!loadingReviews &&
             reviews.map((r) => (
               <Paper key={r.id} shadow="xs" p="md" mt="md" radius="md">
                 <Group align="flex-start">
-                  {/* 大頭貼 */}
                   <Avatar
                     src={
                       r.user.avatar ??
@@ -190,7 +276,6 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {/* 
                     size="lg"
                   />
 
-                  {/* 右側內容 */}
                   <div style={{ flex: 1 }}>
                     <Group justify="space-between">
                       <Text fw={600}>{r.user.name}</Text>
@@ -215,4 +300,3 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {/* 
     </Tabs>
   );
 }
-
