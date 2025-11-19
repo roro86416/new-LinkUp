@@ -9,9 +9,16 @@ import axios from "axios";
 
 export async function getEventWeatherService(eventId: number) {
   try {
-
+    // 1. 這裡再讀 env（不要在檔案頂端讀）
     const apiKey = process.env.CWB_API_KEY;
-    // 1. 找到活動，取得經緯度
+    console.log("🔑 CWB_API_KEY in service =", apiKey);
+
+    if (!apiKey) {
+      console.error("❌ CWB_API_KEY 未設定");
+      throw new Error("氣象署 API 金鑰未設定");
+    }
+
+    // 2. 找活動，取經緯度
     const event = await prisma.event.findUnique({
       where: { id: eventId },
       select: {
@@ -32,38 +39,95 @@ export async function getEventWeatherService(eventId: number) {
       throw new Error("該活動未設定經緯度");
     }
 
-    // 2. 呼叫中央氣象署 API （自動觀測站）
-    const WEATHER_URL = `https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001`;
+    const eventLat = Number(event.latitude);
+    const eventLon = Number(event.longitude);
 
-    const response = await axios.get(WEATHER_URL, {
-      params: {
-        Authorization: apiKey,
-        format: "JSON",
-        lat: event.latitude,
-        lon: event.longitude,
-      },
-    });
-
-    const records = response.data?.records?.Station || [];
-
-    if (records.length === 0) {
-      return {
-        event,
-        weather: null,
-      };
+    if (Number.isNaN(eventLat) || Number.isNaN(eventLon)) {
+      throw new Error("活動經緯度格式錯誤");
     }
 
-    // 3. 取最接近的測站資料
-    const station = records[0];
+    // 3. 呼叫中央氣象署「全測站逐時」資料
+    const baseUrl =
+      "https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0001-001";
 
+    const url = `${baseUrl}?Authorization=${encodeURIComponent(
+      apiKey
+    )}&format=JSON`;
+
+    console.log("📡 Fetch URL =", url);
+
+    const response = await axios.get(url);
+
+    console.log("📡 氣象署回應狀態碼 =", response.status);
+
+    if (response.status !== 200) {
+      console.error("📡 氣象署回應 headers =", response.headers);
+      console.error("📡 氣象署錯誤內容 =", response.data);
+      throw new Error("氣象署 API 回應錯誤");
+    }
+
+    const stations: any[] = response.data?.records?.Station ?? [];
+
+    if (stations.length === 0) {
+      console.warn("⚠️ records.Station 為空");
+      return { event, weather: null };
+    }
+
+    // 4. 找離活動最近的測站
+    let nearestStation: any | null = null;
+    let minDistance = Infinity;
+
+    for (const st of stations) {
+      const coords: any[] = st.GeoInfo?.Coordinates ?? [];
+
+      // 依你貼的 JSON：CoordinateName: "WGS84"
+      const wgs84 =
+        coords.find((c: any) => c.CoordinateName === "WGS84") ?? coords[0];
+
+      if (!wgs84) continue;
+
+      const sLat = Number(wgs84.StationLatitude);
+      const sLon = Number(wgs84.StationLongitude);
+      if (Number.isNaN(sLat) || Number.isNaN(sLon)) continue;
+
+      const dLat = eventLat - sLat;
+      const dLon = eventLon - sLon;
+      const distSq = dLat * dLat + dLon * dLon;
+
+      if (distSq < minDistance) {
+        minDistance = distSq;
+        nearestStation = st;
+      }
+    }
+
+    if (!nearestStation) {
+      console.warn("⚠️ 找不到帶有座標的測站");
+      return { event, weather: null };
+    }
+
+    const coords: any[] = nearestStation.GeoInfo?.Coordinates ?? [];
+    const wgs84 =
+      coords.find((c: any) => c.CoordinateName === "WGS84") ?? coords[0];
+
+    console.log("✅ 選到測站：", {
+      eventId,
+      eventLat,
+      eventLon,
+      stationName: nearestStation.StationName,
+      stationId: nearestStation.StationId,
+      stationLat: wgs84?.StationLatitude ?? null,
+      stationLon: wgs84?.StationLongitude ?? null,
+    });
+
+    // 5. 整理回傳資料
     const weatherData = {
-      stationName: station.StationName,
-      obsTime: station.ObsTime?.DateTime,
-      temperature: station.WeatherElement?.AirTemperature,
-      humidity: station.WeatherElement?.RelativeHumidity,
-      windSpeed: station.WeatherElement?.WindSpeed,
-      windDirection: station.WeatherElement?.WindDirection,
-      rainfall: station.WeatherElement?.Precipitation,
+      stationName: nearestStation.StationName,
+      obsTime: nearestStation.ObsTime?.DateTime,
+      temperature: nearestStation.WeatherElement?.AirTemperature,
+      humidity: nearestStation.WeatherElement?.RelativeHumidity,
+      windSpeed: nearestStation.WeatherElement?.WindSpeed,
+      windDirection: nearestStation.WeatherElement?.WindDirection,
+      rainfall: nearestStation.WeatherElement?.Now?.Precipitation,
     };
 
     return {
@@ -72,6 +136,6 @@ export async function getEventWeatherService(eventId: number) {
     };
   } catch (error) {
     console.error("❌ getEventWeatherService 錯誤：", error);
-    throw error;
+    throw new Error("天氣查詢失敗");
   }
 }
