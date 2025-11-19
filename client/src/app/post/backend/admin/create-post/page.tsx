@@ -25,6 +25,18 @@ export default function CreatePostPage() {
   });
 
   const onSubmit = async (data: PostFormData) => {
+
+
+//     const authToken = localStorage.getItem('token'); 
+
+//     console.log("📌 從 localStorage 讀取的 Token:", authToken);
+
+//     if (!authToken) {
+//       console.error("錯誤：請先登入，找不到驗證 Token。");
+//       // 導航到登入頁面
+//       router.push('/login'); 
+//       return;
+//     }
     // --- content blocks ---
     const contentJSON = JSON.stringify(
       data.content.blocks.map((block) => {
@@ -58,7 +70,11 @@ export default function CreatePostPage() {
     try {
       const res = await fetch("http://localhost:3001/post", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+    "Content-Type": "application/json",
+    // "Authorization": `Bearer ${authToken}`,
+  },
+  // credentials: "include",
         body: JSON.stringify(payload),
       });
 

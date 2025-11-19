@@ -17,7 +17,7 @@ const JWT_SECRETS = {
   member: process.env.JWT_SECRET || "secretkey",
   admin: process.env.JWT_ADMIN_SECRET || "adminsecretkey",
 };
-
+ const TEST_SECRET = "temp_fix_secret_12345"; 
 /**
  * 通用的 JWT 驗證中間件
  * @param role 'member' 或 'admin'
@@ -33,6 +33,7 @@ export const auth = (role: "member" | "admin") => {
 
     try {
       const secret = JWT_SECRETS[role];
+      
       const decoded = jwt.verify(token, secret) as JwtPayload;
 
       // 如果需要驗證角色，且角色不符

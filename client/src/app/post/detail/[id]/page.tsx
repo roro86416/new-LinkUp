@@ -2,9 +2,10 @@ import { notFound } from "next/navigation";
 import Breadcrumb from "../../post-component/layouts/Breadcrumb";
 import ArticleHeader from "../postHeader";
 import ArticleContent from "../postContent";
-import CommentSection from "../CommentList";
+import ReviewComponent from "../PostReview/CommentList";
 
 interface Article {
+  id: number;
   title: string;
   slug: string;
   content: string;
@@ -28,6 +29,7 @@ export default async function ArticlePage({
 }) {
   // ✅ 假資料版本：不用 fetch，直接建立一筆文章資料
   const article: Article = {
+    id: 101,
     title: "React 與 Next.js 的整合實戰",
     slug: params.slug, // 動態從網址帶入
     content: `
@@ -63,7 +65,7 @@ export default async function ArticlePage({
       <ArticleContent content={article.content} />
 
       {/* 評論區 */}
-      <CommentSection />
+      <ReviewComponent currentPostId={article.id} />
     </main>
   );
 }

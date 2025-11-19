@@ -4,7 +4,13 @@ import * as PostsService from "./post.service.js";
 
 export const createPostController = async (req: Request, res: Response) => {
   try {
-    const author_id = (req as any).user?.id || "system";
+    const author_id = (req as any).user?.id; // 只取 ID
+
+    // 🔥 檢查使用者是否通過認證
+    if (!author_id) {
+        // 如果沒有 ID，表示使用者未登入或認證失敗
+        return res.status(401).json({ success: false, message: "Authentication required to create a post." });
+    }
 
     const parsed = createPostSchema.parse(req.body);
 
@@ -23,4 +29,9 @@ export const createPostController = async (req: Request, res: Response) => {
       message: err.message || "Server error",
     });
   }
+};
+
+export const getPostsController = (req: Request, res: Response) => {
+    // 這裡寫入從資料庫查詢文章列表的邏輯
+    res.status(200).json({ message: "文章列表獲取成功！", data: [] });
 };

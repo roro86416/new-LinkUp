@@ -1,9 +1,19 @@
 import { Router } from "express";
+// ❌ 移除對 auth 的匯入
+// import { auth } from "../../../middleware/auth.middleware.js"; 
 import { createPostController } from "./post.controller.js";
+// 假設您還有這個
+import { getPostsController } from "./post.controller.js"; 
 
 const router = Router();
 
-// 前端會用 JSON POST，cover 圖片透過 /image/upload 先上傳
-router.post("/", createPostController);
+// 🚀 關鍵修改：移除 auth("member")
+router.post(
+    "/", 
+    // 移除 auth("member")
+    createPostController        
+);
+
+router.get("/", getPostsController); 
 
 export default router;

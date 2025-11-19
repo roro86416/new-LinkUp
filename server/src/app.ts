@@ -2,6 +2,7 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
+import cookieParser from "cookie-parser";
 
 // 模組匯入
 import productRoutes from "./modules/product/products.routes.js";
@@ -34,7 +35,7 @@ app.use(
   })
 );
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")))
-
+app.use(cookieParser());
 
 
 // --- 靜態檔案服務設定 (重要：讓上傳的圖片可以公開訪問) ---
