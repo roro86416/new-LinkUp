@@ -1,24 +1,37 @@
 import { Request, Response, NextFunction } from "express";
-import { ZodObject } from "zod";
+import { ZodObject, ZodError } from "zod";
 
 const verify =
   (
-    schema: ZodObject<any> // <any> is added to ZodObject to prevent ZodObject type error
+    schema: ZodObject<any>
   ) =>
   async (req: Request, res: Response, next: NextFunction) => {
     try {
-      // 1. 【修正】加上 await，確保異步驗證完成
+      console.log("🔍 [Verify Middleware] 收到請求，開始驗證...");
+      console.log("📦 [Verify Middleware] Body 內容:", JSON.stringify(req.body, null, 2));
+
+      // 1. 執行驗證
       await schema.parseAsync({
         body: req.body,
         query: req.query,
         params: req.params,
       });
 
-      // 2. 【修正】驗證成功後，必須呼叫 next() 才能繼續執行路由
+      console.log("✅ [Verify Middleware] 驗證成功！前往 Controller ->");
+      
+      // 2. 驗證成功，繼續
       next();
     } catch (error) {
-      // 3. 【修正】將錯誤傳遞給 Express 處理
-      // (通常在 Express 中，我們會將錯誤丟給 next(error) 讓全域錯誤處理器處理)
+      console.error("❌ [Verify Middleware] 驗證失敗！");
+      
+      if (error instanceof ZodError) {
+        // 印出詳細的 Zod 錯誤原因 (這對除錯非常有幫助)
+        console.error("📋 [Zod Error Detail]:", JSON.stringify(error.issues, null, 2));
+      } else {
+        console.error("⚠️ [Unknown Error]:", error);
+      }
+
+      // 3. 將錯誤傳遞給 Express
       next(error);
     }
   };

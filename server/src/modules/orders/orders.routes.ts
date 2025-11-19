@@ -1,23 +1,20 @@
 import { Router } from "express";
-// 引入您的中間件
 import verify from "../../middleware/verify.middleware.js"; //
 import { auth } from "../../middleware/auth.middleware.js"; //
-
-// 引入我們剛剛建立的 Schema
 import { createOrderSchema } from "./orders.schema.js"; //
-
-// 引入我們剛剛建立的所有 Controller 函數
 import {
   createOrderController,
   getOrdersController,
   getOrderByIdController,
   cancelOrderController,
+  repayOrderController,
+  fakePayController
 } from "./orders.controller.js";
 
 const router = Router();
 
 // 先登入驗證
-router.use(auth); //
+router.use(auth("member"));
 
 // 查詢目前使用者的所有訂單列表
 router.get(
@@ -38,10 +35,16 @@ router.post(
   createOrderController
 );
 
+// 重新付款 (Repay)
+router.post("/:id/repay", repayOrderController);
+
 // 取消一筆待付款 (Pending) 的訂單
 router.delete(
   "/:id",
   cancelOrderController
 );
+
+//模擬付款成功
+router.post("/:id/fake-pay", fakePayController);
 
 export default router;

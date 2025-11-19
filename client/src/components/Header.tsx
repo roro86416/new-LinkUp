@@ -56,6 +56,7 @@ export default function Header() {
         <input
           type="text"
           placeholder="搜尋活動"
+          suppressHydrationWarning={true}
           className="w-full pl-10 pr-3 py-2 rounded-lg bg-black/20 text-white placeholder-white text-center hover:bg-black/30 focus:outline-none focus:ring-0 border border-white/50 transition-all duration-200 cursor-pointer"
         />
         <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70 pointer-events-none" />

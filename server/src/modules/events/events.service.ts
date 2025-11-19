@@ -87,6 +87,7 @@ export const getPublicEventById = async (eventId: number) => {
       status: EventStatus.APPROVED, // [!] 確保活動是已批准的
     },
     include: {
+      
       // (A) 串聯主辦方 -> 使用者 (為了名稱)
       organizer: { 
         include: {
@@ -110,19 +111,26 @@ export const getPublicEventById = async (eventId: number) => {
       // (C) [!!!] 串聯「商品連結表 (productLinks)」 -> 「商品 (product)」
       //     這就是您的「商城」資料
       productLinks: { 
-        where:{
-          product:{
-            is_published:true
+        where: {
+          product: { 
+            is_published: true 
           }
         },
-        include:{
-          product:true,
+        include: {
+          product: {
+            include: {
+              variants: { 
+                where: {
+                  stock_quantity: { gt: 0 } 
+                },
+                orderBy: {
+                  price_offset: 'asc' 
+                }
+              }
+            }
+          }
         }
       },
-      // (D) (可選) 串聯其他您需要的資料
-      // guests: true,
-      // attachments: true,
-      // tags: { include: { tag: true } },
     }
   });
 
@@ -153,11 +161,21 @@ export const getPublicEventById = async (eventId: number) => {
     .map(link => link.product) // 取出 product 物件
     .filter(product => product != null) // 過濾掉 product == null 的情況
     .map(product => ({
+      // (基本商品資料)
       id: product!.id,
       name: product!.name,
       description: product!.description,
       base_price: product!.base_price.toNumber(),
       image_url: product!.image_url,
+
+      // [!] 補上 "variants" 欄位
+      variants: product!.variants.map(v => ({
+        id: v.id,
+        option1_value: v.option1_value,
+        option2_value: v.option2_value,
+        price_offset: v.price_offset.toNumber(),
+        stock_quantity: v.stock_quantity,
+      })),
     }));
 
   // 4. 組合並回傳最終資料

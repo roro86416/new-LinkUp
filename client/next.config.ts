@@ -3,10 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   /* config options here */
 
-  // [!!!] 
-  // [!!!] 關鍵修正：
-  // [!!!] 告訴 Next.js 允許 (whitelist) 來自這個網域的圖片
-  // [!!!] 
+  // [保留] 原本的圖片設定
   images: {
     remotePatterns: [
       {
@@ -15,7 +12,16 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '**',
       },
-      // (未來如果您有其他圖片網域，例如 S3，也可以加在這裡)
+    ],
+  },
+
+  // [!!! 新增 !!!]
+  // 解決 "Cross origin request detected" 警告
+  // 允許來自您手機或區網 IP 的連線請求
+  experimental: {
+    allowedDevOrigins: [
+      'localhost:3000', 
+      '192.168.1.189:3000', // 加入您的 IP
     ],
   },
 };

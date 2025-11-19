@@ -24,6 +24,53 @@ export const mockEventsData = [
         { name: "課程票", price: 3500, total_quantity: 100, sale_start_time: new Date("2025-10-01T12:00:00Z"), sale_end_time: new Date("2025-11-30T12:00:00Z") }
       ]
     },
+    // [!!!] 
+    // [!!!] 關鍵新增 (步驟一)：
+    // [!!!] 我們在這裡定義這個活動 "綁定" 的商品
+    // [!!!] 
+    productLinks: { 
+      create: [
+        {
+          product: { 
+            create: { 
+              name: "課程紀念 T-Shirt",
+              description: "React 全端實戰營專屬 T-Shirt",
+              base_price: 600,
+              image_url: "/placeholder-tshirt.jpg",
+              is_published: true,
+              // [!!!] 
+              // [!!!] 我們 "必須" 在這裡建立 "ProductVariant" 
+              // [!!!] 
+              variants: {
+                create: [
+                  { option1_value: "S", price_offset: 0, stock_quantity: 100 },
+                  { option1_value: "M", price_offset: 0, stock_quantity: 100 },
+                  { option1_value: "L", price_offset: 0, stock_quantity: 100 },
+                  { option1_value: "XL", price_offset: 50, stock_quantity: 50 }, // XL 加 50 元
+                ]
+              }
+            }
+          }
+        },
+        {
+          product: {
+            create: {
+              name: "課程防水貼紙組",
+              description: "React, Prisma, Next.js Logo 貼紙",
+              base_price: 150,
+              image_url: "/placeholder-stickers.jpg",
+              is_published: true,
+              // [!] 這個商品 "沒有" 規格，所以我們要建立一個 "預設" 規格
+              variants: {
+                create: [
+                  { option1_value: "Default", price_offset: 0, stock_quantity: 200 }
+                ]
+              }
+            }
+          }
+        }
+      ]
+    },
   },
   {
     title: "【課程】手沖咖啡入門",
@@ -291,7 +338,7 @@ export const mockEventsData = [
     title: "【研討會】區塊鏈技術與應用",
     subtitle: "Web3 的未來",
     description: "深入探討區塊鏈技術的基礎與未來應用潛力。",
-    cover_image: "/slide3.jpg", //
+    cover_image: "/slide3.jpg",
     start_time: new Date("2025-11-28T14:00:00Z"),
     end_time: new Date("2025-11-28T17:00:00Z"),
     location_name: "台灣大學",

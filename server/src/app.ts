@@ -2,7 +2,6 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-// 模組匯入
 import productRoutes from "./modules/product/products.routes.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import memberProfileRoutes from "./modules/member/memberProfile/memberProfile.routes.js";
@@ -16,6 +15,7 @@ dotenv.config();
 import cartRoutes from './modules/cart/cart.routes.js'; 
 import orderRoutes from './modules/orders/orders.routes.js';
 import { startOrderScheduler } from "./tasks/orderScheduler.js"; // 倒計時
+import checkInRoutes from './modules/check-in/check-in.routes.js';
 
 const app: Express = express();
 
@@ -63,6 +63,11 @@ app.use("/api/v1/orders", orderRoutes);
 // (使用者購買票券) 路由 ->活動評論API
 app.use("/api/ratings", eventRatingsRoutes);
 
+
+//倒計時
 startOrderScheduler();
+
+// 工作人員票券驗證模組
+app.use('/api/v1/check-in', checkInRoutes);
 
 export default app;

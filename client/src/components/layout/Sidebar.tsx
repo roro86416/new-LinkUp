@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 
 // [保留] 原有的 import
 import { ReactElement, useState, ChangeEvent } from 'react'; // 保留 useState/ChangeEvent 給大頭照上傳
-import { AiOutlineSetting, AiOutlineInbox, AiOutlineStar, AiOutlineCamera } from 'react-icons/ai';
+import { AiOutlineSetting, AiOutlineInbox, AiOutlineStar, AiOutlineCamera, AiOutlineOrderedList} from 'react-icons/ai';
 import { FiPackage, FiBarChart2 } from 'react-icons/fi';
 import { useUser } from '../../context/auth/UserContext';
 
@@ -22,6 +22,7 @@ const memberMenus: MenuItem[] = [
   { label: '帳號設定', icon: <AiOutlineSetting />, href: '/member' },
   { label: '訊息管理', icon: <AiOutlineInbox />, href: '/member/messages' },
   { label: '我的收藏', icon: <AiOutlineStar />, href: '/member/favorites' },
+   { label: '我的訂單', icon: <AiOutlineOrderedList />, href: '/member/orders' },
 ];
 
 // 

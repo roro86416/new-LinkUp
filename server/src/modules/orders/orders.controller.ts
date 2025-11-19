@@ -1,115 +1,193 @@
 import { Request, Response, NextFunction } from "express";
 import { z } from "zod";
-
-// 引入我們在 Schema 步驟中定義的類型
 import { OrderCreateBody } from "./orders.schema.js"; 
-
-// 引入我們剛剛完成的所有 Service 函數
 import {
   createOrderService,
   findOrdersByUserService,
   findOrderByIdService,
   cancelOrderService,
 } from "./orders.service.js";
+import { getECPayParams } from "./ecpay.service.js";
+import prisma from "../../utils/prisma-only.js";
 
-/**
- * @desc 1. 建立新訂單 (結帳)
- */
+interface AuthUser {
+  id?: string;
+  userId?: string;
+  [key: string]: any;
+}
+
+// 建立新訂單 (結帳) - 已整合 ECPay
 export const createOrderController = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction 
 ) => {
   try {
-    // 假設您的 auth.middleware.ts 會將 user 附加到 req 上
-    const userId = (req as any).user.id; 
+    const user = (req as any).user as AuthUser | undefined;
+    console.log("👤 [CreateOrder] Current User:", user);
+    const userId = user?.id?.toString() || user?.userId?.toString();
+    if (!userId) {
+        console.error("❌ User ID not found in request. User object:", user);
+        res.status(401).json({ status: "error", message: "無法識別使用者身分，請重新登入" });
+        return; // 結束函式
+    }
+
     const body = req.body as OrderCreateBody;
 
-    // 呼叫 Service
+    // 步驟 1: 呼叫 Service 建立訂單
     const order = await createOrderService(userId, body);
 
+    // 步驟 2: 準備 ECPay 參數
+    const totalAmount = order.total_amount.toNumber(); 
+    
+    const itemNames = order.items
+      .map(item => `${item.item_name} x ${item.quantity}`)
+      .join(','); 
+
+    // 步驟 3: 呼叫 ECPay 服務產生參數
+    const ecpayResult = getECPayParams(totalAmount, itemNames);
+
+    if (ecpayResult.status === 'error') {
+        throw new Error(ecpayResult.message);
+    }
+
+    // 步驟 4: 回傳給前端
     res.status(201).json({
       status: "success",
-      message: "訂單創建成功，請前往付款。",
-      data: order,
+      message: "訂單創建成功，準備跳轉至 ECPay 付款。",
+      data: {
+        orderId: order.id,
+        ecpay: {
+            apiUrl: ecpayResult.payload.action,
+            formData: ecpayResult.payload.params,
+        }
+      }
     });
   } catch (error) {
-    // 將 Service 拋出的錯誤 (例如 "庫存不足") 傳遞給 Express 錯誤處理器
-    next(error); 
+    console.error("Error in createOrder controller:", error);
+    next(error);
   }
 };
 
-/**
- * @desc 2. 查詢目前使用者的所有訂單列表
- */
-export const getOrdersController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+//取得使用者所有訂單
+export const getOrdersController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req as any).user.id; 
-
-    // 呼叫 Service
+    const user = (req as any).user as AuthUser;
+    const userId = user?.id?.toString() || user?.userId?.toString();
+    if(!userId) throw new Error("User ID missing");
+    
     const orders = await findOrdersByUserService(userId);
-
-    res.status(200).json({
-      status: "success",
-      data: orders,
-    });
+    res.status(200).json({ status: "success", data: orders });
   } catch (error) {
-    next(error); 
+    console.error("Error in getOrdersController:", error);
+    next(error);
   }
 };
 
-/**
- * @desc 3. 查詢單筆訂單詳情
- */
-export const getOrderByIdController = async (
+// 取得訂單資訊by ID
+export const getOrderByIdController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const orderId = z.coerce.number().int().positive().parse(req.params.id);
+    const user = (req as any).user as AuthUser;
+    const userId = user?.id?.toString() || user?.userId?.toString();
+    if(!userId) throw new Error("User ID missing");
+
+    const order = await findOrderByIdService(userId, orderId);
+    res.status(200).json({ status: "success", data: order });
+  } catch (error) {
+    if (error instanceof Error && (error.name === 'ZodError' || error.message.includes("findFirstOrThrow"))) {
+         return res.status(404).json({ status: "error", message: "找不到訂單或 ID 無效" });
+    }
+    next(error);
+  }
+};
+
+//重新付款 (Repay)
+export const repayOrderController = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    // 驗證並轉換 URL 參數 :id
-    const orderId = z.coerce.number().int().positive("ID 必須是正整數").parse(req.params.id);
-    const userId = (req as any).user.id;
+    const orderId = z.coerce.number().parse(req.params.id);
+    
+    // 取得 User ID (與之前相同的邏輯)
+    const user = (req as any).user;
+    const userId = user?.id?.toString() || user?.userId?.toString();
+    if (!userId) throw new Error("User ID missing");
 
-    // 呼叫 Service (Service 內部會檢查 userId 是否匹配)
+    // 1. 查詢訂單 (會自動檢查是否屬於該 User)
     const order = await findOrderByIdService(userId, orderId);
 
+    // 2. 檢查狀態
+    if (order.status !== "pending") {
+      return res.status(400).json({ status: "error", message: "只有待付款的訂單才能重新付款" });
+    }
+
+    // 3. 檢查是否過期 (選做，但建議加上)
+    if (new Date() > order.expires_at) {
+       return res.status(400).json({ status: "error", message: "訂單已過期，請重新下單" });
+    }
+
+    // 4. 重新產生 ECPay 參數
+    const totalAmount = order.total_amount.toNumber();
+    const itemNames = order.items
+      .map((item) => `${item.item_name} x ${item.quantity}`)
+      .join(",");
+
+    const ecpayResult = getECPayParams(totalAmount, itemNames);
+
+    if (ecpayResult.status === "error") {
+      throw new Error(ecpayResult.message);
+    }
+
+    // 5. 回傳
     res.status(200).json({
       status: "success",
-      data: order,
+      data: {
+        orderId: order.id,
+        ecpay: {
+          apiUrl: ecpayResult.payload.action,
+          formData: ecpayResult.payload.params,
+        },
+      },
     });
   } catch (error) {
-    // 如果 z.parse 失敗，或 findOrderByIdService 拋出錯誤 (找不到或權限不足)
-    next(error); 
+    console.error("Repay error:", error);
+    next(error);
   }
 };
 
-/**
- * @desc 4. 取消一筆待付款 (Pending) 的訂單
- */
-export const cancelOrderController = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+//取消訂單
+export const cancelOrderController = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // 驗證並轉換 URL 參數 :id
-    const orderId = z.coerce.number().int().positive("ID 必須是正整數").parse(req.params.id);
-    const userId = (req as any).user.id;
+    const orderId = z.coerce.number().int().positive().parse(req.params.id);
+    const user = (req as any).user as AuthUser;
+    const userId = user?.id?.toString() || user?.userId?.toString();
+    if(!userId) throw new Error("User ID missing");
 
-    // 呼叫 Service (Service 內部會檢查狀態和權限)
     const result = await cancelOrderService(userId, orderId);
-
-    res.status(200).json({
-      status: "success",
-      data: result, // (會回傳 { message: "訂單已成功取消..." })
-    });
+    res.status(200).json({ status: "success", data: result });
   } catch (error) {
-    // 如果 z.parse 失敗，或 Service 拋出錯誤 (例如 "無法取消已付款訂單")
-    next(error); 
+    console.error("Error in cancelOrderController:", error);
+    next(error);
+  }
+};
+
+//假的完成付款狀態
+export const fakePayController = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const orderId = parseInt(req.params.id);
+    
+    // 直接更新資料庫
+    const updatedOrder = await prisma.order.update({
+      where: { id: orderId },
+      data: { status: 'paid' } // 確保您的 Enum 是 'paid' 或 'PAID'
+    });
+
+    res.status(200).json({ status: "success", message: "訂單已強制付款", data: updatedOrder });
+  } catch (error) {
+    console.error("Fake pay failed:", error);
+    next(error);
   }
 };
