@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { jwtDecode } from 'jwt-decode';
 
 export interface User {
+  userId:string;
   name: string;
   avatar: string;
   email: string;
@@ -72,6 +73,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       try {
         const decoded = jwtDecode<DecodedUser>(newToken);
         const userData: User = {
+          userId: decoded.userId,
           name: decoded.name || '',
           email: decoded.email,
           avatar: decoded.avatar || '',

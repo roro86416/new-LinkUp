@@ -18,6 +18,16 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "images.unsplash.com",
       },
+      // 👇 [新增] 允許 Pexels 圖片 (您的錯誤來源)
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+      },
+      // 👇 [建議] 允許 Picsum 圖片 (如果您有用假資料產生器通常會用到)
+      {
+        protocol: "https",
+        hostname: "picsum.photos",
+      },
     ],
   },
 };
