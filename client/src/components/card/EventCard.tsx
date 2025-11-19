@@ -4,6 +4,7 @@
 import { HeartIcon } from '@heroicons/react/24/solid'; // 實心
 import { HeartIcon as HeartIconOutline } from '@heroicons/react/24/outline'; // 空心
 import { TicketIcon } from '@heroicons/react/24/outline'; // 票券圖示 
+import Link from "next/link"; // 首頁活動卡片 → 點擊後前往「活動詳細頁」
 
 // [!!!] 2. 定義這個元件需要的"資料" (Props)
 // (這個介面對應您的 Prisma Schema 和 API)
@@ -30,8 +31,8 @@ export default function EventCard({ event, isFavorited, onToggleFavorite }: Even
   const month = dateObj.toLocaleString('zh-TW', { month: 'numeric' }); 
   const day = dateObj.getDate(); 
 
-  return (
-    // 1. 基礎卡片：白色背景、圓角、陰影、裁切
+  return ( <Link href={`/event/${event.id}`} style={{ textDecoration: "none" }}>
+    {/* // 1. 基礎卡片：白色背景、圓角、陰影、裁切 */}
     <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
 
       <div className="relative w-full h-48">
@@ -84,5 +85,6 @@ export default function EventCard({ event, isFavorited, onToggleFavorite }: Even
         </div>
       </div>
     </div>
+    </Link>
   );
 };

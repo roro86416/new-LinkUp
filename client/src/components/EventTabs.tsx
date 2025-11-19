@@ -69,6 +69,11 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {
   const [newComment, setNewComment] = useState<string>("");
   const [posting, setPosting] = useState(false);
 
+  /* 修改評論 */
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editRating, setEditRating] = useState<number>(0);
+  const [editComment, setEditComment] = useState<string>("");
+
   /* ---------------- WEATHER API ---------------- */
   useEffect(() => {
     if (!eventId) return;
@@ -226,6 +231,49 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {
     }
   }
 
+  /* ----------------⭐ PATCH 修改自己評論 ---------------- */
+  async function handleUpdateReview(ratingId: number) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setReviewError("請先登入才能修改評論");
+      return;
+    }
+
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/ratings/${ratingId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            rating: editRating,
+            comment: editComment,
+          }),
+        }
+      );
+
+      const json = await res.json();
+
+      if (!json.success) {
+        setReviewError(json.message ?? "更新失敗");
+        return;
+      }
+
+      // 更新成功 → 重新抓評論
+      await fetchReviews();
+
+      // 清空狀態
+      setEditingId(null);
+      setEditRating(0);
+      setEditComment("");
+    } catch (err) {
+      setReviewError("無法連接伺服器");
+    }
+  }
+
   /* ---------------- JSX UI ---------------- */
   return (
     <Tabs defaultValue="intro" mt="xl">
@@ -328,25 +376,77 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {
                   <div style={{ flex: 1 }}>
                     <Group justify="space-between">
                       <Text fw={600}>{r.user.name}</Text>
-                      {/* ⭐ 如果是自己的評論，就顯示刪除按鈕 */}
-                      {user?.userId === r.user.id  && (
-                        <Button
-                          color="red"
-                          size="xs"
-                          variant="light"
-                          onClick={() => handleDeleteReview(r.id)}
-                        >
-                          刪除
-                        </Button>
+                      {/* ⭐ 如果是自己的評論，就顯示刪除和編輯按鈕 */}
+                      {user?.userId === r.user.id && (
+                        <Group>
+                          {/* ⭐ 編輯按鈕 */}
+                          <Button
+                            color="blue"
+                            size="xs"
+                            variant="light"
+                            onClick={() => {
+                              setEditingId(r.id);
+                              setEditRating(r.rating);
+                              setEditComment(r.comment);
+                            }}
+                          >
+                            編輯
+                          </Button>
+                          <Button
+                            color="red"
+                            size="xs"
+                            variant="light"
+                            onClick={() => handleDeleteReview(r.id)}
+                          >
+                            刪除
+                          </Button>
+                        </Group>
                       )}
                     </Group>
 
-                    <Rating value={r.rating} readOnly />
-                    <Text mt="sm">{r.comment}</Text>
+                    {/* ⭐ 如果正在編輯這筆評論 → 顯示編輯模式 UI */}
+                    {editingId === r.id ? (
+                      <>
+                        <Rating value={editRating} onChange={setEditRating} />
 
-                    <Text size="xs" mt="xs" c="gray.6">
-                      {new Date(r.created_at).toLocaleString("zh-TW")}
-                    </Text>
+                        <Textarea
+                          mt="sm"
+                          value={editComment}
+                          onChange={(e) => setEditComment(e.target.value)}
+                          minRows={3}
+                        />
+
+                        <Group mt="sm">
+                          <Button
+                            variant="default"
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditRating(0);
+                              setEditComment("");
+                            }}
+                          >
+                            取消
+                          </Button>
+
+                          <Button
+                            color="green"
+                            onClick={() => handleUpdateReview(r.id)}
+                          >
+                            保存修改
+                          </Button>
+                        </Group>
+                      </>
+                    ) : (
+                      /* ⭐ 否則 → 顯示一般模式 UI */
+                      <>
+                        <Rating value={r.rating} readOnly />
+                        <Text mt="sm">{r.comment}</Text>
+
+                        <Text size="xs" mt="xs" c="gray.6">
+                          {new Date(r.created_at).toLocaleString("zh-TW")}
+                        </Text>
+                      </>
+                    )}
                   </div>
                 </Group>
               </Paper>
