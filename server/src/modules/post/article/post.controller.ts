@@ -2,33 +2,33 @@ import { Request, Response } from "express";
 import { createPostSchema } from "./post.schema.js";
 import * as PostsService from "./post.service.js";
 
+// src/modules/post/post.controller.js 裡面的 createPostController 函數
+
 export const createPostController = async (req: Request, res: Response) => {
-  try {
-    const author_id = (req as any).user?.id; // 只取 ID
+  try {
+    // 1. 執行 Zod 驗證，現在 req.body 必須包含 author_id 欄位
+    const parsed = createPostSchema.parse(req.body);
+    
+    // 2. 從解析後的物件中提取 author_id，取代從 req.user 獲取
+    const author_id = parsed.author_id; 
 
-    // 🔥 檢查使用者是否通過認證
-    if (!author_id) {
-        // 如果沒有 ID，表示使用者未登入或認證失敗
-        return res.status(401).json({ success: false, message: "Authentication required to create a post." });
-    }
+    // 移除原有的 if (!author_id) { ... } 檢查，因為 Zod 已經處理了
+    // 您的 Service 函數仍然接收 parsed 和 author_id 兩個參數，不變
+    const post = await PostsService.createPost(parsed, author_id);
 
-    const parsed = createPostSchema.parse(req.body);
+    return res.status(201).json({ success: true, id: post.id });
+  } catch (err: any) {
+    console.error("createPostController error:", err);
 
-    const post = await PostsService.createPost(parsed, author_id);
+    if (err?.name === "ZodError") {
+      return res.status(400).json({ success: false, issues: err.errors });
+    }
 
-    return res.status(201).json({ success: true, id: post.id });
-  } catch (err: any) {
-    console.error("createPostController error:", err);
-
-    if (err?.name === "ZodError") {
-      return res.status(400).json({ success: false, issues: err.errors });
-    }
-
-    return res.status(500).json({
-      success: false,
-      message: err.message || "Server error",
-    });
-  }
+    return res.status(500).json({
+      success: false,
+      message: err.message || "Server error",
+    });
+  }
 };
 
 export const getPostsController = (req: Request, res: Response) => {

@@ -2,7 +2,6 @@ import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
-import cookieParser from "cookie-parser";
 
 // 模組匯入
 import productRoutes from "./modules/product/products.routes.js";
@@ -35,7 +34,7 @@ app.use(
   })
 );
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")))
-app.use(cookieParser());
+
 
 
 // --- 靜態檔案服務設定 (重要：讓上傳的圖片可以公開訪問) ---
@@ -79,10 +78,8 @@ app.use("/api/ratings", eventRatingsRoutes);
 // --- 全域錯誤處理中介軟體 (必須放在所有路由之後) ---
 app.use(errorHandler);
 // 新增：圖片上傳 API
-app.use("/post/upload", uploadRoutes);
-
-app.use("/post", postRoute);
-
-app.use("/image", imageRoutes);
+app.use("/api/post/upload", uploadRoutes); // 加上 /api
+app.use("/api/post", postRoute);             // 加上 /api
+app.use("/api/image", imageRoutes);
 
 export default app;

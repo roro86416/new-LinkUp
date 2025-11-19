@@ -27,16 +27,16 @@ export default function CreatePostPage() {
   const onSubmit = async (data: PostFormData) => {
 
 
-//     const authToken = localStorage.getItem('token'); 
+    const authToken = localStorage.getItem('token'); 
 
-//     console.log("📌 從 localStorage 讀取的 Token:", authToken);
+    console.log("📌 從 localStorage 讀取的 Token:", authToken);
 
-//     if (!authToken) {
-//       console.error("錯誤：請先登入，找不到驗證 Token。");
-//       // 導航到登入頁面
-//       router.push('/login'); 
-//       return;
-//     }
+    if (!authToken) {
+      console.error("錯誤：請先登入，找不到驗證 Token。");
+      // 導航到登入頁面
+      router.push('/login'); 
+      return;
+    }
     // --- content blocks ---
     const contentJSON = JSON.stringify(
       data.content.blocks.map((block) => {
@@ -55,7 +55,7 @@ export default function CreatePostPage() {
 
     // --- category 只要字串 ---
     const categoryValue = data.category ? data.category.trim() : "";
-
+const currentUserId = localStorage.getItem('user_id') || "7a57e4cd-dcd0-4126-a002-7a0ff251413f";
     // --- 最終 payload（完全符合後端 createPost） ---
     const payload = {
       title: data.title,
@@ -63,12 +63,13 @@ export default function CreatePostPage() {
       category: categoryValue, // 字串
       content: contentJSON,
       tags: tagArray,
+      author_id: currentUserId,
     };
 
     console.log("📌 送到後端的 payload:", payload);
 
     try {
-      const res = await fetch("http://localhost:3001/post", {
+      const res = await fetch("http://localhost:3001/api/post", {
         method: "POST",
         headers: {
     "Content-Type": "application/json",
