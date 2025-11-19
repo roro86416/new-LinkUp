@@ -1,15 +1,9 @@
-//  client/src/app/(organizer)/layout.tsx
-
+// client/src/app/(organizer)/layout.tsx
 'use client';
 
 import { AppShell, Burger, Group, NavLink, Title } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
-import {
-  IoGrid,
-  IoCalendar,
-  IoAdd,
-  IoSettings,
-} from 'react-icons/io5';
+import { IoGrid, IoCalendar, IoAdd, IoSettings } from 'react-icons/io5';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -21,24 +15,31 @@ export default function OrganizerLayout({
   const [opened, { toggle }] = useDisclosure();
   const pathname = usePathname();
 
-  const navLinks = [
-    { icon: IoGrid, label: '總覽', href: '/dashboard' }, 
-    {
-      icon: IoCalendar,
-      label: '活動列表',
-      href: '/dashboard',
-    },
-    {
-      icon: IoAdd, 
-      label: '建立活動',
-      href: '/events/new',
-    },
-    {
-      icon: IoSettings, 
-      label: '帳戶設定',
-      href: '/settings',
-    },
-  ];
+ const navLinks = [
+  // 儀表板
+  { icon: IoGrid, label: '總覽', href: '/dashboard' },
+
+  // 活動列表（這裡要用 /events，不是 /organizer/events）
+  {
+    icon: IoCalendar,
+    label: '活動列表',
+    href: '/events',
+  },
+
+  // 建立活動
+  {
+    icon: IoAdd,
+    label: '建立活動',
+    href: '/events/new',
+  },
+
+  // 帳戶設定（之後要做的）
+  {
+    icon: IoSettings,
+    label: '帳戶設定',
+    href: '/settings',
+  },
+];
 
   return (
     <AppShell
@@ -64,17 +65,14 @@ export default function OrganizerLayout({
             href={link.href}
             label={link.label}
             leftSection={<link.icon size="1rem" />}
-            active={pathname?.startsWith(link.href)} 
-            component={Link} 
+            active={pathname?.startsWith(link.href)}
+            component={Link}
             onClick={toggle}
           />
         ))}
       </AppShell.Navbar>
 
-      <AppShell.Main>
-        {/*  page.tsx 內容會顯示處 */}
-        {children}
-      </AppShell.Main>
+      <AppShell.Main>{children}</AppShell.Main>
     </AppShell>
   );
 }

@@ -1,5 +1,10 @@
+// client/src/app/layout.tsx
+import React from 'react';
+// Mantine
+import '@mantine/core/styles.css';
+import { MantineProvider } from '@mantine/core';
 
-import './globals.css';
+// 自己的 Context / 元件
 import { UserProvider } from '../context/auth/UserContext';
 import { ModalProvider } from '../context/auth/ModalContext';
 import HeaderWrapper from './HeaderWrapper';
@@ -17,7 +22,11 @@ export const metadata = {
   description: '活動報名平台',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="zh-TW">
       <body className="bg-white">
@@ -27,22 +36,26 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             duration: 3000, // 預設 3 秒後消失
           }}
         />
+
         <UserProvider>
           <ModalProvider>
-            <HeaderWrapper />
+            {/* MantineProvider 一定要包在最外層，讓內層所有 Mantine 元件都吃得到 Theme */}
+            <MantineProvider>
+              <HeaderWrapper />
 
-            <main className="w-full justify-center m-0 p-0 min-h-screen">
-              {children}
-            </main>
+              <main className="w-full justify-center m-0 p-0 min-h-screen">
+                {children}
+              </main>
 
-            <LoginModal />
-            <EmailLoginModal />
-            <RegisterModal />
-            <ForgotPasswordModal />
-            <PasswordSentModal />
-            <AdminLoginModal />
+              <LoginModal />
+              <EmailLoginModal />
+              <RegisterModal />
+              <ForgotPasswordModal />
+              <PasswordSentModal />
+              <AdminLoginModal />
 
-            <Footer />
+              <Footer />
+            </MantineProvider>
           </ModalProvider>
         </UserProvider>
       </body>
