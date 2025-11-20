@@ -1,7 +1,8 @@
 import express from "express";
 // 由於我們是旁路策略，auth.middleware 將不再使用
 // import { auth } from "../../middleware/auth.middleware.js"; 
-import { createPostController, getPostsController } from "./post.controller.js"; 
+import { createPostController, getPostsController, getPostById} from "./post.controller.js"; 
+
 
 const router = express.Router();
 
@@ -11,6 +12,8 @@ router.post("/", createPostController);
 
 // 文章列表
 router.get("/", getPostsController); 
+
+router.get("/:id", getPostById);
 
 // ... 其他路由 ...
 

@@ -85,7 +85,11 @@ const currentUserId = localStorage.getItem('user_id') || "7a57e4cd-dcd0-4126-a00
         console.log("文章上傳成功", result);
         const newPostId = result.id;
         if (newPostId) {
-          router.push(`/posts/${newPostId}`);
+          router.refresh(); 
+          
+          // 關鍵修復 2: 使用 replace 取代 push，避免頁面歷史紀錄堆疊
+          router.replace(`/post/detail/${newPostId}`); 
+          // router.push(`/post/detail/${newPostId}`);
         }
       } else {
         console.error("文章上傳失敗", result);

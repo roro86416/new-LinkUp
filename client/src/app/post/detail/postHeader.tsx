@@ -2,16 +2,20 @@ import Image from "next/image";
 import Link from "next/link";
 
 interface ArticleHeaderProps {
-  article: {
-    title: string;
-    image: string;
-    createdAt: string;
-    author: { name: string; id: number };
-    category: { name: string; id: number };
-    tags: { name: string }[];
-    eventLink?: string;
-  };
+  article: {
+    id: number; 
+    title: string;
+    // 修正：移除冗餘的 image 字段，只保留 coverImageUrl
+    coverImageUrl: string | null; 
+    createdAt: string;
+    author: { name: string; id: string };
+    category: { name: string; id: number };
+    tags: { name: string }[];
+    eventLink?: string;
+    slug?: string;
+  };
 }
+
 
 export default function ArticleHeader({ article }: ArticleHeaderProps) {
   const formatDate = (dateString: string) =>
@@ -69,7 +73,8 @@ export default function ArticleHeader({ article }: ArticleHeaderProps) {
 
       <div className="relative w-full lg:w-[400px] h-[250px] rounded-lg overflow-hidden">
         <Image
-          src={article.image}
+          src={article.coverImageUrl || "/placeholder.jpg"}
+
           alt={article.title}
           fill
           className="object-cover"
