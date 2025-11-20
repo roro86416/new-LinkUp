@@ -1,71 +1,93 @@
-//顯示活動資訊並管理收藏狀態
+"use client";
 
-'use client';
-
-import { HeartIcon as HeartIconSolid } from '@heroicons/react/24/solid';
+import { HeartIcon } from '@heroicons/react/24/solid';
 import { HeartIcon as HeartIconOutline } from '@heroicons/react/24/outline';
-import { useFavorites, FavoriteEvent } from './FavoritesContext'; // 確保路徑正確
-import toast from 'react-hot-toast';
+import { TicketIcon } from '@heroicons/react/24/outline';
 
-// 假設你的活動卡片 props 結構如下
-interface EventCardProps {
-  event: FavoriteEvent; // 直接使用我們在 Context 中定義的類型
+// 定義資料介面 (對應後端 API 回傳的格式)
+export interface EventCardData {
+  id: number;
+  title: string;
+  start_time: string;    // ISO Date string
+  location_name: string;
+  cover_image: string;
+  organizerName?: string; 
+  price?: number;
 }
 
-const EventCard: React.FC<EventCardProps> = ({ event }) => {
-  // 1. 從 FavoritesContext 取得所需函式和狀態
-  const { addFavoriteEvent, removeFavoriteEvent, favoriteEvents } = useFavorites();
+interface EventCardProps {
+  event: EventCardData;
+  isFavorited: boolean;
+  onToggleFavorite: (event: EventCardData) => void; // 傳回整個 event 物件以便加入收藏
+}
 
-  // 2. 判斷此活動是否已被收藏
-  const isFavorited = favoriteEvents.some(favEvent => favEvent.id === event.id);
-
-  // 3. 處理點擊愛心按鈕的事件
-  const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.preventDefault(); // 防止點擊愛心時觸發卡片的其他連結（例如進入活動詳情頁）
-    e.stopPropagation();
-
-    if (isFavorited) {
-      removeFavoriteEvent(event.id);
-      toast.success('已取消收藏');
-    } else {
-      addFavoriteEvent(event);
-      toast.success('已成功收藏！');
-    }
-  };
+export default function EventCard({ event, isFavorited, onToggleFavorite }: EventCardProps) {
+  
+  // 日期處理邏輯：從 start_time 解析出月份和日期
+  const dateObj = new Date(event.start_time);
+  const month = dateObj.toLocaleString('zh-TW', { month: 'numeric' }); // 例如 "11"
+  const day = dateObj.getDate(); // 例如 "20"
 
   return (
-    <div className="group relative block overflow-hidden rounded-xl shadow-lg transition-all duration-300 hover:shadow-2xl">
-      {/* 活動圖片 (假設) */}
-      <img
-        src={`https://picsum.photos/seed/${event.id}/400/200`} // 範例圖片
-        alt={event.title}
-        className="h-48 w-full object-cover transition-transform duration-500 group-hover:scale-105"
-      />
+    // 1. 基礎卡片：白色背景、圓角、陰影、Hover 上浮效果
+    <div className="bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 group cursor-pointer h-full flex flex-col border border-gray-100">
 
-      {/* 收藏按鈕 */}
-      <button
-        onClick={handleFavoriteToggle}
-        className="absolute top-3 right-3 z-10 rounded-full bg-white/80 p-2 text-orange-500 backdrop-blur-sm transition-all duration-200 hover:bg-white hover:scale-110"
-        aria-label={isFavorited ? '取消收藏' : '加入收藏'}
-      >
-        {isFavorited ? (
-          <HeartIconSolid className="h-6 w-6" />
-        ) : (
-          <HeartIconOutline className="h-6 w-6" />
-        )}
-      </button>
+      {/* 2. 上半部：圖片區 */}
+      <div className="relative w-full h-48 flex-shrink-0 overflow-hidden">
+        <img
+          src={event.cover_image}
+          alt={event.title}
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        {/* 地點標籤 */}
+        <span className="absolute bottom-2 left-2 bg-black/60 text-white text-xs font-semibold px-2 py-1 rounded backdrop-blur-sm">
+          {event.location_name}
+        </span>
+        {/* 收藏按鈕 (愛心) */}
+        <button
+          onClick={(e) => {
+            e.preventDefault(); // 防止點擊愛心時觸發卡片連結
+            e.stopPropagation();
+            onToggleFavorite(event);
+          }}
+          className="absolute top-3 right-3 p-2 bg-white/90 rounded-full text-red-500 transition-transform hover:scale-110 active:scale-95 shadow-sm z-10"
+          title={isFavorited ? "取消收藏" : "加入收藏"}
+        >
+          {isFavorited ? (
+            <HeartIcon className="w-5 h-5" />
+          ) : (
+            <HeartIconOutline className="w-5 h-5" />
+          )}
+        </button>
+      </div>
 
-      {/* 卡片內容 */}
-      <div className="relative bg-white p-4">
-        <h3 className="truncate text-lg font-bold text-gray-900 group-hover:text-orange-600">{event.title}</h3>
-        <p className="mt-1.5 text-sm text-gray-600">{event.organizerName}</p>
-        <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
-          <span>{event.date}</span>
-          <span>{event.location}</span>
+      {/* 3. 下半部：內容區 (Flex 佈局) */}
+      <div className="p-4 flex items-start space-x-4 flex-1">
+        {/* 左側：日期區 */}
+        <div className="flex flex-col flex-shrink-0 items-center justify-center w-14 pr-3 border-r border-gray-200 my-1">
+          <span className="text-sm font-bold text-blue-600">{month}月</span>
+          <span className="text-3xl font-extrabold text-gray-800 leading-none mt-1">{day}</span>
+        </div>
+
+        {/* 右側：標題與資訊 */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between h-full">
+          <div>
+            <h3 className="font-bold text-lg text-gray-900 leading-tight truncate group-hover:text-orange-600 transition-colors" title={event.title}>
+              {event.title}
+            </h3>
+            <p className="text-sm text-gray-500 mt-1 truncate">
+              {event.organizerName || '主辦單位'}
+            </p>
+          </div>
+          
+          <div className="flex items-center text-gray-700 font-bold mt-3">
+            <TicketIcon className="w-4 h-4 text-gray-400 mr-1.5" />
+            <span className="text-sm">
+              {event.price ? `NT$ ${event.price.toLocaleString()} 起` : '免費 / 尚未公佈'}
+            </span>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default EventCard;
+}

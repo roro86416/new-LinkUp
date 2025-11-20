@@ -55,7 +55,7 @@ export function useUpload(openCropperModal: () => void): UseUploadReturn {
       const formData = new FormData();
       formData.append("file", file); // 必須與後端 Multer 的欄位名稱一致
 
-      const res = await fetch("http://localhost:3001/api/post/upload", {
+      const res = await fetch("http://localhost:3001/post/upload", {
         method: "POST",
         body: formData,
       });

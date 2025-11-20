@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { createPostSchema } from "./post.schema.js";
+<<<<<<< HEAD
 import * as PostsService from "./post.service.js"; // ✅ namespace 導入
 
 // --- 建立文章 ---
@@ -19,6 +20,19 @@ export const createPostController = async (req: Request, res: Response) => {
       id: post.id,
       redirectUrl: `/post/detail/${post.id}`
     });
+=======
+import * as PostsService from "./post.service.js";
+
+export const createPostController = async (req: Request, res: Response) => {
+  try {
+    const author_id = (req as any).user?.id || "system";
+
+    const parsed = createPostSchema.parse(req.body);
+
+    const post = await PostsService.createPost(parsed, author_id);
+
+    return res.status(201).json({ success: true, id: post.id });
+>>>>>>> 77744d70939425ae86e1cda0cce80e81ffbf3a67
   } catch (err: any) {
     console.error("createPostController error:", err);
 
@@ -32,6 +46,7 @@ export const createPostController = async (req: Request, res: Response) => {
     });
   }
 };
+<<<<<<< HEAD
 
 // --- 取得文章列表 ---
 export const getPostsController = (req: Request, res: Response) => {
@@ -57,3 +72,5 @@ export const getPostById = async (req: Request, res: Response) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+=======
+>>>>>>> 77744d70939425ae86e1cda0cce80e81ffbf3a67

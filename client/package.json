@@ -9,11 +9,13 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@ant-design/icons": "^6.1.0",
     "@headlessui/react": "^2.2.9",
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.2.2",
-    "antd": "^5.29.1",
+    "@mantine/core": "^8.3.8",
+    "@tabler/icons-react": "^3.35.0",
+    "@yudiel/react-qr-scanner": "^2.4.1",
+    "axios": "^1.13.2",
     "chart.js": "^4.5.1",
     "cropperjs": "^2.1.0",
     "html2canvas": "^1.4.1",
@@ -21,6 +23,7 @@
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.553.0",
     "next": "16.0.1",
+    "qrcode.react": "^4.2.0",
     "react": "19.2.0",
     "react-chartjs-2": "^5.3.1",
     "react-cropper": "^2.3.3",
@@ -35,7 +38,6 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/cookie-parser": "^1.4.10",
     "@types/html2canvas": "^1.0.0",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -43,6 +45,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.0.1",
     "tailwindcss": "^4",
+    "tailwindcss-animate": "^1.0.7",
     "typescript": "^5"
   }
 }

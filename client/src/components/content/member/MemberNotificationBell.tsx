@@ -1,13 +1,12 @@
-//前端通知中心鈴鐺組件，負責顯示、標記已讀和打開通知詳情，並且支援狀態同步。
-
+// new-LinkUp/client/src/components/content/member/MemberNotificationBell.tsx
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { BellIcon, XMarkIcon } from '@heroicons/react/24/outline';
-// ⭐️ 匯入 Modal 組件
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { BellIcon } from '@heroicons/react/24/outline';
 import NotificationDetailModal from './NotificationDetailModal';
+import { apiClient } from '../../../api/auth/apiClient';
 
-interface DemoNotification {
+interface Notification {
   id: string;
   title: string;
   content: string;
@@ -16,150 +15,178 @@ interface DemoNotification {
   isRead: boolean;
 }
 
-const typeStyles: { [key: string]: string } = {
-  '活動提醒': 'border-l-4 border-yellow-500',
-  '報名成功': 'border-l-4 border-green-500',
-  '系統公告': 'border-l-4 border-blue-500',
-  '活動變更': 'border-l-4 border-red-500',
-};
+export default function MemberNotificationBell({ className = '' }: { className?: string }) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  // 使用您偏好的變數命名
+  const [showDropdown, setShowDropdown] = useState(false); 
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
-export default function MemberNotificationBell() {
-  // ⭐️ 修正：使用 useState 的函式初始化，避免在 effect 中同步設定狀態
-  // 這個函式只會在客戶端首次渲染時執行一次。
-  const [notifications, setNotifications] = useState<DemoNotification[]>(() => {
-    // 確保只在客戶端執行
-    if (typeof window === 'undefined') {
-      return [];
-    }
-    try {
-      const data = localStorage.getItem('demo_notifications');
-      return data ? JSON.parse(data) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [isOpen, setIsOpen] = useState(false);
-  // ⭐️ 新增 state 來控制 Modal
-  const [viewingNotification, setViewingNotification] = useState<DemoNotification | null>(null);
-  const menuRef = React.useRef<HTMLDivElement>(null);
+  // ------------------------------------------------------------
+  // 核心邏輯 (保持不動)：混合讀取 API 與 LocalStorage
+  // ------------------------------------------------------------
+  const fetchNotifications = useCallback(async () => {
+    let apiData: Notification[] = [];
+    let localData: Notification[] = [];
 
-  // 從 localStorage 讀取通知
-  const loadNotifications = useCallback(() => {
+    // 1. 嘗試讀取 API
     try {
-      // 這個函式現在只用於事件監聽觸發的更新
-      const data = localStorage.getItem('demo_notifications');
-      setNotifications(data ? JSON.parse(data) : []);
+      const res = await apiClient.get<any>('/api/notifications');
+      const data = Array.isArray(res) ? res : (res?.data || []); 
+      if (Array.isArray(data)) apiData = data;
     } catch (error) {
-      console.error("Failed to parse notifications from localStorage", error);
-      setNotifications([]);
+      // 靜默失敗
     }
+
+    // 2. 讀取 LocalStorage (模擬 Admin 通知)
+    try {
+      const saved = localStorage.getItem('demo_notifications');
+      if (saved) localData = JSON.parse(saved);
+    } catch (error) {
+      console.error("LS 讀取失敗", error);
+    }
+
+    // 3. 合併並排序
+    const merged = [...localData, ...apiData].sort((a, b) => 
+      new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()
+    );
+    
+    const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
+    setNotifications(unique);
   }, []);
 
+  // 定時輪詢與事件監聽
   useEffect(() => {
-    // 監聽由其他分頁（如後台）觸發的 storage 變化
-    window.addEventListener('storage', loadNotifications);
-    // ⭐️ 新增：監聽由同頁面其他組件（如 Messages 頁面）觸發的自訂事件
-    window.addEventListener('notifications-updated', loadNotifications);
+    fetchNotifications();
+
+    const handler = () => { fetchNotifications(); };
+    window.addEventListener('notifications-updated', handler);
+    
+    const interval = setInterval(fetchNotifications, 5000);
 
     return () => {
-      window.removeEventListener('storage', loadNotifications);
-      window.removeEventListener('notifications-updated', loadNotifications);
+      window.removeEventListener('notifications-updated', handler);
+      clearInterval(interval);
     };
-  }, [loadNotifications]);
+  }, [fetchNotifications]);
 
-  // ⭐️ 修正：將 unreadCount 的宣告移至最前面
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  // ⭐️ 核心修改：將「標記已讀」的邏輯移到關閉選單時觸發
-  // ⭐️ 修正：handleClose 現在只負責關閉選單，不再處理已讀狀態
-  const handleClose = useCallback(() => {
-    if (!isOpen) return; // 如果已經是關閉狀態，則不執行任何操作
+  // 點擊處理邏輯 (保持不動)：判斷來源並更新狀態
+  const handleNotificationClick = async (notification: Notification) => {
+    setShowDropdown(false); // 關閉下拉
+    setSelectedNotification(notification); // 開啟 Modal
 
-    setIsOpen(false);
-  }, [isOpen]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        handleClose();
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-    // ⭐️ 修正：將 handleClose 加入依賴項陣列
-  }, [handleClose]);
-
-  const handleToggle = () => {
-    // 現在點擊只負責切換開關狀態
-    setIsOpen(!isOpen);
-  };
-
-  // ⭐️ 處理點擊通知項目的函式
-  const handleNotificationClick = (notification: DemoNotification) => {
-    // 1. 關閉鈴鐺下拉選單
-    setIsOpen(false);
-    // 2. 設定要顯示的通知，觸發 Modal 打開
-    setViewingNotification(notification);
-
-    // 3. 如果是未讀的，則標示為已讀
     if (!notification.isRead) {
-      const updated = notifications.map(n =>
-        n.id === notification.id ? { ...n, isRead: true } : n
-      );
-      localStorage.setItem('demo_notifications', JSON.stringify(updated));
-      setNotifications(updated); // 更新畫面狀態
-      // ⭐️ 發送一個自訂事件，通知其他組件（如 Messages 頁面）資料已更新
+      // 1. 嘗試更新 LocalStorage
+      try {
+           const saved = localStorage.getItem('demo_notifications');
+           if (saved) {
+             const list: Notification[] = JSON.parse(saved);
+             if (list.some(n => n.id === notification.id)) {
+                const updated = list.map(n => n.id === notification.id ? { ...n, isRead: true } : n);
+                localStorage.setItem('demo_notifications', JSON.stringify(updated));
+             }
+           }
+      } catch(e) { console.error(e); }
+
+      // 2. 嘗試呼叫 API
+      try {
+          await apiClient.patch(`/api/notifications/${notification.id}/read`, {});
+      } catch (e) { }
+
+      // 更新 UI
+      fetchNotifications();
       window.dispatchEvent(new CustomEvent('notifications-updated'));
     }
   };
 
+  // 點擊外部關閉
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // ------------------------------------------------------------
+  // UI 部分 (已替換為您指定的版本)
+  // ------------------------------------------------------------
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative" ref={dropdownRef}>
       <button
-        onClick={handleToggle}
-        className="relative p-2 rounded-full text-white transition-colors hover:bg-white/10 cursor-pointer"
-        aria-label="通知中心"
+        onClick={() => setShowDropdown(!showDropdown)}
+        className={`relative p-2 rounded-full transition-colors hover:bg-black/5 ${className}`}
       >
-        <BellIcon className="h-6 w-6" />
+        <BellIcon className={`w-6 h-6 ${className ? '' : 'text-white'}`} />
         {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 -mt-1 -mr-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white">
+          <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white ring-2 ring-white">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
       </button>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 md:w-96 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-          <div className="flex justify-between items-center p-3 border-b">
-            <h3 className="font-semibold text-gray-800">通知中心</h3>
-            {/* 關閉按鈕現在也會觸發 handleClickOutside 邏輯 */}
-            <button onClick={handleClose} className="p-1 rounded-full hover:bg-gray-100">
-              <XMarkIcon className="h-5 w-5 text-gray-600" />
-            </button>
+      {showDropdown && (
+        <div className="absolute right-0 mt-2 w-80 origin-top-right rounded-xl bg-white shadow-xl border border-gray-100 focus:outline-none z-50 overflow-hidden">
+          <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+            <h3 className="text-sm font-semibold text-gray-900">通知中心</h3>
+            {/* 若後端無全部已讀 API，可先隱藏此按鈕或僅做前端效果 */}
           </div>
+
           <div className="max-h-96 overflow-y-auto">
-            {notifications.filter(n => !n.isRead).length > 0 ? (
-              notifications.filter(n => !n.isRead).map(n => (
-                <button
-                  key={n.id}
-                  onClick={() => handleNotificationClick(n)}
-                  className={`w-full text-left p-3 border-b hover:bg-gray-50 ${typeStyles[n.type] || 'border-l-4 border-gray-300'}`}
-                >
-                  <p className="font-semibold text-sm text-gray-900 truncate">{n.title}</p>
-                  <p className="text-xs text-gray-500 mt-1">{new Date(n.sentAt).toLocaleString()}</p>
-                </button>
-              ))
+            {notifications.length > 0 ? (
+              <div className="divide-y divide-gray-100">
+                {notifications.map((notification) => (
+                  <button
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification)}
+                    className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
+                      !notification.isRead ? 'bg-orange-50/30' : ''
+                    }`}
+                  >
+                    <div className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
+                      !notification.isRead ? 'bg-[#EF9D11]' : 'bg-gray-300'
+                    }`} />
+                    <div className="flex-1 space-y-1">
+                      <p className={`text-sm ${!notification.isRead ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
+                        {notification.title}
+                      </p>
+                      <p className="line-clamp-2 text-xs text-gray-500">
+                        {notification.content}
+                      </p>
+                      <p className="text-[10px] text-gray-400">
+                        {new Date(notification.sentAt).toLocaleString('zh-TW')}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
             ) : (
-              <p className="p-8 text-center text-sm text-gray-500">目前沒有任何通知。</p>
+              <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                <BellIcon className="mb-2 h-8 w-8 opacity-20" />
+                <p className="text-sm">暫無通知</p>
+              </div>
             )}
+          </div>
+          
+          <div className="border-t border-gray-100 bg-gray-50 px-4 py-2 text-center">
+            <a href="/member?section=通知管理" className="text-xs font-medium text-gray-600 hover:text-[#EF9D11]">
+              查看所有通知
+            </a>
           </div>
         </div>
       )}
 
-      {/* ⭐️ 當 viewingNotification 有值時，渲染 Modal */}
-      {viewingNotification && <NotificationDetailModal notification={viewingNotification} onClose={() => setViewingNotification(null)} />}
+      {selectedNotification && (
+        <NotificationDetailModal
+          notification={selectedNotification}
+          onClose={() => setSelectedNotification(null)}
+        />
+      )}
     </div>
   );
 }

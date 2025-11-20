@@ -10,7 +10,6 @@ interface RegisterResult {
   token?: string;
 }
 
-// ✅ registerUser function
 async function registerUser(email: string, password: string): Promise<RegisterResult> {
   const res = await fetch('http://localhost:3001/api/auth/register', {
     method: 'POST',
@@ -31,6 +30,7 @@ export default function RegisterModal() {
   const { isRegisterOpen, closeRegister, openEmailLogin } = useModal();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState(''); // 🔥 新增
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -38,13 +38,19 @@ export default function RegisterModal() {
   if (!isRegisterOpen) return null;
 
   const handleRegister = async () => {
-    if (!email || !password) {
+    if (!email || !password || !confirmPassword) {
       setMessage('⚠️ 請填寫完整資訊');
       return;
     }
-    // ✅ 新增：客戶端密碼長度驗證
+
     if (password.length < 8) {
       setMessage('❌ 密碼長度至少需要 8 個字元');
+      return;
+    }
+
+    // 🔥 新增：確認密碼匹配
+    if (password !== confirmPassword) {
+      setMessage('❌ 密碼與確認密碼不一致');
       return;
     }
 
@@ -58,8 +64,8 @@ export default function RegisterModal() {
       setMessage('🎉 註冊成功！');
       setEmail('');
       setPassword('');
+      setConfirmPassword(''); // 清空
 
-      // 如果有 token，可以存起來
       if (result.token) localStorage.setItem('token', result.token);
 
       setTimeout(() => {
@@ -69,13 +75,12 @@ export default function RegisterModal() {
     } catch (err: unknown) {
       if (err instanceof Error) {
         try {
-          // 嘗試解析錯誤訊息，因為後端可能回傳 JSON 格式的錯誤陣列
           const errors = JSON.parse(err.message);
           if (Array.isArray(errors) && errors.length > 0) {
-            setMessage(`❌ ${errors[0].message}`); // 只顯示第一條錯誤訊息
+            setMessage(`❌ ${errors[0].message}`);
           }
-        } catch (e) {
-          setMessage(`❌ ${err.message}`); // 如果解析失敗，顯示原始錯誤訊息
+        } catch {
+          setMessage(`❌ ${err.message}`);
         }
       } else {
         setMessage('❌ 發生未知錯誤');
@@ -123,6 +128,15 @@ export default function RegisterModal() {
           >
             {showPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
           </button>
+        </div>
+        <div className="relative w-full mb-3">
+          <input
+            type={showPassword ? 'text' : 'password'}
+            placeholder="確認密碼"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-[#EF9D11]"
+          />
         </div>
 
         <button

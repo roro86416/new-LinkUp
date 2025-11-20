@@ -1,9 +1,9 @@
+//必要模組
 import express, { Express, Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
-
-// 模組匯入
+// 功能匯入
 import productRoutes from "./modules/product/products.routes.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import memberProfileRoutes from "./modules/member/memberProfile/memberProfile.routes.js";
@@ -15,8 +15,17 @@ import eventRatingsRoutes from "./modules/event-ratings/event-ratings.routes.js"
 import uploadRoutes from "./modules/post/coverupload/coverupload.routes.js"
 import postRoute from "./modules/post/article/post.route.js"
 import imageRoutes from "./modules/post/image/image.route.js";
+import eventRoutes from "./modules/events/events.routes.js";
+import notificationRoutes from "./modules/notification/notification.routes.js";
+import orderRoutes from "./modules/orders/orders.routes.js";
+import checkInRoutes from './modules/check-in/check-in.routes.js';
+import eventWeatherRoutes from "./modules/event-weather/event-weather.routes.js";
+import eventSearchRoutes from "./modules/event-search/event-search.routes.js";
+import eventStatsRoutes from "./modules/event-stats/event-stats.routes.js";
 
+import { startOrderScheduler } from "./tasks/orderScheduler.js";
 
+// 中間件匯入
 import { errorHandler } from "./middleware/error.middleware.js";
 
 dotenv.config();
@@ -35,11 +44,6 @@ app.use(
 );
 app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")))
 
-
-
-// --- 靜態檔案服務設定 (重要：讓上傳的圖片可以公開訪問) ---
-// 設定 /uploads 路徑對應到專案根目錄下的 'uploads' 資料夾
-// 這樣前端就可以透過 http://localhost:3001/uploads/檔名 來存取圖片
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // --- 測試用路由 ---
@@ -72,14 +76,32 @@ app.use("/api/v1/organizer", organizerRoutes);
 
 // 模組四 (使用者購買票券) 路由 ->活動評論API
 app.use("/api/ratings", eventRatingsRoutes);
+// 活動搜尋與篩選模組 
+app.use("/api/events", eventSearchRoutes);
+// 活動統計模組 (Event Stats)
+app.use("/api/events", eventStatsRoutes);
+// 查詢活動當地天氣
+app.use("/api/events", eventWeatherRoutes);
 
 
+app.use("/api/v1/events", eventRoutes);
 
-// --- 全域錯誤處理中介軟體 (必須放在所有路由之後) ---
-app.use(errorHandler);
+app.use("/api/notifications", notificationRoutes);
+
+app.use("/api/v1/orders", orderRoutes);
+
+// 工作人員票券驗證模組
+app.use('/api/v1/check-in', checkInRoutes);
+
 // 新增：圖片上傳 API
 app.use("/api/post/upload", uploadRoutes); // 加上 /api
 app.use("/api/post", postRoute);             // 加上 /api
 app.use("/api/image", imageRoutes);
+
+startOrderScheduler();
+
+// --- 全域錯誤處理中介軟體 (必須放在所有路由之後) ---
+app.use(errorHandler);
+
 
 export default app;

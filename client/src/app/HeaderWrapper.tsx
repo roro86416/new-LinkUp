@@ -1,5 +1,4 @@
-//負責在不同頁面控制 Header 顯示與排版
-
+// new-LinkUp/client/src/app/HeaderWrapper.tsx
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -7,20 +6,22 @@ import Header from '../components/Header';
 
 export default function HeaderWrapper() {
   const pathname = usePathname();
+  
   const isHome = pathname === '/';
+  const isEventPage = pathname.startsWith('/event/');
+  const isCheckoutPage = pathname.startsWith('/checkout');
 
-  // 如果是後台登入頁面，不渲染 Header
   if (pathname === '/admin/login') {
     return null;
   }
 
-  // ⭐️ 修正：
-  // 1. 在非首頁時，動態加入一個與 Header 等高的 div (h-16 約 64px) 來推開下方內容。
-  // 2. 在首頁時，不加入這個 div，讓 Header 直接疊在 Banner 上。
+  // 修正邏輯：首頁 OR 活動頁 OR 結帳頁，都不顯示預設佔位 div
+  const shouldHideSpacer = isHome || isEventPage || isCheckoutPage;
+
   return (
     <>
       <Header />
-      {!isHome && <div className="h-16" />}
+      {!shouldHideSpacer && <div className="h-20" />}
     </>
   );
 }

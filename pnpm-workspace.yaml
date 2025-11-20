@@ -3,9 +3,10 @@ packages:
   - server
 
 onlyBuiltDependencies:
-  - '@prisma/client'
-  - '@prisma/engines'
+  - "@prisma/client"
+  - "@prisma/engines"
   - bcrypt
+  - core-js
   - esbuild
   - prisma
   - sharp

@@ -1,190 +1,205 @@
+// new-LinkUp/client/src/components/Header.tsx
 'use client';
 
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useModal } from '../context/auth/ModalContext';
-import { useAdminUser } from '../context/auth/AdminUserContext';
-import { useUser } from '../context/auth/UserContext';
+import { usePathname, useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { FaTicketAlt } from 'react-icons/fa';
-import { useState, useRef, useEffect } from 'react';
-import {
-  CogIcon,
-  InboxIcon,
-  StarIcon,
-  ArrowRightOnRectangleIcon,
-  ClipboardDocumentIcon,
-} from '@heroicons/react/24/outline';
-import { useRouter } from 'next/navigation';
-import { usePathname } from 'next/navigation';
+import { Search, User as UserIcon, LogOut, Ticket, Settings } from 'lucide-react';
 
-// ⭐️ 步驟 1: 匯入通知鈴鐺組件
+import { useModal } from '../context/auth/ModalContext';
+import { useUser } from '../context/auth/UserContext';
+import { useAdminUser } from '../context/auth/AdminUserContext';
 import MemberNotificationBell from './content/member/MemberNotificationBell';
 
 export default function Header() {
-  const { openLogin } = useModal();
-  const { user: memberUser, loading: memberLoading, logout: memberLogout } = useUser();
-  const { adminUser, loading: adminLoading, logout: adminLogout } = useAdminUser();
-  const router = useRouter();
   const pathname = usePathname();
+  const router = useRouter();
+  
+  // 頁面判斷
+  const isHome = pathname === '/';
+  const isEventPage = pathname.startsWith('/event/');
   const isAdmin = pathname.startsWith('/admin');
+  const isMember = pathname.startsWith('/member');
+  const islist = pathname.startsWith('/eventlist');
 
-  // 根據當前頁面決定要顯示的使用者資訊和登出功能
-  const user = isAdmin ? adminUser : memberUser;
-  const loading = isAdmin ? adminLoading : memberLoading;
-  const logout = isAdmin ? adminLogout : memberLogout;
+  // 是否為特殊背景頁面 (首頁或活動頁) -> 需要透明效果
+  const isSpecialPage = isHome || isEventPage || isMember || islist;
 
-
+  const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  // 點擊外部關閉選單
+  const { openLogin, isLoginOpen, isRegisterOpen, isEmailLoginOpen, isForgotPasswordOpen, isPasswordSentOpen, isAdminLoginOpen } = useModal();
+  const { user: memberUser, logout: memberLogout } = useUser();
+  const { adminUser, logout: adminLogout } = useAdminUser();
+
+  const user = isAdmin ? adminUser : memberUser;
+  const logout = isAdmin ? adminLogout : memberLogout;
+  
+  // 任何 Modal 開啟時
+  const isAnyModalOpen = isLoginOpen || isRegisterOpen || isEmailLoginOpen || isForgotPasswordOpen || isPasswordSentOpen || isAdminLoginOpen;
+
+  // 1. 解決 Hydration Error
+  useEffect(() => {
+    requestAnimationFrame(() => setIsMounted(true));
+  }, []);
+
+  // 2. 監聽捲動
+  useEffect(() => {
+    // 如果不是特殊頁面，直接設為白底模式 (scrolled=true)
+    if (!isSpecialPage) {
+        setScrolled(true);
+        return;
+    }
+
+    const handleScroll = () => {
+      const isScrolled = window.scrollY > 50;
+      setScrolled(prev => (prev !== isScrolled ? isScrolled : prev));
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    // 初始化檢查
+    requestAnimationFrame(() => handleScroll());
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isSpecialPage]); // 當頁面類型改變時重新執行
+
+  // 3. 點擊外部關閉選單
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // --- 樣式邏輯判斷 ---
+  
+  // 定義變數 (修復錯誤)
+  const isModalMode = isAnyModalOpen;
+  // 透明模式：特殊頁面 + 沒捲動 + 沒開 Modal
+  const isTransparentMode = isSpecialPage && !scrolled && !isModalMode;
+
+  // 決定文字顏色
+  let textColorClass = 'text-slate-600 hover:text-[#EF9D11]'; // 預設：深色 (白底時)
+  
+  if (isModalMode) {
+    textColorClass = 'text-white hover:text-white/80'; // Modal 開啟：白色
+  } else if (isTransparentMode) {
+    if (isEventPage || isMember) {
+        textColorClass = 'text-white hover:text-white/80'; // 活動頁頂部：白色 (配深色海報)
+    } else {
+        textColorClass = 'text-slate-700 hover:text-[#EF9D11]'; // 首頁頂部：深色 (配亮色天空)
+    }
+  }
+
+  // 決定 Logo 圖片
+  let logoSrc = "/logo/logoColor.png";
+  let logoClass = "";
+
+  if (isModalMode) {
+    logoSrc = "/logo/logoBlack.png"; logoClass = "invert opacity-100"; // 白Logo
+  } else if (isTransparentMode) {
+    if (isEventPage || isMember) {
+        logoSrc = "/logo/logoBlack.png"; logoClass = "invert opacity-100"; // 活動頁：白Logo
+    } else {
+        logoSrc = "/logo/logoBlack.png"; logoClass = "opacity-90 hover:opacity-100"; // 首頁：黑Logo
+    }
+  }
+
+  // 背景樣式
+  const headerBackgroundClass = isModalMode
+    ? 'bg-transparent border-transparent'
+    : isTransparentMode
+      ? 'bg-transparent border-transparent py-5'
+      : 'bg-white/90 backdrop-blur-md border-white/20 py-3 shadow-sm'; // 滾動後變白底
+
   return (
-    <header
-      className={`fixed top-0 left-0 w-full z-[99] flex items-center justify-between px-10 py-1 shadow-md ${isAdmin ? 'bg-white backdrop-blur-md' : 'bg-black/50 backdrop-blur-md'
-        }`}
-    >
-      {/* LOGO */}
-      <Link href="/" className="cursor-pointer">
-        <Image
-          src={isAdmin ? "/logo/logoColor.png" : "/logo/logoBlack.png"}
-          alt="LOGO"
-          width={120}
-          height={40}
-          className={isAdmin ? "" : "invert brightness-200"}
-          style={{ width: 'auto' }}
-        />
-      </Link>
+    <header className={`fixed top-0 left-0 w-full z-[99] transition-all duration-300 border-b ${headerBackgroundClass}`}>
+      <div className="container mx-auto px-6 flex items-center justify-between">
+        
+        {/* Logo */}
+        <Link href="/" className="cursor-pointer flex items-center gap-2 group relative z-[100]">
+          <div className="relative h-10 w-32">
+             <Image src={logoSrc} alt="LinkUp Logo" fill className={`object-contain transition-all duration-300 ${logoClass}`} priority />
+          </div>
+        </Link>
 
-      <div className="flex gap-4 items-center">
-        {/* 我的票卷 */}
-        {!isAdmin && (
-          <button
-            // 移除 onClick 事件，並恢復 hover 效果
-            className="flex items-center gap-2 text-white font-medium transition-colors px-4 py-2 cursor-pointer rounded-lg hover:bg-white/10"
-          >
-            <FaTicketAlt className="text-lg" /> 我的票卷
-          </button>
-        )}
+        {/* 中間選單 */}
+        <div className={`hidden md:flex items-center gap-8 text-sm font-medium transition-colors duration-300 ${textColorClass}`}>
+            <Link href="/eventlist" className="transition-colors">活動列表</Link>
+            <Link href="/post" className="transition-colors">文章牆</Link>
+            <Link href="/about" className="transition-colors">關於我們</Link>
+        </div>
 
-        {/* 登入狀態 */}
-        {loading ? (
-          // 在讀取使用者狀態時，顯示一個佔位符或不顯示任何內容
-          // 這裡我們用一個固定寬高的 div 來避免佈局跳動
-          <div className="w-10 h-10" />
-        ) : user ? (
-          // ⭐️ 步驟 2: 將鈴鐺和頭像包在一起
-          <div className="flex items-center gap-4">
-            {/* 如果不是後台頁面，就顯示通知鈴鐺 */}
-            {!isAdmin && <MemberNotificationBell />}
+        {/* 右側功能區 */}
+        <div className="flex items-center gap-4 md:gap-6">
+          <Link href="/eventlist" className={`p-2 rounded-full transition-colors ${textColorClass.includes('text-white') ? 'hover:bg-white/20' : 'hover:bg-gray-100'}`}>
+             {/* 讓 Search Icon 顏色跟隨文字顏色 */}
+             <Search size={22} className={textColorClass.split(' ')[0]} />
+          </Link>
 
-            <div className="relative" ref={menuRef}>
-              {/* 大頭照按鈕，增加 border */}
-              <button
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-300 hover:border-[#EF9D11] transition cursor-pointer"
-              >
-                {user.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt="avatar"
-                    className="w-full h-full object-cover rounded-full"
-                  />
-                ) : (
-                  <div
-                    className={`w-full h-full flex items-center justify-center text-white text-xl font-bold ${isAdmin ? 'bg-red-900' : 'bg-gray-500'
-                      }`}
-                  >
-                    {user.name?.[0]?.toUpperCase() || '?'}
+          {isMounted && user ? (
+            <div className="flex items-center gap-4 animate-in fade-in duration-300">
+              {!isAdmin && (
+                // 修正：讓通知鈴鐺顏色與 textColorClass 同步
+                <MemberNotificationBell className={textColorClass.split(' ')[0]} />
+              )}
+              
+              <div className="relative" ref={menuRef}>
+                <button onClick={() => setMenuOpen(!menuOpen)} className={`w-10 h-10 rounded-full overflow-hidden border-2 transition-all flex items-center justify-center ${textColorClass.includes('text-white') ? 'border-white/50 hover:border-white' : 'border-gray-200 hover:border-[#EF9D11]'}`}>
+                  {user.avatar ? <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" /> : <div className={`w-full h-full flex items-center justify-center text-lg font-bold ${textColorClass.includes('text-white') ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-600'}`}>{user.name?.[0]?.toUpperCase() || <UserIcon size={20} />}</div>}
+                </button>
+                
+                {/* Dropdown Menu */}
+                {menuOpen && (
+                  <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="p-5 border-b border-gray-100 bg-gray-50/50">
+                      <div className="flex items-center gap-3">
+                         <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 border border-gray-200">
+                           {user.avatar ? <img src={user.avatar} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-gray-400 text-white font-bold">{user.name?.[0]?.toUpperCase()}</div>}
+                         </div>
+                         <div className="flex-1 min-w-0">
+                           <p className="font-bold text-gray-900 truncate text-base">{user.name || '會員'}</p>
+                           <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                         </div>
+                      </div>
+                    </div>
+                    <div className="p-2">
+                        <button onClick={() => { router.push(isAdmin ? '/admin' : '/member'); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-[#EF9D11] rounded-xl transition-colors text-left">
+                           {isAdmin ? <Settings size={18}/> : <UserIcon size={18}/>} {isAdmin ? '後台管理' : '會員中心'}
+                        </button>
+                        {!isAdmin && (
+                            <button onClick={() => { router.push('/member?section=我的訂單'); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-orange-50 hover:text-[#EF9D11] rounded-xl transition-colors text-left">
+                               <Ticket size={18}/> 我的票券
+                            </button>
+                        )}
+                    </div>
+                    <div className="p-2 border-t border-gray-100">
+                      <button onClick={() => { if(logout) logout(); setMenuOpen(false); }} className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors text-left">
+                        <LogOut size={18} /> 登出
+                      </button>
+                    </div>
                   </div>
                 )}
-              </button>
-
-              {/* 下拉選單 */}
-              {menuOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl shadow-lg border border-gray-100 z-50">
-                  {/* 第一列：點擊跳轉會員頁 */}
-                  {isAdmin ? (
-                    <div className="w-full flex items-center p-4 border-b border-gray-300 text-left">
-                      {/* Admin view: Not clickable */}
-                      {user.avatar ? <img src={user.avatar} alt="avatar" className="w-12 h-12 rounded-full border-2 border-gray-300 object-cover mr-3" /> : <div className="w-12 h-12 rounded-full bg-gray-500 flex items-center justify-center text-white text-2xl font-bold mr-3 flex-shrink-0">{user.name?.[0]?.toUpperCase()}</div>}
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-800">{user.name}</p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                      </div>
-                      <CogIcon className="w-5 h-5 text-gray-500" />
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        router.push('/member'); // 跳轉會員頁
-                        setMenuOpen(false);     // 關閉下拉選單
-                      }}
-                      className="w-full flex items-center p-4 border-b border-gray-300 text-left cursor-pointer hover:text-[#EF9D11] transition-colors"
-                    >
-                      {/* Member view: Clickable */}
-                      {user.avatar ? <img src={user.avatar} alt="avatar" className="w-12 h-12 rounded-full border-2 border-gray-300 object-cover mr-3" /> : <div className="w-12 h-12 rounded-full bg-gray-500 flex items-center justify-center text-white text-2xl font-bold mr-3 flex-shrink-0">{user.name?.[0]?.toUpperCase()}</div>}
-                      <div className="flex-1">
-                        <p className="font-semibold text-gray-800">{user.name}</p>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                      </div>
-                      <CogIcon className="w-5 h-5 text-gray-500 hover:text-[#EF9D11]" />
-                    </button>
-                  )}
-
-                  {!isAdmin && (
-                    <>
-                      <button
-                        onClick={() => {
-                          router.push('/member?section=訊息管理');
-                          setMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer"
-                      >
-                        <InboxIcon className="w-5 h-5 pointer-events-none" />
-                        訊息管理
-                      </button>
-                      <button
-                        onClick={() => {
-                          router.push('/member?section=我的收藏');
-                          setMenuOpen(false);
-                        }}
-                        className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left cursor-pointer"
-                      >
-                        <StarIcon className="w-5 h-5 pointer-events-none" />
-                        我的收藏
-                      </button>
-                    </>
-                  )}
-
-                  <button
-                    onClick={() => logout && logout()}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-gray-700 font-medium hover:text-[#EF9D11] transition-colors text-left border-t border-gray-300 cursor-pointer"
-                  >
-                    <ArrowRightOnRectangleIcon className="w-5 h-5 pointer-events-none" />
-                    登出
-                  </button>
-                </div>
-              )}
+              </div>
             </div>
-          </div>
-        ) : !isAdmin ? ( // 如果不是後台頁面，顯示登入按鈕
-          <button
-            onClick={openLogin}
-            className="flex items-center gap-2 text-white hover:text-[#EF9D11] font-medium transition-colors px-4 py-2 cursor-pointer"
-          >
-            登入 / 註冊
-          </button>
-        ) : null}
+          ) : (
+            // 登入按鈕
+            <button onClick={openLogin} className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold transition-all shadow-sm hover:shadow-md active:scale-95 ${
+                  isModalMode 
+                    ? 'bg-white/20 text-white hover:bg-white/30 border border-white/50' 
+                    : (isTransparentMode && !isEventPage) // 首頁透明模式 (深字)
+                        ? 'bg-[#0C2838] text-white hover:bg-[#EF9D11]' 
+                        : 'bg-[#EF9D11] text-white hover:bg-[#d88d0e]' // 其他 (含活動頁透明/白底)
+              }`}>
+              <UserIcon size={18} />
+              <span>登入 / 註冊</span>
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

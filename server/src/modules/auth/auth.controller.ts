@@ -4,7 +4,7 @@ import { registerSchema, loginSchema } from "./auth.schema.js";
 import jwt from "jsonwebtoken";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
-const TEST_SECRET = "temp_fix_secret_12345"; 
+
 export const authController = {
   /** 註冊 */
   async register(req: Request, res: Response) {
@@ -29,10 +29,9 @@ export const authController = {
         email: user.email,
         name: user.name,
         avatar: user.avatar || null,
-        role: "member",
       };
 
-const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "7d" });
+      const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "7d" });
 
       res.status(200).json({
         message: "登入成功",
