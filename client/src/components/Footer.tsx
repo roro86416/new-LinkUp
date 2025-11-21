@@ -7,11 +7,9 @@ import { ChevronRight } from 'lucide-react';
 
 export default function Footer() {
   const pathname = usePathname();
-
-  // 如果是後台登入頁面，不渲染 Footer
-  if (pathname === '/admin/login') {
-    return null;
-  }
+  // 如果是 admin 頁面，不渲染 Footer
+  if (pathname?.startsWith('/admin')) return null;
+  
 
   return (
     // 增加 mt-40 確保上方有足夠空間容納漂浮的太空人，避免擋到頁面內容

@@ -1,17 +1,16 @@
-// new-LinkUp/client/src/app/events/page.tsx
+// new-LinkUp/client/src/app/eventlist/page.tsx
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { MagnifyingGlassIcon, FunnelIcon, ArrowsUpDownIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { getEvents } from '../../api/event-api'; // [引用] 使用現有的 API
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { MagnifyingGlassIcon, FunnelIcon, ArrowsUpDownIcon, XMarkIcon, TagIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
+import { getEvents } from '../../api/event-api';
 import { EventCardData } from '../../components/card/EventCard';
 import HomeEventCard from '../../components/card/HomeEventCard';
-import { useFavorites } from '../../components/content/member/FavoritesContext'; // [引用] 整合收藏功能
+import { useFavorites } from '../../components/content/member/FavoritesContext';
 
-// 模擬分類資料 (建議與首頁保持一致或從後端撈取)
 const CATEGORIES = ['全部', '音樂', '戶外', '展覽', '學習', '親子', '運動'];
 
-// 排序選項
 const SORT_OPTIONS = [
   { label: '最新發布', value: 'newest' },
   { label: '即將開始', value: 'upcoming' },
@@ -20,23 +19,26 @@ const SORT_OPTIONS = [
 ];
 
 export default function EventsPage() {
-  // 1. 資料與狀態管理
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
   const [allEvents, setAllEvents] = useState<EventCardData[]>([]);
+  const [visibleCount, setVisibleCount] = useState(9); // 控制顯示數量
   const [loading, setLoading] = useState(true);
-  const { isFavorited, toggleFavorite } = useFavorites(); // 取得收藏狀態
+  const { isFavorited, toggleFavorite } = useFavorites();
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
-  // 2. 搜尋與篩選狀態
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('全部');
-  const [sortBy, setSortBy] = useState('newest');
+  // 從 URL 初始化狀態，若無則使用預設值
+  const [searchTerm, setSearchTerm] = useState(searchParams.get('search') || '');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '全部');
+  const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'newest');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
-  // 3. 載入活動資料
+  // 1. 載入原始資料 (保持原邏輯，一次抓取 100 筆)
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // 這裡抓取 'all' 類型的活動，數量設為 100 (或更多)
         const data = await getEvents('all', 100);
         setAllEvents(data);
       } catch (error) {
@@ -48,11 +50,26 @@ export default function EventsPage() {
     fetchData();
   }, []);
 
-  // 4. 用戶端過濾邏輯 (Filter & Search Logic)
+  // 2. 同步 URL (當篩選條件改變時)
+  const updateUrl = useCallback(() => {
+    const params = new URLSearchParams();
+    if (searchTerm) params.set('search', searchTerm);
+    if (selectedCategory !== '全部') params.set('category', selectedCategory);
+    if (sortBy !== 'newest') params.set('sort', sortBy);
+    
+    router.replace(`/eventlist?${params.toString()}`, { scroll: false });
+  }, [searchTerm, selectedCategory, sortBy, router]);
+
+  useEffect(() => {
+    updateUrl();
+    setVisibleCount(9); // 篩選條件改變時重置顯示數量
+  }, [searchTerm, selectedCategory, sortBy, updateUrl]);
+
+  // 3. 用戶端過濾與排序邏輯
   const filteredEvents = useMemo(() => {
     let result = [...allEvents];
 
-    // (A) 關鍵字搜尋 (標題、地點、主辦方)
+    // (A) 關鍵字搜尋
     if (searchTerm.trim()) {
       const lowerTerm = searchTerm.toLowerCase();
       result = result.filter(e => 
@@ -62,24 +79,23 @@ export default function EventsPage() {
       );
     }
 
-    // (B) 類別篩選 (目前 EventCardData 暫無 category 欄位，這裡預留邏輯或需擴充 API)
-    // 如果未來 API 有回傳 category，可在此過濾：
+    // (B) 類別篩選 (若未來 API 支援 category 欄位，可在此啟用)
     // if (selectedCategory !== '全部') {
     //    result = result.filter(e => e.category === selectedCategory);
     // }
 
     // (C) 排序邏輯
     switch (sortBy) {
-      case 'newest': // ID 越大越新 (假設)
+      case 'newest': 
         result.sort((a, b) => b.id - a.id);
         break;
-      case 'upcoming': // 日期越近越前
+      case 'upcoming': 
         result.sort((a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
         break;
-      case 'price_asc': // 價格低到高
+      case 'price_asc': 
         result.sort((a, b) => a.price - b.price);
         break;
-      case 'price_desc': // 價格高到低
+      case 'price_desc': 
         result.sort((a, b) => b.price - a.price);
         break;
     }
@@ -87,18 +103,41 @@ export default function EventsPage() {
     return result;
   }, [allEvents, searchTerm, selectedCategory, sortBy]);
 
-  // 處理切換收藏 (包裝成符合 HomeEventCard 需求的格式)
-  const handleToggleFavorite = (id: number) => {
-    const event = allEvents.find(e => e.id === id);
-    if (event) {
-      toggleFavorite(event);
-    }
+  // 計算當前顯示的事件
+  const displayEvents = filteredEvents.slice(0, visibleCount);
+  const hasMore = visibleCount < filteredEvents.length;
+
+  const handleLoadMore = () => {
+    setVisibleCount(prev => prev + 9);
   };
 
+  const handleToggleFavorite = (id: number) => {
+    const event = allEvents.find(e => e.id === id);
+    if (event) toggleFavorite(event);
+  };
+
+  // 回到頂部邏輯
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowBackToTop(window.scrollY > 500);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // 取得排序標籤顯示文字
+  const currentSortLabel = useMemo(() => {
+      return SORT_OPTIONS.find(opt => opt.value === sortBy)?.label;
+  }, [sortBy]);
+
   return (
-    <div className="min-h-screen font-sans relative selection:bg-[#EF9D11] selection:text-white pb-20">
+    <div className="min-h-screen font-sans relative selection:bg-[#EF9D11] selection:text-white pb-20 bg-[#0C2838]">
       
-      {/* ================= 背景特效 (同首頁) ================= */}
+      {/* 背景特效 */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(180deg,#EEEEEE_0%,#7D8B93_45%,#0C2838_100%)]"></div>
         <div className="absolute inset-0 opacity-30 mix-blend-overlay" 
@@ -109,14 +148,11 @@ export default function EventsPage() {
              }}>
         </div>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-40"></div>
-        
-        {/* 漂浮星球 (裝飾) */}
         <img src="/homepage/moon.png" alt="" className="absolute top-20 right-[-100px] w-64 h-64 object-contain opacity-60 animate-float-slow pointer-events-none" />
       </div>
 
       <div className="fixed top-0 left-0 w-full h-20 z-50 pointer-events-none"></div>
 
-      {/* ================= 主要內容 ================= */}
       <main className="relative z-10 pt-28 px-4 container mx-auto max-w-7xl flex flex-col gap-8">
         
         {/* 標題區 */}
@@ -129,7 +165,7 @@ export default function EventsPage() {
           </p>
         </div>
 
-        {/* ================= 搜尋與篩選工具列 (Glassmorphism) ================= */}
+        {/* ================= 搜尋與篩選工具列 ================= */}
         <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 shadow-xl animate-in fade-in slide-in-from-bottom-6 duration-700">
           <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
             
@@ -157,7 +193,7 @@ export default function EventsPage() {
 
             {/* 篩選器與排序 (桌面版) */}
             <div className="hidden md:flex gap-3 w-full md:w-auto">
-              {/* 類別下拉 (目前僅 UI) */}
+              {/* 類別 */}
               <div className="relative min-w-[140px]">
                 <select 
                   value={selectedCategory}
@@ -169,7 +205,7 @@ export default function EventsPage() {
                 <FunnelIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
               </div>
 
-              {/* 排序下拉 */}
+              {/* 排序 */}
               <div className="relative min-w-[180px]">
                 <select 
                   value={sortBy}
@@ -191,7 +227,7 @@ export default function EventsPage() {
             </button>
           </div>
 
-          {/* 手機版展開的篩選器 */}
+          {/* 手機版展開 */}
           {showMobileFilters && (
             <div className="md:hidden mt-4 pt-4 border-t border-white/10 flex flex-col gap-3 animate-in slide-in-from-top-2">
               <div>
@@ -222,6 +258,53 @@ export default function EventsPage() {
           )}
         </div>
 
+        {/* ================= 篩選標籤顯示區 (Active Filter Tags) ================= */}
+        <div className="flex flex-wrap items-center gap-2 min-h-[32px] animate-in fade-in duration-500">
+            <span className="text-gray-400 text-xs uppercase tracking-wider font-bold mr-2">篩選條件:</span>
+            
+            {/* 搜尋關鍵字 */}
+            {searchTerm && (
+                 <button 
+                    onClick={() => setSearchTerm('')}
+                    className="group px-3 py-1 rounded-full bg-purple-500/20 border border-purple-500/50 text-purple-400 text-xs font-medium flex items-center gap-1 hover:bg-purple-500 hover:text-white transition-all"
+                >
+                    搜尋: {searchTerm}
+                    <XMarkIcon className="w-3 h-3 group-hover:text-white" />
+                </button>
+            )}
+
+            {/* 分類標籤 */}
+            {selectedCategory !== '全部' && (
+                <button 
+                    onClick={() => setSelectedCategory('全部')}
+                    className="group px-3 py-1 rounded-full bg-[#EF9D11]/20 border border-[#EF9D11]/50 text-[#EF9D11] text-xs font-medium flex items-center gap-1 hover:bg-[#EF9D11] hover:text-white transition-all"
+                >
+                    <TagIcon className="w-3 h-3" />
+                    {selectedCategory}
+                    <XMarkIcon className="w-3 h-3 group-hover:text-white" />
+                </button>
+            )}
+
+            {/* 排序標籤 (僅在非預設時顯示) */}
+            {sortBy !== 'newest' && currentSortLabel && (
+                <button 
+                    onClick={() => setSortBy('newest')}
+                    className="group px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/50 text-blue-400 text-xs font-medium flex items-center gap-1 hover:bg-blue-500 hover:text-white transition-all"
+                >
+                    <ArrowsUpDownIcon className="w-3 h-3" />
+                    {currentSortLabel}
+                    <XMarkIcon className="w-3 h-3 group-hover:text-white" />
+                </button>
+            )}
+
+            {/* 若無任何篩選，顯示預設標籤 */}
+            {!searchTerm && selectedCategory === '全部' && sortBy === 'newest' && (
+                 <div className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/60 text-xs font-medium">
+                    顯示所有活動
+                 </div>
+            )}
+        </div>
+
         {/* ================= 活動列表區 ================= */}
         <div className="min-h-[400px]">
           {loading ? (
@@ -229,24 +312,43 @@ export default function EventsPage() {
                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#EF9D11]"></div>
                <p className="text-gray-400 mt-4">正在載入活動...</p>
             </div>
-          ) : filteredEvents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {filteredEvents.map(event => (
-                <div key={event.id} className="h-full animate-in fade-in duration-500">
-                  <HomeEventCard 
-                    event={event} 
-                    isFavorited={isFavorited(event.id)} 
-                    onToggleFavorite={handleToggleFavorite} 
-                  />
+          ) : displayEvents.length > 0 ? (
+            <>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                  {displayEvents.map((event, index) => (
+                    // 卡片動畫：從左側滑入 (Slide In From Left) + 漸顯
+                    <div key={`${event.id}-${index}`} className="h-full animate-in slide-in-from-left-4 fade-in duration-700 fill-mode-backwards" style={{ animationDelay: `${(index % 9) * 100}ms` }}>
+                      <HomeEventCard 
+                        event={event} 
+                        isFavorited={isFavorited(event.id)} 
+                        onToggleFavorite={handleToggleFavorite} 
+                      />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+
+                {/* 查看更多按鈕 (取代無限捲動) */}
+                {hasMore && (
+                    <div className="mt-12 flex justify-center">
+                        <button 
+                            onClick={handleLoadMore}
+                            className="group relative px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/20 rounded-full text-white font-bold transition-all flex items-center gap-2 overflow-hidden"
+                        >
+                            <span className="relative z-10 flex items-center gap-2">
+                                查看更多活動 <ArrowDownIcon className="w-4 h-4 group-hover:translate-y-1 transition-transform" />
+                            </span>
+                            {/* 底部漸層光暈效果 */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-[#EF9D11]/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
+                        </button>
+                    </div>
+                )}
+            </>
           ) : (
             <div className="text-center py-32 bg-white/5 backdrop-blur-md border border-white/10 rounded-3xl">
                <p className="text-2xl text-gray-300 font-bold">沒有找到相關活動</p>
                <p className="text-gray-500 mt-2">試試看調整搜尋關鍵字或篩選條件吧！</p>
                <button 
-                 onClick={() => { setSearchTerm(''); setSelectedCategory('全部'); }}
+                 onClick={() => { setSearchTerm(''); setSelectedCategory('全部'); setSortBy('newest'); }}
                  className="mt-6 px-6 py-2 bg-white/10 hover:bg-[#EF9D11] text-white rounded-full transition-all"
                >
                  清除所有條件
@@ -256,6 +358,16 @@ export default function EventsPage() {
         </div>
 
       </main>
+
+      {/* 回到頂部按鈕 */}
+      <button
+        onClick={scrollToTop}
+        className={`fixed bottom-8 right-8 p-3 bg-[#EF9D11] text-white rounded-full shadow-lg hover:bg-[#d88d0e] transition-all duration-300 z-50 ${
+          showBackToTop ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'
+        }`}
+      >
+        <ArrowUpIcon className="h-6 w-6" />
+      </button>
     </div>
   );
 }

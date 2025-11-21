@@ -104,8 +104,7 @@ export default function OrderTicketPage() {
       <div className="absolute inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(180deg,#1a202c_0%,#0C2838_100%)]"></div>
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-40"></div>
-        {/* 漂浮星球 (裝飾) */}
-        <img src="/homepage/moon.png" alt="" className="absolute -top-20 -right-20 w-64 h-64 object-contain opacity-20 animate-pulse" />
+       
       </div>
 
       {/* 頂部導航列 */}

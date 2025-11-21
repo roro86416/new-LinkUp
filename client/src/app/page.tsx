@@ -7,12 +7,10 @@ import {
   Sparkles, Clock, BookOpen, User 
 } from 'lucide-react';
 import Link from 'next/link';
-
 // API & Context
-import { getEvents, getAnnouncements, AnnouncementData } from '.././api/event-api';
+import { getEvents } from '.././api/event-api';
 import { EventCardData } from '.././components/card/EventCard';
 import HomeEventCard from '.././components/card/HomeEventCard';
-// [新增] 引入 Context Hook
 import { useFavorites } from '../components/content/member/FavoritesContext';
 
 // --- 靜態資料 ---
@@ -23,7 +21,12 @@ const CATEGORIES = [
   { id: 4, name: '學習', icon: '📚' },
   { id: 5, name: '親子', icon: '👨‍👩‍👧' },
   { id: 6, name: '運動', icon: '🏀' },
-  { id: 'all', name: '全部', icon: <ArrowRight size={24} className="text-white" /> },
+  {
+    id: 'all',
+    name: '全部',
+    icon: <ArrowRight size={24} className="text-white" />,
+    href: 'http://localhost:3000/eventlist'
+  },
 ];
 
 const MOCK_ARTICLES = [
@@ -31,6 +34,15 @@ const MOCK_ARTICLES = [
   { id: 2, title: "探索台北的地下獨立樂團文化", author: "聽團仔", date: "2024-11-18", image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80", desc: "除了主流音樂，台北的地下 Live House 其實藏著許多寶藏聲音，帶你走訪公館、西門町的秘密基地。" },
   { id: 3, title: "週末露營去！新手也能輕鬆上手的營地推薦", author: "戶外達人", date: "2024-11-15", image: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=800&q=80", desc: "不想跑太遠，又想享受芬多精？精選北部 5 個適合新手的露營區，裝備租借也超方便。" },
 ];
+
+// 定義 LocalStorage Banner 的介面
+interface LocalBanner {
+  id: number;
+  title: string;
+  imageUrl: string;
+  linkUrl: string;
+  isActive: boolean;
+}
 
 interface HeroSlide {
   id: string;
@@ -43,12 +55,14 @@ interface HeroSlide {
 }
 
 export default function HomePage() {
-  // [新增] 使用 Context 取代原本的 local state
   const { isFavorited, toggleFavorite } = useFavorites();
   
   const [loading, setLoading] = useState(true);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
-  const [announcements, setAnnouncements] = useState<AnnouncementData[]>([]);
+  
+  // [修改] State 改為儲存 LocalBanner
+  const [announcements, setAnnouncements] = useState<LocalBanner[]>([]);
+  
   const [hotEvents, setHotEvents] = useState<EventCardData[]>([]);
   const [newEvents, setNewEvents] = useState<EventCardData[]>([]);
   const [spotlightEvents, setSpotlightEvents] = useState<EventCardData[]>([]);
@@ -56,7 +70,7 @@ export default function HomePage() {
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [currentAnnouncementIndex, setCurrentAnnouncementIndex] = useState(0);
   const [hotPage, setHotPage] = useState(0);
-  const [activeTab, setActiveTab] = useState<'new' | 'spotlight'>('new');
+  const [activeTab, setActiveTab] = useState<'new' | 'spotlight'>('spotlight');
 
   const HOT_ITEMS_PER_PAGE = 3;
 
@@ -64,16 +78,46 @@ export default function HomePage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const [announcementData, allEvents, featuredEvents] = await Promise.all([
-          getAnnouncements(),
+
+        // 1. 取得活動 API 資料 (移除了 getAnnouncements)
+        const [allEvents, featuredEvents] = await Promise.all([
           getEvents('all', 50),
           getEvents('featured', 3)
         ]);
 
-        setAnnouncements(announcementData);
+        // 2. 讀取 Admin 設定的 Banner (LocalStorage: 'home_banners')
+        let adminBanners: LocalBanner[] = [];
+        try {
+            const stored = localStorage.getItem('home_banners');
+            if (stored) adminBanners = JSON.parse(stored);
+        } catch (e) { console.error(e); }
 
+        // [新增] 設定公告欄資料：只取 Active 的，並反轉順序(通常新的在後)
+        const activeAnnouncements = adminBanners.filter(b => b.isActive).reverse();
+        setAnnouncements(activeAnnouncements);
+
+        // 3. 組合 Hero Slides 邏輯
         const slides: HeroSlide[] = [];
-        featuredEvents.forEach(evt => {
+
+        // 優先顯示 Admin 公告 (最多 3 則)
+        const activeAdminBanners = adminBanners.filter(b => b.isActive).slice(0, 3);
+        
+        activeAdminBanners.forEach(b => {
+            slides.push({
+                id: `banner-${b.id}`,
+                image: b.imageUrl,
+                title: b.title,
+                highlight: "最新公告",
+                desc: "點擊查看詳情",
+                type: 'announcement',
+                link: b.linkUrl || '#'
+            });
+        });
+
+        // 補上活動 (最多補到 6 則，或至少補 3 則活動)
+        const eventsToTake = featuredEvents.slice(0, 3);
+        
+        eventsToTake.forEach(evt => {
           slides.push({
             id: `evt-${evt.id}`,
             image: evt.cover_image,
@@ -84,33 +128,24 @@ export default function HomePage() {
             link: `/event/${evt.id}`
           });
         });
-
-        const bannerAnnouncements = announcementData.filter(a => a.cover_image).slice(0, 2);
-        bannerAnnouncements.forEach(ann => {
-          slides.unshift({ 
-            id: `ann-${ann.id}`,
-            image: ann.cover_image!,
-            title: "最新消息",
-            highlight: ann.title,
-            desc: "點擊查看詳細公告內容與活動辦法。",
-            type: 'announcement',
-            link: ann.linkUrl || '#'
-          });
-        });
-
-        if (slides.length === 0 && allEvents.length > 0) {
-           allEvents.slice(0, 3).forEach(evt => {
-              slides.push({
-                id: `fill-${evt.id}`,
-                image: evt.cover_image,
-                title: evt.title,
-                highlight: '熱門推薦',
-                desc: '大家都在關注的活動，別錯過！',
-                type: 'event',
-                link: `/event/${evt.id}`
-              });
-           });
+        
+        if (slides.length < 3 && allEvents.length > 0) {
+             const fillCount = 3 - slides.length;
+             allEvents.slice(0, fillCount).forEach(evt => {
+                if (!slides.some(s => s.id === `evt-${evt.id}`)) {
+                    slides.push({
+                        id: `fill-${evt.id}`,
+                        image: evt.cover_image,
+                        title: evt.title,
+                        highlight: '熱門推薦',
+                        desc: '大家都在關注的活動，別錯過！',
+                        type: 'event',
+                        link: `/event/${evt.id}`
+                    });
+                }
+             });
         }
+
         setHeroSlides(slides);
 
         const now = new Date();
@@ -146,12 +181,9 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, [heroSlides]);
 
-  // [新增] 處理點擊愛心邏輯：需要從現有列表中找到完整的 event 物件傳給 Context
   const handleToggleFavorite = (id: number) => {
-    // 嘗試從所有列表中尋找該活動
     const allKnownEvents = [...hotEvents, ...newEvents, ...spotlightEvents];
     const targetEvent = allKnownEvents.find(e => e.id === id);
-    
     if (targetEvent) {
       toggleFavorite(targetEvent);
     }
@@ -181,7 +213,7 @@ export default function HomePage() {
 
       <main className="relative z-10 pt-24 px-4 container mx-auto max-w-6xl flex flex-col gap-16">
         
-        {/* 公告欄 (保持不變) */}
+        {/* 公告欄 (使用 LocalStorage 資料) */}
         <section className="bg-white/95 backdrop-blur-md border border-white/60 rounded-full px-5 py-3 flex items-center justify-between shadow-lg shadow-black/5 animate-in fade-in slide-in-from-top-4 duration-700 h-14">
             <div className="flex items-center gap-3 overflow-hidden flex-1 h-full">
                 <div className="flex items-center gap-1 text-[#EF9D11] font-bold whitespace-nowrap">
@@ -191,9 +223,17 @@ export default function HomePage() {
                 <div className="flex-1 h-full relative overflow-hidden">
                     {announcements.map((item, idx) => (
                         <div key={item.id} className="absolute top-0 left-0 w-full h-full transition-all duration-700 ease-in-out flex items-center" style={{ transform: `translateY(${(idx - currentAnnouncementIndex) * 100}%)`, opacity: idx === currentAnnouncementIndex ? 1 : 0 }}>
-                            <Link href={item.linkUrl || '#'} className="text-sm text-gray-800 font-medium truncate hover:text-[#EF9D11] transition-colors block w-full">• {item.title}</Link>
+                            {/* [修改] 這裡改為 div，不使用 Link，但保留 hover 效果 */}
+                            <div className="text-sm text-gray-800 font-medium truncate hover:text-[#EF9D11] transition-colors block w-full cursor-default select-none">
+                                • {item.title}
+                            </div>
                         </div>
                     ))}
+                    {announcements.length === 0 && (
+                         <div className="absolute top-0 left-0 w-full h-full flex items-center text-sm text-gray-400">
+                            暫無公告
+                         </div>
+                    )}
                 </div>
             </div>
             <Link href="/announcements" className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-[#EF9D11] whitespace-nowrap ml-4 transition-colors">更多 <ArrowRight className="w-3 h-3" /></Link>
@@ -232,21 +272,48 @@ export default function HomePage() {
 
         {/* Categories */}
         <section className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-3xl p-6 shadow-lg relative z-20">
-            <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-                {CATEGORIES.map((cat) => (
-                    <div key={cat.id} className="group flex flex-col items-center gap-2 cursor-pointer">
-                        <div className={`w-16 h-16 rounded-full backdrop-blur-sm border shadow-lg flex items-center justify-center text-2xl group-hover:scale-110 transition-all duration-300 ${cat.id === 'all' ? 'bg-[#EF9D11] border-[#EF9D11] text-white shadow-orange-500/30' : 'bg-white/10 border-white/40 group-hover:bg-[#EF9D11] group-hover:border-[#EF9D11] text-white'}`}>
-                            {cat.icon}
-                        </div>
-                        <span className={`text-sm font-bold transition-colors ${cat.id === 'all' ? 'text-white' : 'text-white group-hover:text-[#EF9D11]'}`}>{cat.name}</span>
-                    </div>
-                ))}
-            </div>
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10">
+            {CATEGORIES.map((cat) => {
+              const content = (
+                <div
+                  key={cat.id}
+                  className="group flex flex-col items-center gap-2 cursor-pointer"
+                >
+                  <div
+                    className={`w-16 h-16 rounded-full backdrop-blur-sm border shadow-lg flex items-center justify-center text-2xl group-hover:scale-110 transition-all duration-300 ${
+                      cat.id === 'all'
+                        ? 'bg-[#EF9D11] border-[#EF9D11] text-white shadow-orange-500/30'
+                        : 'bg-white/10 border-white/40 group-hover:bg-[#EF9D11] group-hover:border-[#EF9D11] text-white'
+                    }`}
+                  >
+                    {cat.icon}
+                  </div>
+                  <span
+                    className={`text-sm font-bold transition-colors ${
+                      cat.id === 'all'
+                        ? 'text-white'
+                        : 'text-white group-hover:text-[#EF9D11]'
+                    }`}
+                  >
+                    {cat.name}
+                  </span>
+                </div>
+              );
+
+              return cat.href ? (
+                <Link href={cat.href} key={cat.id}>
+                  {content}
+                </Link>
+              ) : (
+                content
+              );
+            })}
+          </div>
         </section>
 
         {/* 月球 */}
         <div className="relative h-0 w-full z-0 hidden md:block -my-5">
-            <img src="/homepage/moon.png" alt="Moon Decoration" className="absolute -top-36 -right-32 w-80 h-80 object-contain opacity-80 drop-shadow-2xl animate-float-slow pointer-events-none" style={{ transform: 'rotate(15deg)' }}/>
+            <img src="/homepage/moon.png" alt="Moon Decoration" className="absolute -top-56 -right-56 w-96 h-96 object-contain  drop-shadow-2xl animate-float-slow pointer-events-none" style={{ transform: 'rotate(15deg)' }}/>
         </div>
 
         {/* 熱門活動 */}
@@ -268,7 +335,7 @@ export default function HomePage() {
                       <div key={event.id} className="h-full animate-in fade-in duration-500">
                           <HomeEventCard 
                             event={event} 
-                            isFavorited={isFavorited(event.id)} // 使用 Context 檢查狀態
+                            isFavorited={isFavorited(event.id)}
                             onToggleFavorite={handleToggleFavorite} 
                           />
                       </div>
@@ -279,28 +346,42 @@ export default function HomePage() {
 
         {/* [星球 2] 地球 */}
         <div className="relative h-0 w-full z-0 hidden md:block -my-5">
-            <img src="/homepage/earth.png" alt="Earth Decoration" className="absolute -top-48 -left-40 w-[30rem] h-[30rem] object-contain opacity-90 drop-shadow-2xl animate-float-reverse pointer-events-none"/>
+            <img src="/homepage/earth.png" alt="Earth Decoration" className="absolute -top-48 -left-62 w-[30rem] h-[30rem] object-contain  drop-shadow-2xl animate-float-reverse pointer-events-none"/>
         </div>
 
         {/* 最新/焦點活動 */}
         <section className="bg-white/30 backdrop-blur-xl border border-white/40 rounded-[40px] p-6 md:p-10 shadow-2xl z-20">
              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 border-b border-[#0C2838]/10 pb-4 gap-4">
-                <h2 className="text-3xl font-bold text-[#0C2838] drop-shadow-sm flex items-center gap-3">
-                    {activeTab === 'new' ? <Sparkles className="text-[#EF9D11]" /> : <Clock className="text-red-500" />}
-                    {activeTab === 'new' ? '最新上架' : '焦點活動'}
-                </h2>
-                <div className="flex bg-white/40 p-1 rounded-full backdrop-blur-sm">
-                    <button onClick={() => setActiveTab('new')} className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'new' ? 'bg-[#EF9D11] text-white shadow-lg' : 'text-[#0C2838]/70 hover:text-[#0C2838]'}`}>最新上架</button>
-                    <button onClick={() => setActiveTab('spotlight')} className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'spotlight' ? 'bg-red-500 text-white shadow-lg' : 'text-[#0C2838]/70 hover:text-[#0C2838]'}`}>焦點活動</button>
-                </div>
-            </div>
+    <h2 className="text-3xl font-bold text-[#0C2838] drop-shadow-sm flex items-center gap-3">
+        {/* 標題顯示邏輯不用動，它會自動根據 activeTab 變換，但因為預設變了，這裡會直接先顯示焦點活動 */}
+        {activeTab === 'spotlight' ? <Clock className="text-red-500" /> : <Sparkles className="text-[#EF9D11]" />}
+        {activeTab === 'spotlight' ? '焦點活動' : '最新上架'}
+    </h2>
+    <div className="flex bg-white/40 p-1 rounded-full backdrop-blur-sm">
+        {/* 按鈕 1: 焦點活動 (移到前面) */}
+        <button 
+            onClick={() => setActiveTab('spotlight')} 
+            className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'spotlight' ? 'bg-red-500 text-white shadow-lg' : 'text-[#0C2838]/70 hover:text-[#0C2838]'}`}
+        >
+            焦點活動
+        </button>
+        
+        {/* 按鈕 2: 最新上架 (移到後面) */}
+        <button 
+            onClick={() => setActiveTab('new')} 
+            className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'new' ? 'bg-[#EF9D11] text-white shadow-lg' : 'text-[#0C2838]/70 hover:text-[#0C2838]'}`}
+        >
+            最新上架
+        </button>
+    </div>
+</div>
             {loading ? <div className="text-center py-20 text-[#0C2838]/50">載入中...</div> : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {(activeTab === 'new' ? newEvents : spotlightEvents).map(event => (
                       <div key={event.id} className="h-full animate-in zoom-in-95 duration-300">
                           <HomeEventCard 
                             event={event} 
-                            isFavorited={isFavorited(event.id)} // 使用 Context 檢查狀態
+                            isFavorited={isFavorited(event.id)}
                             onToggleFavorite={handleToggleFavorite} 
                           />
                       </div>
@@ -308,9 +389,17 @@ export default function HomePage() {
               </div>
             )}
             <div className="mt-10 text-center">
+              <Link
+                href={
+                  activeTab === 'new'
+                    ? '/eventlist'
+                    : '/eventlist?sort=upcoming'
+                }
+              >
                 <button className="bg-white hover:bg-[#EF9D11] hover:text-white border border-white/30 text-[#0C2838] px-8 py-3 rounded-full font-bold backdrop-blur-md transition-all hover:scale-105 shadow-lg">
-                    查看更多{activeTab === 'new' ? '最新' : '焦點'}活動
+                  查看更多{activeTab === 'new' ? ' 焦點' : '最新'}活動
                 </button>
+              </Link>
             </div>
         </section>
         

@@ -62,6 +62,15 @@ export const authService = {
     };
   },
 
+  // 🔥 [新增] 這是您缺少的關鍵函式！
+  /** 透過 Email 查找用戶 (Google Login 專用) */
+  async findUserByEmail(email: string) {
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
+    return user;
+  },
+
   /** 更新會員資料 */
   async updateUser(
     userId: string,

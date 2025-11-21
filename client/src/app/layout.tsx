@@ -20,6 +20,7 @@ import AdminLoginModal from '../components/modals/auth/AdminLoginModal';
 import { Toaster } from 'react-hot-toast';
 // [注意] 請確認此路徑與您的檔案名稱大小寫一致 (例如 mantineProviders.tsx 或 MantineProviders.tsx)
 import MantineProviders from '../providers/MantineProviders';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 export const metadata = {
   title: "LinkUp | 連結每一個精彩瞬間",
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
           <AdminUserProvider>
             <UserProvider>
+              <GoogleOAuthProvider clientId="851448034728-23otj2ua4rlpr8km64lgfi0l4r3b6vni.apps.googleusercontent.com">
               <ModalProvider>
                 <CouponsProvider>
                   <FavoritesProvider>
@@ -59,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   </FavoritesProvider>
                 </CouponsProvider>
               </ModalProvider>
+              </GoogleOAuthProvider>
             </UserProvider>
           </AdminUserProvider>
         </MantineProviders>

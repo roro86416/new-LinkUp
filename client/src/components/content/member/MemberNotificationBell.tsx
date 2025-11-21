@@ -18,7 +18,6 @@ interface Notification {
 export default function MemberNotificationBell({ className = '' }: { className?: string }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   
-  // 使用您偏好的變數命名
   const [showDropdown, setShowDropdown] = useState(false); 
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -30,24 +29,17 @@ export default function MemberNotificationBell({ className = '' }: { className?:
     let apiData: Notification[] = [];
     let localData: Notification[] = [];
 
-    // 1. 嘗試讀取 API
     try {
       const res = await apiClient.get<any>('/api/notifications');
       const data = Array.isArray(res) ? res : (res?.data || []); 
       if (Array.isArray(data)) apiData = data;
-    } catch (error) {
-      // 靜默失敗
-    }
+    } catch (error) { }
 
-    // 2. 讀取 LocalStorage (模擬 Admin 通知)
     try {
       const saved = localStorage.getItem('demo_notifications');
       if (saved) localData = JSON.parse(saved);
-    } catch (error) {
-      console.error("LS 讀取失敗", error);
-    }
+    } catch (error) { console.error("LS 讀取失敗", error); }
 
-    // 3. 合併並排序
     const merged = [...localData, ...apiData].sort((a, b) => 
       new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()
     );
@@ -56,30 +48,28 @@ export default function MemberNotificationBell({ className = '' }: { className?:
     setNotifications(unique);
   }, []);
 
-  // 定時輪詢與事件監聽
   useEffect(() => {
     fetchNotifications();
-
     const handler = () => { fetchNotifications(); };
     window.addEventListener('notifications-updated', handler);
-    
     const interval = setInterval(fetchNotifications, 5000);
-
     return () => {
       window.removeEventListener('notifications-updated', handler);
       clearInterval(interval);
     };
   }, [fetchNotifications]);
 
+  // 1. 計算未讀數量 (用於紅點)
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
-  // 點擊處理邏輯 (保持不動)：判斷來源並更新狀態
+  // 2. [新增] 產生一個只包含未讀通知的列表，用於渲染
+  const unreadList = notifications.filter(n => !n.isRead);
+
   const handleNotificationClick = async (notification: Notification) => {
-    setShowDropdown(false); // 關閉下拉
-    setSelectedNotification(notification); // 開啟 Modal
+    setShowDropdown(false); 
+    setSelectedNotification(notification); 
 
     if (!notification.isRead) {
-      // 1. 嘗試更新 LocalStorage
       try {
            const saved = localStorage.getItem('demo_notifications');
            if (saved) {
@@ -91,18 +81,15 @@ export default function MemberNotificationBell({ className = '' }: { className?:
            }
       } catch(e) { console.error(e); }
 
-      // 2. 嘗試呼叫 API
       try {
           await apiClient.patch(`/api/notifications/${notification.id}/read`, {});
       } catch (e) { }
 
-      // 更新 UI
       fetchNotifications();
       window.dispatchEvent(new CustomEvent('notifications-updated'));
     }
   };
 
-  // 點擊外部關閉
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -113,9 +100,6 @@ export default function MemberNotificationBell({ className = '' }: { className?:
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // ------------------------------------------------------------
-  // UI 部分 (已替換為您指定的版本)
-  // ------------------------------------------------------------
   return (
     <div className="relative" ref={dropdownRef}>
       <button
@@ -133,26 +117,24 @@ export default function MemberNotificationBell({ className = '' }: { className?:
       {showDropdown && (
         <div className="absolute right-0 mt-2 w-80 origin-top-right rounded-xl bg-white shadow-xl border border-gray-100 focus:outline-none z-50 overflow-hidden">
           <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
-            <h3 className="text-sm font-semibold text-gray-900">通知中心</h3>
-            {/* 若後端無全部已讀 API，可先隱藏此按鈕或僅做前端效果 */}
+            <h3 className="text-sm font-semibold text-gray-900">未讀通知</h3>
           </div>
 
           <div className="max-h-96 overflow-y-auto">
-            {notifications.length > 0 ? (
+            {/* 3. 修改這裡：判斷未讀列表長度，並渲染 unreadList */}
+            {unreadList.length > 0 ? (
               <div className="divide-y divide-gray-100">
-                {notifications.map((notification) => (
+                {unreadList.map((notification) => (
                   <button
                     key={notification.id}
                     onClick={() => handleNotificationClick(notification)}
-                    className={`flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 ${
-                      !notification.isRead ? 'bg-orange-50/30' : ''
-                    }`}
+                    className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50 bg-orange-50/30"
                   >
-                    <div className={`mt-1 h-2 w-2 shrink-0 rounded-full ${
-                      !notification.isRead ? 'bg-[#EF9D11]' : 'bg-gray-300'
-                    }`} />
+                    {/* 因為只顯示未讀，所以這裡的小圓點一定是橘色 */}
+                    <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[#EF9D11]" />
+                    
                     <div className="flex-1 space-y-1">
-                      <p className={`text-sm ${!notification.isRead ? 'font-medium text-gray-900' : 'text-gray-600'}`}>
+                      <p className="text-sm font-medium text-gray-900">
                         {notification.title}
                       </p>
                       <p className="line-clamp-2 text-xs text-gray-500">
@@ -168,14 +150,14 @@ export default function MemberNotificationBell({ className = '' }: { className?:
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-gray-500">
                 <BellIcon className="mb-2 h-8 w-8 opacity-20" />
-                <p className="text-sm">暫無通知</p>
+                <p className="text-sm">暫無未讀通知</p>
               </div>
             )}
           </div>
           
           <div className="border-t border-gray-100 bg-gray-50 px-4 py-2 text-center">
             <a href="/member?section=通知管理" className="text-xs font-medium text-gray-600 hover:text-[#EF9D11]">
-              查看所有通知
+              查看歷史通知
             </a>
           </div>
         </div>

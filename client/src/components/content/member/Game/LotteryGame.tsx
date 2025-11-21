@@ -2,9 +2,11 @@
 'use client';
 import React, { useState } from 'react';
 import { SparklesIcon, GiftIcon } from '@heroicons/react/24/solid';
-import toast from 'react-hot-toast';
+// import toast from 'react-hot-toast'; // Context 裡面已經有 toast 了，這裡可以移除
+import { useCoupons } from '../CouponsContext'; // [新增 1] 引入 Context
 
 export default function LotteryGame() {
+  const { addCoupon } = useCoupons(); // [新增 2] 取得新增折價券的方法
   const [isSpinning, setIsSpinning] = useState(false);
   const [result, setResult] = useState<{name:string, code:string}|null>(null);
 
@@ -15,11 +17,12 @@ export default function LotteryGame() {
 
     // 模擬抽獎過程
     setTimeout(() => {
+        // [修改 3] 為了配合 Context 的介面，我們幫獎品補上 image 欄位 (雖然目前 UI 沒用到)
         const prizes = [
-            { name: '95折優惠券', code: 'LUCKY95', chance: 0.5 },
-            { name: '9折優惠券', code: 'LUCKY90', chance: 0.3 },
-            { name: '85折優惠券', code: 'LUCKY85', chance: 0.15 },
-            { name: '免費票券一張', code: 'FREE01', chance: 0.05 },
+            { name: '95折優惠券', code: 'LUCKY95', chance: 0.5, image: '' },
+            { name: '9折優惠券', code: 'LUCKY90', chance: 0.3, image: '' },
+            { name: '85折優惠券', code: 'LUCKY85', chance: 0.15, image: '' },
+            { name: '免費票券一張', code: 'FREE01', chance: 0.05, image: '' },
         ];
         
         const rand = Math.random();
@@ -33,12 +36,13 @@ export default function LotteryGame() {
 
         setResult(wonPrize);
         setIsSpinning(false);
-        toast.success(`恭喜獲得：${wonPrize.name}！`);
-
-        // 存入 LocalStorage
-        const currentCoupons = JSON.parse(localStorage.getItem('my_coupons') || '[]');
-        currentCoupons.push({ ...wonPrize, id: Date.now().toString(), date: new Date().toISOString() });
-        localStorage.setItem('my_coupons', JSON.stringify(currentCoupons));
+        
+        // [修改 4] 關鍵修改！使用 Context 的方法來新增折價券
+        // 這會自動處理 LocalStorage ('user_coupons') 並更新畫面
+        addCoupon({
+          name: wonPrize.name,
+          image: wonPrize.image
+        });
 
     }, 2000);
   };

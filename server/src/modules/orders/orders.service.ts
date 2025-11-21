@@ -285,7 +285,7 @@ export const createOrderService = async (
       data: {
         type: "transaction",
         title: "訂單成立通知",
-        message: `您的訂單 #${newOrder.order_number} 已成立。\n請於 30 分鐘內完成付款，否則訂單將自動取消。`,
+        message: `您的訂單 #${newOrder.order_number} 已成立。\n請於 15 分鐘內完成付款，否則訂單將自動取消。`,
         sent_at: new Date(),
         userStatuses: {
           create: {

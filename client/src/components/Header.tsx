@@ -11,6 +11,7 @@ import { useModal } from '../context/auth/ModalContext';
 import { useUser } from '../context/auth/UserContext';
 import { useAdminUser } from '../context/auth/AdminUserContext';
 import MemberNotificationBell from './content/member/MemberNotificationBell';
+import { BsInfoSquare } from 'react-icons/bs';
 
 export default function Header() {
   const pathname = usePathname();
@@ -22,9 +23,13 @@ export default function Header() {
   const isAdmin = pathname.startsWith('/admin');
   const isMember = pathname.startsWith('/member');
   const islist = pathname.startsWith('/eventlist');
+  const isanno = pathname.startsWith('/announcements');
+  const isabout = pathname.startsWith('/about');
+
+
 
   // 是否為特殊背景頁面 (首頁或活動頁) -> 需要透明效果
-  const isSpecialPage = isHome || isEventPage || isMember || islist;
+  const isSpecialPage = isHome || isEventPage || isMember || islist || isanno || isabout;
 
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -88,7 +93,7 @@ export default function Header() {
   if (isModalMode) {
     textColorClass = 'text-white hover:text-white/80'; // Modal 開啟：白色
   } else if (isTransparentMode) {
-    if (isEventPage || isMember) {
+    if (isEventPage || isMember ||isabout) {
         textColorClass = 'text-white hover:text-white/80'; // 活動頁頂部：白色 (配深色海報)
     } else {
         textColorClass = 'text-slate-700 hover:text-[#EF9D11]'; // 首頁頂部：深色 (配亮色天空)
@@ -102,7 +107,7 @@ export default function Header() {
   if (isModalMode) {
     logoSrc = "/logo/logoBlack.png"; logoClass = "invert opacity-100"; // 白Logo
   } else if (isTransparentMode) {
-    if (isEventPage || isMember) {
+    if (isEventPage || isMember || isabout) {
         logoSrc = "/logo/logoBlack.png"; logoClass = "invert opacity-100"; // 活動頁：白Logo
     } else {
         logoSrc = "/logo/logoBlack.png"; logoClass = "opacity-90 hover:opacity-100"; // 首頁：黑Logo
@@ -128,12 +133,45 @@ export default function Header() {
         </Link>
 
         {/* 中間選單 */}
-        <div className={`hidden md:flex items-center gap-8 text-sm font-medium transition-colors duration-300 ${textColorClass}`}>
-            <Link href="/eventlist" className="transition-colors">活動列表</Link>
-            <Link href="/post" className="transition-colors">文章牆</Link>
-            <Link href="/about" className="transition-colors">關於我們</Link>
-        </div>
+        <div className="hidden md:flex items-center gap-8 text-sm font-medium transition-colors duration-300">
 
+  <Link 
+    href="/eventlist" 
+    className={`transition-colors ${
+      isModalMode ? "text-white hover:text-white/70" :
+      isTransparentMode && (isEventPage || isMember || isabout) ? "text-white hover:text-white/70" :
+      isTransparentMode ? "text-slate-700 hover:text-[#EF9D11]" :
+      "text-slate-600 hover:text-[#EF9D11]"
+    }`}
+  >
+    活動列表
+  </Link>
+
+  <Link 
+    href="/post" 
+    className={`transition-colors ${
+      isModalMode ? "text-white hover:text-white/70" :
+      isTransparentMode && (isEventPage || isMember|| isabout) ? "text-white hover:text-white/70" :
+      isTransparentMode ? "text-slate-700 hover:text-[#EF9D11]" :
+      "text-slate-600 hover:text-[#EF9D11]"
+    }`}
+  >
+    文章牆
+  </Link>
+
+  <Link 
+    href="/about" 
+    className={`transition-colors ${
+      isModalMode ? "text-white hover:text-white/70" :
+      isTransparentMode && (isEventPage || isMember|| isabout) ? "text-white hover:text-white/70" :
+      isTransparentMode ? "text-slate-700 hover:text-[#EF9D11]" :
+      "text-slate-600 hover:text-[#EF9D11]"
+    }`}
+  >
+    關於我們
+  </Link>
+  
+</div>
         {/* 右側功能區 */}
         <div className="flex items-center gap-4 md:gap-6">
           <Link href="/eventlist" className={`p-2 rounded-full transition-colors ${textColorClass.includes('text-white') ? 'hover:bg-white/20' : 'hover:bg-gray-100'}`}>
