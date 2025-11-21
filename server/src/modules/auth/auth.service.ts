@@ -21,23 +21,24 @@ export const authService = {
       avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // ✅ 預設頭像圖片
 
     // 建立使用者
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password_hash: hashedPassword,
-        name: defaultName,
-        avatar: defaultAvatar,
-        role: "MEMBER",
-        is_active: true,
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        avatar: true,
-        created_at: true,
-      },
-    });
+  const user = await prisma.user.create({
+  data: {
+    email,
+    password_hash: hashedPassword,
+    name: defaultName,
+    avatar: defaultAvatar,
+    role: "MEMBER",
+    is_active: true,
+  },
+  select: {
+    id: true,
+    email: true,
+    name: true,
+    avatar: true,
+    role: true,          // ✅ 加這行
+    created_at: true,
+  },
+});
 
     return user;
   },
@@ -59,16 +60,8 @@ export const authService = {
       email: user.email,
       name: user.name,
       avatar: user.avatar || null,
+      role: user.role,
     };
-  },
-
-  // 🔥 [新增] 這是您缺少的關鍵函式！
-  /** 透過 Email 查找用戶 (Google Login 專用) */
-  async findUserByEmail(email: string) {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    });
-    return user;
   },
 
   /** 更新會員資料 */

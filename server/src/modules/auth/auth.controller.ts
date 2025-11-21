@@ -2,10 +2,10 @@ import { Request, Response } from "express";
 import { authService } from "./auth.service.js";
 import { registerSchema, loginSchema } from "./auth.schema.js";
 import jwt from "jsonwebtoken";
-import { OAuth2Client } from 'google-auth-library';
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "851448034728-23otj2ua4rlpr8km64lgfi0l4r3b6vni.apps.googleusercontent.com";
+const {OAuth2Client} = await import('google-auth-library');
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export const authController = {
@@ -42,11 +42,13 @@ export const authController = {
       const parsed = loginSchema.parse(req.body);
       const user = await authService.login(parsed);
 
+      // ✅ 將 avatar 一起放入 payload
       const tokenPayload = {
         userId: user.id,
         email: user.email,
         name: user.name,
         avatar: user.avatar || null,
+         role: user.role, 
       };
 
       const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "7d" });
@@ -124,4 +126,3 @@ export const authController = {
     }
   }
 };
-

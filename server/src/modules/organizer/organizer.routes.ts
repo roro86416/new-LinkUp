@@ -1,5 +1,7 @@
 import { Router } from "express";
 import verify from "../../middleware/verify.middleware.js";
+import { auth } from "../../middleware/auth.middleware.js";
+import { applyOrganizerSchema } from "./organizer.schema.js";
 import {
   createEventSchema,
   updateEventSchema,
@@ -67,5 +69,12 @@ router.post(
   c.addAttachment
 );
 router.delete("/events/:eventId/attachments/:attachmentId", c.deleteAttachment);
+
+router.post(
+  "/apply",
+  auth("member"),
+  verify(applyOrganizerSchema),
+  c.applyOrganizer
+);
 
 export default router;
