@@ -1,6 +1,7 @@
 import prisma from "../../utils/prisma-only.js";
 import { Prisma } from "../../generated/prisma/client.js";
 import { CreateEventBody } from "./organizer.schema.js";
+import { ApplyOrganizerBody } from "./organizer.schema.js";
 
 // TODO: 登入完成後改從 req.user 取
 const MOCK_ORGANIZER_ID = "00000000-0000-0000-0000-000000000001";
@@ -230,7 +231,7 @@ const ensureCouponOwned = async (eventId: number, couponId: string) => {
   const c = await prisma.coupon.findFirst({
     where: {
       id: couponId,
-      event_id: eventId /* coupon 可為 null event，但這裡限制一定屬於此活動 */,
+      event_id: eventId,
     },
   });
   if (!c) throw new Error("Coupon not found or no permission");
@@ -245,4 +246,32 @@ const ensureAttachmentOwned = async (eventId: number, attachmentId: number) => {
     },
   });
   if (!a) throw new Error("Attachment not found or no permission");
+};
+
+export const applyOrganizer = async (userId: string, body: ApplyOrganizerBody) => {
+  const exist = await prisma.organizer.findUnique({
+    where: { user_id: userId },
+  });
+  if (exist) return exist;
+
+  // 建立 organizers 資料
+  const organizer = await prisma.organizer.create({
+    data: {
+      user_id: userId,
+      org_name: body.org_name,
+      org_address: body.org_address ?? null,
+      org_phone: body.org_phone ?? null,
+      org_tax_id: body.org_tax_id ?? null,
+      org_description: body.org_description ?? null,
+      is_verified: false,
+    },
+  });
+
+  // 更新 user.role
+  await prisma.user.update({
+    where: { id: userId },
+    data: { role: "ORGANIZER" },
+  });
+
+  return organizer;
 };

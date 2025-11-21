@@ -77,3 +77,12 @@ export const createAttachmentSchema = z.object({
     file_url: z.string().min(1),
   }),
 });
+export const applyOrganizerSchema = z.object({
+  org_name: z.string().min(1, "主辦單位名稱必填"),
+  org_address: z.string().optional().nullable(),
+  org_phone: z.string().optional().nullable(),
+  org_tax_id: z.string().optional().nullable(),
+  org_description: z.string().optional().nullable(),
+});
+
+export type ApplyOrganizerBody = z.infer<typeof applyOrganizerSchema>;

@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as svc from "./organizer.service.js";
+import { AuthRequest } from "../../middleware/auth.middleware.js";
 
 // --- Event ---
 export const listEvents = async (_req: Request, res: Response) => {
@@ -105,4 +106,12 @@ export const deleteAttachment = async (req: Request, res: Response) => {
   const attachmentId = parseInt(req.params.attachmentId);
   await svc.deleteAttachment(eventId, attachmentId);
   res.status(204).send();
+};
+
+export const applyOrganizer = async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.userId || req.user?.id;
+  if (!userId) return res.status(401).json({ message: "未登入" });
+
+  const data = await svc.applyOrganizer(String(userId), req.body);
+  res.status(201).json({ status: "success", data });
 };
