@@ -27,13 +27,13 @@ type Event = {
 };
 
 async function fetchOrganizerEvents(): Promise<Event[]> {
-  const res = await fetch("http://localhost:3001/api/v1/organizer/events", {
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
+
+  const res = await fetch(`${base}/api/v1/organizer/events`, {
     cache: "no-store",
   });
 
-  if (!res.ok) {
-    throw new Error("主辦方活動列表取得失敗");
-  }
+  if (!res.ok) throw new Error("主辦方活動列表取得失敗");
 
   const json = await res.json();
   return json.data as Event[];
@@ -87,7 +87,7 @@ export default async function OrganizerDashboardPage() {
   const pending = events.filter((ev) => ev.status === "PENDING").length;
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <main className=" bg-slate-50">
       <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-8 md:px-8">
 
         {/* 頂部區塊 */}
@@ -113,9 +113,8 @@ export default async function OrganizerDashboardPage() {
                 匯出報表（預留）
               </button>
 
-              {/* 🔗 這裡改成導到 /events/new */}
               <Link
-                href="/events/new"
+                href="/organizer/events/new"
                 className="rounded-full bg-white px-4 py-2 text-sm font-medium text-slate-900 shadow-sm hover:bg-slate-100 transition-colors inline-flex items-center justify-center"
               >
                 ＋ 新增活動
@@ -203,9 +202,8 @@ export default async function OrganizerDashboardPage() {
               </p>
             </div>
 
-            {/* 這顆也一起導到 /events/new */}
             <Link
-              href="/events/new"
+              href="/organizer/events/new"
               className="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors"
             >
               ＋ 新增活動

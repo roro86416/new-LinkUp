@@ -1,6 +1,8 @@
+// client/src/app/organizer/layout.tsx
 'use client';
 
 import React, { useEffect } from 'react';
+import { useDisclosure } from '@mantine/hooks';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -13,17 +15,11 @@ import {
   Center,
   Text,
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
 import { IoGrid, IoCalendar, IoAdd, IoSettings } from 'react-icons/io5';
 
-// ✅ 依你的專案結構：client/src/context/auth/UserContext.tsx
 import { useUser } from '../../context/auth/UserContext';
 
-export default function OrganizerLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function OrganizerLayout({ children }: { children: React.ReactNode }) {
   const [opened, { toggle, close }] = useDisclosure();
   const pathname = usePathname();
   const router = useRouter();
@@ -31,52 +27,26 @@ export default function OrganizerLayout({
 
   const isOrganizer = user?.role === 'ORGANIZER';
 
-  // ✅ 權限守門：非主辦方不能進 organizer group
+  // ✅ [新增] 目前是否在 apply 頁
+  const isApplyPage = pathname?.startsWith('/organizer/apply');
+
   useEffect(() => {
     if (loading) return;
 
     if (!user) {
-      router.replace('/'); // 未登入 → 回首頁
+      router.replace('/');
       return;
     }
 
-    if (!isOrganizer) {
-      router.replace('/organizer/apply'); // 已登入但不是主辦方 → 去升級頁
+    // ✅ [修改] 不是 organizer 但「不是 apply 頁」才導向 apply
+    if (!isOrganizer && !isApplyPage) {
+      router.replace('/organizer/apply');
       return;
     }
-  }, [loading, user, isOrganizer, router]);
+  }, [loading, user, isOrganizer, isApplyPage, router]);
 
-  const navLinks = [
-    { icon: IoGrid, label: '總覽', href: '/dashboard' },
-    { icon: IoCalendar, label: '活動列表', href: '/events' },
-    { icon: IoAdd, label: '建立活動', href: '/events/new' },
-    { icon: IoSettings, label: '帳戶設定', href: '/settings' },
-  ];
-
-  // ✅ 避免 /events/new 讓「活動列表」與「建立活動」同時 active
-  const isLinkActive = (href: string) => {
-    if (!pathname) return false;
-
-    if (href === '/events') {
-      // 活動列表：亮在 /events、/events/[id]、/events/[id]/edit
-      // 但不要包含 /events/new
-      return (
-        pathname === '/events' ||
-        (pathname.startsWith('/events/') && !pathname.startsWith('/events/new'))
-      );
-    }
-
-    // 其他：精準 + 子路由
-    return pathname === href || pathname.startsWith(href + '/');
-  };
-
-  // ✅ 只在 mobile 開啟時才收合 navbar
-  const handleNavClick = () => {
-    if (opened) close();
-  };
-
-  // ✅ loading / redirect 中的占位畫面（避免閃一下看到後台）
-  if (loading || !user || !isOrganizer) {
+  // ✅ loading 中 or 非主辦方且不是 apply 頁 → 才顯示擋路畫面
+  if (loading || !user || (!isOrganizer && !isApplyPage)) {
     return (
       <div className="min-h-screen relative bg-slate-50">
         <LoadingOverlay visible />
@@ -92,6 +62,36 @@ export default function OrganizerLayout({
       </div>
     );
   }
+
+  // ✅ [新增] apply 頁就不要顯示後台殼（側欄/頂欄），直接顯示內容
+  if (isApplyPage && !isOrganizer) {
+    return <div className="min-h-screen bg-slate-50">{children}</div>;
+  }
+
+  const navLinks = [
+    { icon: IoGrid, label: '總覽', href: '/organizer/dashboard' },
+    { icon: IoCalendar, label: '活動列表', href: '/organizer/events' },
+    { icon: IoAdd, label: '建立活動', href: '/organizer/events/new' },
+    { icon: IoSettings, label: '帳戶設定', href: '/organizer/settings' },
+  ];
+
+  const isLinkActive = (href: string) => {
+    if (!pathname) return false;
+
+    if (href === '/organizer/events') {
+      return (
+        pathname === '/organizer/events' ||
+        (pathname.startsWith('/organizer/events/') &&
+          !pathname.startsWith('/organizer/events/new'))
+      );
+    }
+
+    return pathname === href || pathname.startsWith(href + '/');
+  };
+
+  const handleNavClick = () => {
+    if (opened) close();
+  };
 
   return (
     <AppShell

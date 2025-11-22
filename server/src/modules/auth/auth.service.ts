@@ -1,13 +1,21 @@
+// server/src/modules/auth/auth.service.ts
 import prisma from "../../utils/prisma-only.js";
 import bcrypt from "bcryptjs";
-import { RegisterInput, LoginInput } from "./auth.schema.js";
+import {
+  RegisterInput,
+  LoginInput,
+  GoogleLoginInput,
+} from "./auth.schema.js";
+
+import { OAuth2Client } from "google-auth-library";
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 export const authService = {
-  /** 註冊 */
+  /** 註冊 (EMAIL) */
   async register(data: RegisterInput) {
     const { email, password, name, avatar } = data;
 
-    // 檢查是否已存在
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       throw new Error("此 Email 已被註冊");
@@ -15,35 +23,37 @@ export const authService = {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 預設名稱與預設頭像
     const defaultName = name || email.split("@")[0] || `User_${Date.now()}`;
     const defaultAvatar =
-      avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png"; // ✅ 預設頭像圖片
+      avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png";
 
-    // 建立使用者
-  const user = await prisma.user.create({
-  data: {
-    email,
-    password_hash: hashedPassword,
-    name: defaultName,
-    avatar: defaultAvatar,
-    role: "MEMBER",
-    is_active: true,
-  },
-  select: {
-    id: true,
-    email: true,
-    name: true,
-    avatar: true,
-    role: true,          // ✅ 加這行
-    created_at: true,
-  },
-});
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password_hash: hashedPassword,
+        name: defaultName,
+        avatar: defaultAvatar,
+        role: "MEMBER",
+        is_active: true,
+
+        // ✅ 如果你的 Prisma User model 有 provider/provider_id 就打開
+        // provider: "GOOGLE",
+        // provider_account_id: null,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatar: true,
+        role: true,
+        created_at: true,
+      },
+    });
 
     return user;
   },
 
-  /** 登入 */
+  /** 登入 (EMAIL) */
   async login(data: LoginInput) {
     const { email, password } = data;
 
@@ -62,6 +72,79 @@ export const authService = {
       avatar: user.avatar || null,
       role: user.role,
     };
+  },
+
+  /** ✅ Google 第三方登入 / 註冊 */
+  async googleLogin(data: GoogleLoginInput) {
+    const token = data.credential || data.idToken;
+    if (!token) throw new Error("缺少 Google credential/idToken");
+
+    // 1) 驗證 Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload?.email) throw new Error("Google 帳號無 email");
+
+    const email = payload.email;
+    const name = payload.name || email.split("@")[0];
+    const avatar = payload.picture;
+
+    // 2) 找 user
+    const existing = await prisma.user.findUnique({ where: { email } });
+
+    if (existing) {
+      // 已存在就更新資料（可選）
+      const updated = await prisma.user.update({
+        where: { email },
+        data: {
+          name: existing.name || name,
+          avatar: existing.avatar || avatar,
+
+          // ✅ 如果你的 Prisma User model 有 provider/provider_id 就打開
+          // provider: "GOOGLE",
+          // provider_account_id: payload.sub,
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          avatar: true,
+          role: true,
+          created_at: true,
+        },
+      });
+
+      return updated;
+    }
+
+    // 3) 不存在 → 建新 user（等於 Google 註冊）
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password_hash: null, // google 註冊沒有密碼
+        name,
+        avatar,
+        role: "MEMBER",
+        is_active: true,
+
+        // ✅ 如果你的 Prisma User model 有 provider/provider_id 就打開
+        // provider: "GOOGLE",
+        // provider_account_id: payload.sub,
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        avatar: true,
+        role: true,
+        created_at: true,
+      },
+    });
+
+    return user;
   },
 
   /** 更新會員資料 */

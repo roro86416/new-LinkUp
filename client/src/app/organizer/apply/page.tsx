@@ -4,13 +4,14 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-// ✅ 建議用 env
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
 
 export default function ApplyOrganizerPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [message, setMessage] = useState("");
 
   const handleApply = async () => {
@@ -33,30 +34,21 @@ export default function ApplyOrganizerPage() {
         },
       });
 
-      // ✅ 先嘗試 parse json
-      const json = await res.json().catch(() => ({}));
+      const json = await res.json();
 
       if (!res.ok || json.status !== "success") {
         throw new Error(json.message || json.error || "申請主辦方失敗");
       }
 
-      // ✅ 重點：存新 token（後端要回傳 token）
-      if (json.token) {
-        localStorage.setItem("linkup_token", json.token);
-      }
-
       setStatus("success");
       setMessage("已成功升級為主辦方，為你導向儀表板…");
 
-      // ✅ 可直接 push（Header 的 role 會因新 token 變 ORGANIZER）
       setTimeout(() => {
-        router.push("/dashboard");
-        router.refresh(); // 讓 layout / header 重抓狀態
-      }, 800);
-
-    } catch (err: Error | unknown) {
+        router.push("/organizer/dashboard");
+      }, 1500);
+    } catch (err: any) {
       setStatus("error");
-      setMessage(err instanceof Error ? err.message : "申請主辦方失敗");
+      setMessage(err.message || "申請主辦方失敗");
     }
   };
 
@@ -104,7 +96,7 @@ export default function ApplyOrganizerPage() {
 
         <div className="text-xs text-slate-500">
           已經是主辦方了嗎？{" "}
-          <Link href="/dashboard" className="text-slate-900 underline">
+          <Link href="/organizer/dashboard" className="text-slate-900 underline">
             前往主辦方儀表板
           </Link>
         </div>

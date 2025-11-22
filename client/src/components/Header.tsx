@@ -1,4 +1,3 @@
-// new-LinkUp/client/src/components/Header.tsx
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -16,6 +15,7 @@ import { BsInfoSquare } from 'react-icons/bs';
 export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
+
   
   // 頁面判斷
   const isHome = pathname === '/';
@@ -42,6 +42,10 @@ export default function Header() {
 
   const user = isAdmin ? adminUser : memberUser;
   const logout = isAdmin ? adminLogout : memberLogout;
+
+  // --- Organizer / Member 角色判斷 ---
+  const memberRole = memberUser?.role;
+  const isOrganizer = memberRole === 'ORGANIZER';
   
   // 任何 Modal 開啟時
   const isAnyModalOpen = isLoginOpen || isRegisterOpen || isEmailLoginOpen || isForgotPasswordOpen || isPasswordSentOpen || isAdminLoginOpen;
@@ -121,12 +125,25 @@ export default function Header() {
       ? 'bg-transparent border-transparent py-5'
       : 'bg-white/90 backdrop-blur-md border-white/20 py-3 shadow-sm'; // 滾動後變白底
 
+  // Organizer CTA / Dashboard 按鈕樣式（依 header 狀態調整）
+  const organizerCtaClass = `rounded-full border px-4 py-1.5 text-sm font-semibold transition-colors ${
+    textColorClass.includes('text-white')
+      ? 'border-white/70 text-white hover:bg-white/10'
+      : 'border-slate-300 text-slate-800 hover:bg-slate-50'
+  }`;
+
+  const organizerDashboardClass = `rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+    textColorClass.includes('text-white')
+      ? 'bg-white/20 text-white hover:bg-white/30'
+      : 'bg-slate-900 text-white hover:bg-slate-800'
+  }`;
+
   return (
-    <header className={`fixed top-0 left-0 w-full z-[99] transition-all duration-300 border-b ${headerBackgroundClass}`}>
+    <header className={`fixed top-0 left-0 w-full z-99 transition-all duration-300 border-b ${headerBackgroundClass}`}>
       <div className="container mx-auto px-6 flex items-center justify-between">
         
         {/* Logo */}
-        <Link href="/" className="cursor-pointer flex items-center gap-2 group relative z-[100]">
+        <Link href="/" className="cursor-pointer flex items-center gap-2 group relative z-[\100\]">
           <div className="relative h-10 w-32">
              <Image src={logoSrc} alt="LinkUp Logo" fill className={`object-contain transition-all duration-300 ${logoClass}`} priority />
           </div>
@@ -178,6 +195,19 @@ export default function Header() {
              {/* 讓 Search Icon 顏色跟隨文字顏色 */}
              <Search size={22} className={textColorClass.split(' ')[0]} />
           </Link>
+
+          {/* Organizer 入口：依登入/角色顯示 */}
+          {!isAdmin && isMounted && (
+            memberUser && isOrganizer ? (
+              <Link href="/organizer/dashboard" className={organizerDashboardClass}>
+                主辦方後台
+              </Link>
+            ) : (
+              <Link href="/organizer/apply" className={organizerCtaClass}>
+                辦活動
+              </Link>
+            )
+          )}
 
           {isMounted && user ? (
             <div className="flex items-center gap-4 animate-in fade-in duration-300">

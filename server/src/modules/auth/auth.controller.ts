@@ -1,7 +1,9 @@
+// server/src/modules/auth/auth.controller.ts
 import { Request, Response } from "express";
 import { authService } from "./auth.service.js";
 import { registerSchema, loginSchema } from "./auth.schema.js";
 import jwt from "jsonwebtoken";
+import { googleLoginSchema } from "./auth.schema.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
 
@@ -14,6 +16,16 @@ export const authController = {
       res.status(201).json({ message: "註冊成功", user });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
+    }
+  },
+
+  async googleLogin(req: Request, res: Response) {
+    try {
+      const data = googleLoginSchema.parse(req.body);
+      const user = await authService.googleLogin(data);
+      res.json({ user });
+    } catch (err: any) {
+      res.status(400).json({ message: err.message || "Google 登入失敗" });
     }
   },
 

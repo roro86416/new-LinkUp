@@ -86,13 +86,11 @@ export default function EditEventPage() {
     const isOnline = values.event_type === 'ONLINE';
     const onlineUrl = (values.online_event_url ?? '').trim();
 
-    // 線上活動：一定要填連結
     if (isOnline && !onlineUrl) {
       alert('線上活動請輸入「線上活動連結」。');
       return;
     }
 
-    // 組 payload（注意：實體活動就不要放 online_event_url 這個欄位）
     const payload: any = {
       title: values.title,
       subtitle: values.subtitle ?? '',

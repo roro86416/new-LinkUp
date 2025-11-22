@@ -1,4 +1,4 @@
-// client/src/app/%28organizer%29/events/new/page.tsx
+// client/src/app/organizer/events/new/page.tsx
 "use client";
 
 import { useState } from "react";

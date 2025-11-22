@@ -1,4 +1,4 @@
-// app/layout.tsx
+// client/src/app/layout.tsx
 
 import './globals.css';
 import "@mantine/core/styles.css";
