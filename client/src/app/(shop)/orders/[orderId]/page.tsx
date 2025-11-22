@@ -5,7 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { apiClient } from '../../../../api/auth/apiClient';
 import toast from 'react-hot-toast';
-import { ChevronLeftIcon, CalendarIcon, MapPinIcon, TicketIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { ChevronLeftIcon, CalendarIcon, MapPinIcon, TicketIcon, XMarkIcon, DocumentDuplicateIcon } from '@heroicons/react/24/outline';
 import { QRCodeSVG } from 'qrcode.react';
 
 // --- 介面定義 ---
@@ -181,11 +181,27 @@ export default function OrderTicketPage() {
                                         <p className="text-gray-900 font-bold">{ticket.name}</p>
                                     </div>
                                 </div>
+                                
 
-                                <div className="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between shadow-sm">
-                                    <code className="text-xs text-gray-500 font-mono tracking-wider">{ticket.qr_code_data}</code>
-                                    <TicketIcon className="w-5 h-5 text-[#EF9D11]" />
+                                <div 
+                                    onClick={() => {
+                                        navigator.clipboard.writeText(ticket.qr_code_data);
+                                        toast.success('已複製票券編號');
+                                    }}
+                                    className="bg-white border border-gray-200 rounded-xl p-3 flex items-center justify-between shadow-sm cursor-pointer hover:bg-gray-50 hover:border-[#EF9D11]/50 transition-colors group active:scale-95"
+                                    title="點擊複製編號"
+                                >
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                        <code className="text-xs text-gray-500 font-mono tracking-wider group-hover:text-[#EF9D11] transition-colors truncate">
+                                            {ticket.qr_code_data}
+                                        </code>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-gray-400 group-hover:text-[#EF9D11]">
+                                        <span className="text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">複製</span>
+                                        <DocumentDuplicateIcon className="w-5 h-5" />
+                                    </div>
                                 </div>
+
                             </div>
                         </div>
                     </div>

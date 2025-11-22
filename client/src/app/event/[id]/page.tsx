@@ -25,7 +25,7 @@ const Breadcrumb = ({ title }: { title: string }) => (
       <Home size={14} /> 首頁
     </Link>
     <ChevronRight size={14} className="text-gray-400" />
-    <Link href="/events" className="hover:text-[#EF9D11] transition-colors">
+    <Link href="/eventlist" className="hover:text-[#EF9D11] transition-colors">
       活動列表
     </Link>
     <ChevronRight size={14} className="text-gray-400" />
@@ -300,9 +300,21 @@ export default function EventDetailPage() {
 
               <div className="flex-1 text-white mb-4 md:mb-0">
                   <div className="flex items-center gap-2 mb-4">
-                     <span className="bg-[#EF9D11] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-orange-500/30">
-                        {getCategoryName(event.category)}
-                     </span>
+                    {event.category && typeof event.category !== 'string' ? (
+          <Link 
+              href={`/eventlist?category_id=${event.category.id}`}
+              className="bg-[#EF9D11] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-orange-500/30 hover:bg-[#d88d0e] transition-colors cursor-pointer"
+          >
+              {event.category.name}
+          </Link>
+       ) : (
+          <span className="bg-[#EF9D11] text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg shadow-orange-500/30">
+              {getCategoryName(event.category)}
+          </span>
+       )}
+
+
+
                      <span className="bg-white/10 backdrop-blur-md text-gray-100 text-xs font-bold px-3 py-1 rounded-full border border-white/20">
                         {event.organizer.name}
                      </span>

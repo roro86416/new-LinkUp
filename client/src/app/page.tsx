@@ -8,26 +8,25 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 // API & Context
-import { getEvents } from '.././api/event-api';
+// [修改 1] 引入 getCategories 與 CategoryData
+import { getEvents, getAnnouncements, getCategories, AnnouncementData, CategoryData } from '.././api/event-api';
 import { EventCardData } from '.././components/card/EventCard';
 import HomeEventCard from '.././components/card/HomeEventCard';
 import { useFavorites } from '../components/content/member/FavoritesContext';
 
-// --- 靜態資料 ---
-const CATEGORIES = [
-  { id: 1, name: '戶外', icon: '🏕️' },
-  { id: 2, name: '音樂', icon: '🎵' },
-  { id: 3, name: '展覽', icon: '🎨' },
-  { id: 4, name: '學習', icon: '📚' },
-  { id: 5, name: '親子', icon: '👨‍👩‍👧' },
-  { id: 6, name: '運動', icon: '🏀' },
-  {
-    id: 'all',
-    name: '全部',
-    icon: <ArrowRight size={24} className="text-white" />,
-    href: 'http://localhost:3000/eventlist'
-  },
-];
+// [輔助函式] 根據類別名稱回傳對應 Icon (因為資料庫只有名字)
+const getCategoryIcon = (name: string) => {
+  if (name.includes('課程')) return '📕';
+  if (name.includes('展覽')) return '🎨';
+  if (name.includes('派對')) return '🎵';
+  if (name.includes('聚會')) return '🤝';
+  if (name.includes('市集')) return '🎪';
+  if (name.includes('比賽')) return '🏀';
+  if (name.includes('表演')) return '🎭';
+  if (name.includes('研討會')) return '🎤';
+  if (name.includes('導覽')) return '🗺️';
+  return '✨'; // 預設圖示
+};
 
 const MOCK_ARTICLES = [
   { id: 1, title: "2025 音樂祭生存指南：必備物品清單", author: "音樂小編", date: "2024-11-20", image: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?auto=format&fit=crop&w=800&q=80", desc: "夏天就是要去音樂祭！但要帶什麼才不會手忙腳亂？這篇清單幫你整理好所有懶人包。" },
@@ -35,7 +34,6 @@ const MOCK_ARTICLES = [
   { id: 3, title: "週末露營去！新手也能輕鬆上手的營地推薦", author: "戶外達人", date: "2024-11-15", image: "https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?auto=format&fit=crop&w=800&q=80", desc: "不想跑太遠，又想享受芬多精？精選北部 5 個適合新手的露營區，裝備租借也超方便。" },
 ];
 
-// 定義 LocalStorage Banner 的介面
 interface LocalBanner {
   id: number;
   title: string;
@@ -59,13 +57,14 @@ export default function HomePage() {
   
   const [loading, setLoading] = useState(true);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
-  
-  // [修改] State 改為儲存 LocalBanner
   const [announcements, setAnnouncements] = useState<LocalBanner[]>([]);
   
   const [hotEvents, setHotEvents] = useState<EventCardData[]>([]);
   const [newEvents, setNewEvents] = useState<EventCardData[]>([]);
   const [spotlightEvents, setSpotlightEvents] = useState<EventCardData[]>([]);
+  
+  // [修改 2] 新增 categories 狀態
+  const [categories, setCategories] = useState<CategoryData[]>([]);
 
   const [currentHeroIndex, setCurrentHeroIndex] = useState(0);
   const [currentAnnouncementIndex, setCurrentAnnouncementIndex] = useState(0);
@@ -79,11 +78,15 @@ export default function HomePage() {
       try {
         setLoading(true);
 
-        // 1. 取得活動 API 資料 (移除了 getAnnouncements)
-        const [allEvents, featuredEvents] = await Promise.all([
+        // [修改 3] 在 Promise.all 中加入 getCategories(6)
+        const [allEvents, featuredEvents, apiCategories] = await Promise.all([
           getEvents('all', 50),
-          getEvents('featured', 3)
+          getEvents('featured', 3),
+          getCategories(8) // 抓取前 6 個類別
         ]);
+
+        // 設定類別資料
+        setCategories(apiCategories);
 
         // 2. 讀取 Admin 設定的 Banner (LocalStorage: 'home_banners')
         let adminBanners: LocalBanner[] = [];
@@ -92,7 +95,6 @@ export default function HomePage() {
             if (stored) adminBanners = JSON.parse(stored);
         } catch (e) { console.error(e); }
 
-        // [新增] 設定公告欄資料：只取 Active 的，並反轉順序(通常新的在後)
         const activeAnnouncements = adminBanners.filter(b => b.isActive).reverse();
         setAnnouncements(activeAnnouncements);
 
@@ -205,7 +207,6 @@ export default function HomePage() {
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div className="absolute inset-0 bg-[linear-gradient(180deg,#EEEEEE_0%,#7D8B93_45%,#0C2838_100%)]"></div>
         <div className="absolute inset-0 opacity-30 mix-blend-overlay" style={{ backgroundImage: `url('https://images.unsplash.com/photo-1518640467707-6811f4a6ab73?q=80&w=2080&auto=format&fit=crop')`, backgroundSize: 'cover', filter: 'grayscale(100%) contrast(150%)' }}></div>
-        
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-40"></div>
       </div>
 
@@ -213,7 +214,7 @@ export default function HomePage() {
 
       <main className="relative z-10 pt-24 px-4 container mx-auto max-w-6xl flex flex-col gap-16">
         
-        {/* 公告欄 (使用 LocalStorage 資料) */}
+        {/* 公告欄 */}
         <section className="bg-white/95 backdrop-blur-md border border-white/60 rounded-full px-5 py-3 flex items-center justify-between shadow-lg shadow-black/5 animate-in fade-in slide-in-from-top-4 duration-700 h-14">
             <div className="flex items-center gap-3 overflow-hidden flex-1 h-full">
                 <div className="flex items-center gap-1 text-[#EF9D11] font-bold whitespace-nowrap">
@@ -223,7 +224,6 @@ export default function HomePage() {
                 <div className="flex-1 h-full relative overflow-hidden">
                     {announcements.map((item, idx) => (
                         <div key={item.id} className="absolute top-0 left-0 w-full h-full transition-all duration-700 ease-in-out flex items-center" style={{ transform: `translateY(${(idx - currentAnnouncementIndex) * 100}%)`, opacity: idx === currentAnnouncementIndex ? 1 : 0 }}>
-                            {/* [修改] 這裡改為 div，不使用 Link，但保留 hover 效果 */}
                             <div className="text-sm text-gray-800 font-medium truncate hover:text-[#EF9D11] transition-colors block w-full cursor-default select-none">
                                 • {item.title}
                             </div>
@@ -239,7 +239,7 @@ export default function HomePage() {
             <Link href="/announcements" className="flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-[#EF9D11] whitespace-nowrap ml-4 transition-colors">更多 <ArrowRight className="w-3 h-3" /></Link>
         </section>
 
-        {/* Hero Banner (保持不變) */}
+        {/* Hero Banner */}
         <section className="relative w-full h-[450px] rounded-[32px] overflow-hidden shadow-2xl group bg-gray-900">
             {heroSlides.length > 0 ? heroSlides.map((slide, index) => (
                 <div key={slide.id} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentHeroIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
@@ -270,44 +270,39 @@ export default function HomePage() {
             </div>
         </section>
 
-        {/* Categories */}
+        {/* Categories (動態渲染) */}
         <section className="bg-white/20 backdrop-blur-xl border border-white/30 rounded-3xl p-6 shadow-lg relative z-20">
           <div className="flex flex-wrap justify-center gap-6 md:gap-10">
-            {CATEGORIES.map((cat) => {
-              const content = (
-                <div
-                  key={cat.id}
-                  className="group flex flex-col items-center gap-2 cursor-pointer"
-                >
-                  <div
-                    className={`w-16 h-16 rounded-full backdrop-blur-sm border shadow-lg flex items-center justify-center text-2xl group-hover:scale-110 transition-all duration-300 ${
-                      cat.id === 'all'
-                        ? 'bg-[#EF9D11] border-[#EF9D11] text-white shadow-orange-500/30'
-                        : 'bg-white/10 border-white/40 group-hover:bg-[#EF9D11] group-hover:border-[#EF9D11] text-white'
-                    }`}
-                  >
-                    {cat.icon}
+            
+            {/* 1. 渲染 API 回傳的類別 */}
+            {categories.map((cat) => {
+              return (
+                <Link href={`/eventlist?category_id=${cat.id}`} key={cat.id}>
+                  <div className="group flex flex-col items-center gap-2 cursor-pointer">
+                    <div className="w-16 h-16 rounded-full backdrop-blur-sm border border-white/40 bg-white/10 shadow-lg flex items-center justify-center text-2xl group-hover:scale-110 group-hover:bg-[#EF9D11] group-hover:border-[#EF9D11] group-hover:text-white transition-all duration-300">
+                      {/* 使用輔助函式顯示圖示 */}
+                      {getCategoryIcon(cat.name)}
+                    </div>
+                    <span className="text-sm font-bold text-white group-hover:text-[#EF9D11] transition-colors">
+                      {cat.name}
+                    </span>
                   </div>
-                  <span
-                    className={`text-sm font-bold transition-colors ${
-                      cat.id === 'all'
-                        ? 'text-white'
-                        : 'text-white group-hover:text-[#EF9D11]'
-                    }`}
-                  >
-                    {cat.name}
-                  </span>
-                </div>
-              );
-
-              return cat.href ? (
-                <Link href={cat.href} key={cat.id}>
-                  {content}
                 </Link>
-              ) : (
-                content
               );
             })}
+
+            {/* 2. 固定顯示「全部」按鈕 */}
+            <Link href="/eventlist">
+              <div className="group flex flex-col items-center gap-2 cursor-pointer">
+                <div className="w-16 h-16 rounded-full backdrop-blur-sm border border-[#EF9D11] bg-[#EF9D11] shadow-orange-500/30 shadow-lg flex items-center justify-center text-2xl group-hover:scale-110 transition-all duration-300">
+                  <ArrowRight size={24} className="text-white" />
+                </div>
+                <span className="text-sm font-bold text-white">
+                  全部
+                </span>
+              </div>
+            </Link>
+
           </div>
         </section>
 
@@ -352,29 +347,26 @@ export default function HomePage() {
         {/* 最新/焦點活動 */}
         <section className="bg-white/30 backdrop-blur-xl border border-white/40 rounded-[40px] p-6 md:p-10 shadow-2xl z-20">
              <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 border-b border-[#0C2838]/10 pb-4 gap-4">
-    <h2 className="text-3xl font-bold text-[#0C2838] drop-shadow-sm flex items-center gap-3">
-        {/* 標題顯示邏輯不用動，它會自動根據 activeTab 變換，但因為預設變了，這裡會直接先顯示焦點活動 */}
-        {activeTab === 'spotlight' ? <Clock className="text-red-500" /> : <Sparkles className="text-[#EF9D11]" />}
-        {activeTab === 'spotlight' ? '焦點活動' : '最新上架'}
-    </h2>
-    <div className="flex bg-white/40 p-1 rounded-full backdrop-blur-sm">
-        {/* 按鈕 1: 焦點活動 (移到前面) */}
-        <button 
-            onClick={() => setActiveTab('spotlight')} 
-            className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'spotlight' ? 'bg-red-500 text-white shadow-lg' : 'text-[#0C2838]/70 hover:text-[#0C2838]'}`}
-        >
-            焦點活動
-        </button>
-        
-        {/* 按鈕 2: 最新上架 (移到後面) */}
-        <button 
-            onClick={() => setActiveTab('new')} 
-            className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'new' ? 'bg-[#EF9D11] text-white shadow-lg' : 'text-[#0C2838]/70 hover:text-[#0C2838]'}`}
-        >
-            最新上架
-        </button>
-    </div>
-</div>
+                <h2 className="text-3xl font-bold text-[#0C2838] drop-shadow-sm flex items-center gap-3">
+                    {activeTab === 'spotlight' ? <Clock className="text-red-500" /> : <Sparkles className="text-[#EF9D11]" />}
+                    {activeTab === 'spotlight' ? '焦點活動' : '最新上架'}
+                </h2>
+                <div className="flex bg-white/40 p-1 rounded-full backdrop-blur-sm">
+                    <button 
+                        onClick={() => setActiveTab('spotlight')} 
+                        className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'spotlight' ? 'bg-red-500 text-white shadow-lg' : 'text-[#0C2838]/70 hover:text-[#0C2838]'}`}
+                    >
+                        焦點活動
+                    </button>
+                    
+                    <button 
+                        onClick={() => setActiveTab('new')} 
+                        className={`px-6 py-2 rounded-full text-sm font-bold transition-all ${activeTab === 'new' ? 'bg-[#EF9D11] text-white shadow-lg' : 'text-[#0C2838]/70 hover:text-[#0C2838]'}`}
+                    >
+                        最新上架
+                    </button>
+                </div>
+            </div>
             {loading ? <div className="text-center py-20 text-[#0C2838]/50">載入中...</div> : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {(activeTab === 'new' ? newEvents : spotlightEvents).map(event => (
@@ -397,13 +389,13 @@ export default function HomePage() {
                 }
               >
                 <button className="bg-white hover:bg-[#EF9D11] hover:text-white border border-white/30 text-[#0C2838] px-8 py-3 rounded-full font-bold backdrop-blur-md transition-all hover:scale-105 shadow-lg">
-                  查看更多{activeTab === 'new' ? ' 焦點' : '最新'}活動
+                  查看更多{activeTab === 'new' ? '最新' : '焦點'}活動
                 </button>
               </Link>
             </div>
         </section>
         
-        {/* 文章牆 (保持不變) */}
+        {/* 文章牆 */}
         <section className="bg-white/20 backdrop-blur-xl border border-white/40 rounded-[40px] p-6 md:p-10 shadow-xl relative overflow-hidden z-20">
             <div className="flex items-center justify-between mb-8">
                 <h2 className="text-3xl font-bold text-white flex items-center gap-3 drop-shadow-md">
@@ -416,7 +408,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {MOCK_ARTICLES.map((article) => (
                     <Link href={`/post/${article.id}`} key={article.id} className="group block h-full">
-                        <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-2xl overflow-hidden hover:bg-white/20 transition-all duration-300 h-full flex flex-col shadow-lg group-hover:shadow-xl hover:-translate-y-1">
+                        <div className="bg-black/40 backdrop-blur-lg border border-white/10 rounded-2xl overflow-hidden hover:bg-black/60 transition-all duration-300 h-full flex flex-col shadow-lg group-hover:shadow-xl hover:-translate-y-1">
                             <div className="relative h-48 overflow-hidden">
                                 <img src={article.image} alt={article.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                 <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded backdrop-blur-sm">{article.date}</div>

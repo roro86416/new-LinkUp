@@ -2,11 +2,17 @@
 import { useModal } from '../../../context/auth/ModalContext';
 import { useState } from 'react';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
 import { apiClient } from '../../../api/auth/apiClient';
+import { useUser } from '../../../context/auth/UserContext';
+
 
 export default function RegisterModal() {
-  const { isRegisterOpen, closeRegister, openEmailLogin, openLogin } = useModal();
+  // [新增] 取得 login 方法
+  const { login } = useUser();
+  const { isRegisterOpen, closeRegister, openLogin } = useModal();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -17,6 +23,7 @@ export default function RegisterModal() {
   if (!isRegisterOpen) return null;
 
   const handleRegister = async () => {
+    // ... (驗證邏輯保持不變) ...
     if (!email || !password || !confirmPassword) {
       setMessage('⚠️ 請填寫完整資訊'); return;
     }
@@ -31,18 +38,61 @@ export default function RegisterModal() {
     setMessage(null);
 
     try {
-      // 使用 apiClient 或 fetch
-      await apiClient.post('/api/auth/register', { email, password });
+      // 呼叫後端註冊 API
+      const res: any = await apiClient.post('/api/auth/register', { email, password });
       
-      setMessage('🎉 註冊成功！');
-      setEmail(''); setPassword(''); setConfirmPassword('');
+      if (res.token) {
+          // 1. 執行自動登入
+          login(res.token);
+          
+          // -------------------------------------------------------
+          // [新增] 2. 自動發送「歡迎通知」
+          // -------------------------------------------------------
+          if (res.user && res.user.userId) {
+             const welcomeNotification = {
+                id: `welcome_${Date.now()}`, // 獨特 ID
+                title: '🎉 歡迎加入 LinkUp！',
+                content: '很高興見到您！為了獲得更完整的體驗，快來完善您的個人基本資料吧！',
+                type: '系統公告',
+                sentAt: new Date().toISOString(),
+                isRead: false,
+                link: '/member?section=基本資料' // [關鍵] 設定跳轉連結
+             };
 
-      setTimeout(() => {
-        closeRegister();
-        openEmailLogin();
-      }, 1500);
+             try {
+                const userKey = `notifications_${res.user.userId}`;
+                const savedUser = localStorage.getItem(userKey);
+                const currentUserList = savedUser ? JSON.parse(savedUser) : [];
+                
+                // 將新通知加到最前面
+                const newList = [welcomeNotification, ...currentUserList];
+                localStorage.setItem(userKey, JSON.stringify(newList));
+                
+                // 觸發事件讓小鈴鐺立即更新
+                window.dispatchEvent(new CustomEvent('notifications-updated'));
+             } catch (e) {
+                console.error("發送歡迎通知失敗", e);
+             }
+          }
+          // -------------------------------------------------------
+
+          toast.success('註冊成功！已自動登入');
+          
+          setTimeout(() => {
+            closeRegister();
+          }, 1000);
+      } else {
+          // Fallback
+          setMessage('🎉 註冊成功！請登入');
+          setTimeout(() => {
+            closeRegister();
+            openLogin(); 
+          }, 1500);
+      }
+
     } catch (err: any) {
-       setMessage(`❌ ${err.message || '註冊失敗'}`);
+       const errorMsg = err.response?.data?.error || err.message || '註冊失敗';
+       setMessage(`❌ ${errorMsg}`);
     } finally {
       setLoading(false);
     }

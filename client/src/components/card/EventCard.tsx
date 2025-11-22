@@ -15,6 +15,10 @@ export interface EventCardData {
   cover_image: string;    // 來自 events (模組二)
   organizerName: string;  // 來自 users (模組一)
   price: number;          // 來自 ticket_types (模組二)
+  category?: {
+    id: number;
+    name: string;
+  };
 }
 
 interface EventCardProps {

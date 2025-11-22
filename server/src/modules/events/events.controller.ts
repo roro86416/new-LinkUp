@@ -10,8 +10,10 @@ export const listEvents = async (req: Request, res: Response) => {
     //從查詢參數中獲取 type 和 limit(如果前端沒提供，給予預設值)
     const type = (req.query.type as string) || "all";
     const limit = Number(req.query.limit) || 10;
+
+    const categoryId = req.query.category_id ? Number(req.query.category_id) : undefined;
     //呼叫 service 函式，並傳入參數
-    const data = await svc.listPublicEvents(type, limit);
+    const data = await svc.listPublicEvents(type, limit, categoryId);
     res.json({ status: "success", data });
   } catch (error) {
     // 如果 service 層 (prisma) 發生錯誤，捕捉它並回傳 500
@@ -49,5 +51,22 @@ export const getEventById = async (req: Request, res: Response) => {
     } else {
       return res.status(500).json({ status: "error", message: "An unknown error occurred" });
     }
+  }
+};
+/**
+ * [新增] 獲取活動類別列表
+ * GET /api/v1/events/categories?limit=6
+ */
+export const listCategories = async (req: Request, res: Response) => {
+  try {
+    // 支援 ?limit=6 參數
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : undefined;
+    
+    const data = await svc.getAllCategories(limit);
+    
+    res.json({ status: "success", data });
+  } catch (error) {
+    console.error("Error in listCategories:", error);
+    res.status(500).json({ status: "error", message: "無法獲取類別列表" });
   }
 };

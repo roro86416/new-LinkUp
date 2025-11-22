@@ -5,6 +5,12 @@ import { type EventCardData } from '../components/card/EventCard';
 // --- 資料介面定義 ---
 
 // 1. 活動詳情介面
+
+export interface CategoryData {
+  id: number;
+  name: string;
+}
+
 export interface EventDetailData {
   id: number;
   title: string;
@@ -68,6 +74,23 @@ export interface AnnouncementData {
 // --- API 函式 ---
 
 /**
+ * [新增] 獲取活動類別
+ * @param limit (可選) 限制數量，預設抓全部
+ */
+export async function getCategories(limit?: number): Promise<CategoryData[]> {
+  try {
+    const url = limit 
+      ? `/api/v1/events/categories?limit=${limit}` 
+      : `/api/v1/events/categories`;
+    const response = await apiClient.get<ApiResponse<CategoryData[]>>(url);
+    return response.data || [];
+  } catch (error) {
+    console.error("[event-api] 獲取類別失敗:", error);
+    return [];
+  }
+}
+
+/**
  * [公開] 獲取單一活動詳情
  */
 export async function getEventDetail(id: number): Promise<EventDetailData> {
@@ -100,12 +123,20 @@ export async function getEventDetail(id: number): Promise<EventDetailData> {
 /**
  * [公開] 獲取活動列表
  */
+/**
+ * [修改] 增加 categoryId 參數
+ */
 export async function getEvents(
   type: 'popular' | 'new' | 'all' | 'featured', 
-  limit: number
+  limit: number,
+  categoryId?: number // [新增]
 ): Promise<EventCardData[]> {
   const apiType = type === 'featured' ? 'popular' : type;
-  const endpoint = `/api/v1/events?type=${apiType}&limit=${limit}`;
+  // 組合 URL
+  let endpoint = `/api/v1/events?type=${apiType}&limit=${limit}`;
+  if (categoryId) {
+    endpoint += `&category_id=${categoryId}`;
+  }
   
   try {
     const response = await apiClient.get<ApiResponse<EventCardData[]>>(endpoint);
@@ -115,6 +146,7 @@ export async function getEvents(
     return [];
   }
 }
+
 
 /**
  * [公開] 獲取活動天氣 (Call 後端)

@@ -9,12 +9,28 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "851448034728-23otj2ua4
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export const authController = {
-  /** 註冊 */
+  /** 註冊 (修改：成功後直接回傳 Token) */
   async register(req: Request, res: Response) {
     try {
       const parsed = registerSchema.parse(req.body);
       const user = await authService.register(parsed);
-      res.status(201).json({ message: "註冊成功", user });
+
+      // [新增] 註冊成功當下，直接簽發 Token
+      const tokenPayload = {
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar || null,
+      };
+
+      // 簽發 Token (效期 7 天)
+      const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "7d" });
+
+      res.status(201).json({ 
+        message: "註冊成功", 
+        user: tokenPayload, 
+        token // [關鍵] 回傳 Token 給前端
+      });
     } catch (err: any) {
       res.status(400).json({ error: err.message });
     }
@@ -82,7 +98,7 @@ export const authController = {
         user = await authService.register({
           email: payload.email,
           password: randomPassword,
-          // name: payload.name, // 若 schema 有支援 name
+          name: payload.name, // 若 schema 有支援 name
         });
       }
 
