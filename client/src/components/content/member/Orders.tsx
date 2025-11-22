@@ -8,23 +8,24 @@ import { ReceiptRefundIcon, ClockIcon, XCircleIcon, CreditCardIcon, QrCodeIcon, 
 import toast from 'react-hot-toast';
 import { redirectToECPay } from '../../../utils/ecpay';
 
-interface OrderItem { 
-  id: number; 
-  item_name: string; 
-  quantity: number; 
-  unit_price: string; 
-  ticket_type?: { event_id: number } 
+interface OrderItem {
+  id: number;
+  item_name: string;
+  quantity: number;
+  unit_price: string;
+  ticket_type?: { event_id: number }
 }
 
-interface Order { 
-    id: number; 
-    order_number: string; 
-    created_at: string; 
-    expires_at: string; 
-    total_amount: string; 
-    status: 'pending' | 'paid' | 'cancelled' | 'completed'; 
-    items: OrderItem[];
-    event?: { id: number; title: string }; 
+interface Order {
+  id: number;
+  order_number: string;
+  created_at: string;
+  expires_at: string;
+  total_amount: string;
+  status: 'pending' | 'paid' | 'cancelled' | 'completed';
+  items: OrderItem[];
+  event?: { id: number; title: string };
+  is_reviewed?: boolean;
 }
 interface OrdersApiResponse { status: string; data: Order[]; }
 
@@ -85,18 +86,20 @@ export default function Orders() {
 
   // [修改] 跳轉至活動評價頁面
   const handleGoToReview = (order: Order) => {
+    // 優先從 order.event 拿，沒有才從 items 找
     let eventId = order.event?.id;
     if (!eventId && order.items.length > 0) {
-        eventId = order.items[0].ticket_type?.event_id;
-    }
-    
-    if (!eventId) {
-        toast.error("無法取得活動資訊");
-        return;
+      // 這裡需要轉型或確認 items 結構，假設後端有 populate
+      eventId = (order.items[0] as any).ticketType?.event?.id;
     }
 
-    // 導向：活動 ID + tab=comments + action=review (觸發撰寫模式)
-    router.push(`/event/${eventId}?tab=comments&action=review`);
+    if (!eventId) {
+      toast.error("無法取得活動資訊");
+      return;
+    }
+
+    // 導向：帶上 action=review 會自動開啟編輯框
+    router.push(`/event/${eventId}?tab=rating&action=review`);
   };
 
   if (isLoading) return <div className="text-center py-20 text-gray-400">載入訂單中...</div>;
@@ -105,7 +108,7 @@ export default function Orders() {
     <div className="w-full mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300 relative">
       <header className="mb-8 border-b border-white/10 pb-6">
         <h1 className="text-2xl font-extrabold text-white mb-2 flex items-center gap-2">
-           <ReceiptRefundIcon className="w-7 h-7 text-[#EF9D11]" /> 我的訂單
+          <ReceiptRefundIcon className="w-7 h-7 text-[#EF9D11]" /> 我的訂單
         </h1>
         <p className="text-gray-400">查看您的所有歷史訂單與交易紀錄。</p>
       </header>
@@ -134,9 +137,9 @@ export default function Orders() {
               </div>
 
               <div className="border-t border-white/10 pt-4 mb-4 cursor-pointer" onClick={() => {
-                  if (order.status === 'paid' || order.status === 'completed') {
-                     router.push(`/orders/${order.id}`);
-                  }
+                if (order.status === 'paid' || order.status === 'completed') {
+                  router.push(`/orders/${order.id}`);
+                }
               }}>
                 {order.items.slice(0, 2).map((item) => (
                   <div key={item.id} className="flex justify-between text-sm text-gray-300 mb-1 group-hover:text-white transition-colors">
@@ -149,10 +152,10 @@ export default function Orders() {
               <div className="flex justify-between items-center pt-2 border-t border-dashed border-white/10">
                 <div>
                   {order.status === 'pending' && <CountdownTimer expiresAt={order.expires_at} />}
-                  {order.status === 'cancelled' && <span className="text-gray-500 text-xs flex items-center gap-1"><XCircleIcon className="w-3 h-3"/> 訂單已取消</span>}
+                  {order.status === 'cancelled' && <span className="text-gray-500 text-xs flex items-center gap-1"><XCircleIcon className="w-3 h-3" /> 訂單已取消</span>}
                 </div>
                 <div className="flex gap-2">
-                  
+
                   {/* 待付款：立即付款 */}
                   {order.status === 'pending' && (
                     <button onClick={() => handleRepay(order.id)} className="flex items-center gap-1 bg-green-600 text-white hover:bg-green-500 px-4 py-1.5 rounded-lg font-bold text-xs transition shadow-lg shadow-green-900/20">
@@ -170,16 +173,24 @@ export default function Orders() {
                   {/* 已完成 (已參加)：查看票券 + 留下評價(跳轉) */}
                   {order.status === 'completed' && (
                     <div className="flex gap-2">
-                        <button onClick={() => router.push(`/orders/${order.id}`)} className="flex items-center gap-1 border border-[#EF9D11] text-[#EF9D11] hover:bg-[#EF9D11] hover:text-white px-4 py-1.5 rounded-lg font-bold text-xs transition">
-                            <QrCodeIcon className="w-3 h-3" /> 查看票券
-                        </button>
-                        {/* 這裡觸發跳轉 */}
-                        <button onClick={() => handleGoToReview(order)} className="flex items-center gap-1 bg-blue-600 text-white hover:bg-blue-500 px-4 py-1.5 rounded-lg font-bold text-xs transition shadow-lg shadow-blue-900/20">
-                            <PencilSquareIcon className="w-3 h-3" /> 留下評價
-                        </button>
+                      <button onClick={() => router.push(`/orders/${order.id}`)} className="flex items-center gap-1 border border-[#EF9D11] text-[#EF9D11] hover:bg-[#EF9D11] hover:text-white px-4 py-1.5 rounded-lg font-bold text-xs transition">
+                        <QrCodeIcon className="w-3 h-3" /> 查看票券
+                      </button>
+                      {/* 這裡觸發跳轉 */}
+                      <button
+                        onClick={() => handleGoToReview(order)}
+                        className={`flex items-center gap-1 px-4 py-1.5 rounded-lg font-bold text-xs transition shadow-lg 
+                                ${order.is_reviewed
+                            ? 'bg-gray-700 text-gray-200 hover:bg-gray-600 shadow-black/20' // 已評價：灰色
+                            : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-900/20' // 未評價：藍色
+                          }`}
+                      >
+                        <PencilSquareIcon className="w-3 h-3" />
+                        {order.is_reviewed ? '修改評價' : '留下評價'}
+                      </button>
                     </div>
                   )}
-                  
+
                 </div>
               </div>
             </div>

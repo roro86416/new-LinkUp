@@ -18,9 +18,7 @@ export default function MemberPage() {
 
   const renderContent = (): ReactNode => {
     switch (section) {
-      case '會員設定':
-        return <AccountSettings />;
-      case '通知管理':
+      case '我的通知':
         return <Messages />;
       case '我的訂單':
         return <Orders />;
@@ -30,6 +28,8 @@ export default function MemberPage() {
         return <MyCoupons />;
       case '幸運抽獎':
         return <LotteryGame />;
+      case '會員設定':
+        return <AccountSettings />;
       default:
         return <AccountSettings />;
     }

@@ -17,6 +17,8 @@ import {
   createRatingService,
   getRatingsService,
   updateRatingService,
+  checkRatingEligibility,
+  deleteRatingService,
 } from "./event-ratings.service.js";
 
 /**
@@ -31,25 +33,28 @@ import {
 */
 export async function createRating(req: Request, res: Response) {
   try {
-    // Step 1️⃣ 驗證前端送來的資料格式(用Zod)
     const parsed = createRatingSchema.parse(req.body);
-
-    // Step 2️⃣ 呼叫 service 處理資料庫寫入
     const newRating = await createRatingService(parsed);
 
-    // Step 3️⃣ 回傳成功訊息
     res.status(201).json({
       message: "✅ 評論新增成功",
       data: newRating,
     });
   } catch (error: any) {
-    // Step 4️⃣ 捕捉錯誤（包含 Zod 驗證錯誤）
     console.error("❌ createRating 錯誤：", error);
 
     if (error.name === "ZodError") {
       return res.status(400).json({
         message: "資料格式錯誤",
         errors: error.errors,
+      });
+    }
+
+    // [關鍵修正] 判斷是否為一般的 Error (包含 Service 拋出的資格錯誤)
+    // 我們回傳 400 (Bad Request) 並帶上錯誤訊息
+    if (error instanceof Error) {
+      return res.status(400).json({
+        message: error.message // 這就會是 "您尚未取得評價資格..."
       });
     }
 
@@ -147,5 +152,47 @@ export async function updateRating(req: Request, res: Response) {
       success: false,
       message: "伺服器內部錯誤，評論更新失敗",
     });
+  }
+}
+/**
+ * [新增] 檢查評價資格 API
+ * GET /api/v1/events/:id/can-review
+ */
+export async function checkCanReview(req: Request, res: Response) {
+  try {
+    const eventId = Number(req.params.id);
+    // 假設透過 verifyToken 中介軟體，user 會被放在 req.body.user 或 req.user
+    // 這裡我們先假設您會傳入 user_id (或者從 token 解析)
+    // 為了方便前端 apiClient 呼叫，我們從 query 讀取 user_id (較簡單) 或從 middleware (較安全)
+
+    // 這裡配合前端 apiClient 傳送的方式，假設是透過 verifyToken 解析出的 (req as any).user
+    // 如果您的路由沒有掛 verifyToken，我們就從 Query String 拿 (僅供測試，正式建議用 Token)
+    const userId = (req as any).user?.userId || req.query.user_id as string;
+
+    if (!userId || isNaN(eventId)) {
+      return res.json({ canReview: false });
+    }
+
+    const canReview = await checkRatingEligibility(userId, eventId);
+
+    res.json({ status: "success", canReview });
+  } catch (error) {
+    console.error("檢查資格錯誤", error);
+    res.json({ status: "error", canReview: false });
+  }
+}
+
+export async function deleteRating(req: Request, res: Response) {
+  try {
+    const ratingId = parseInt(req.params.ratingId);
+    // 假設有 auth middleware，從 req.user 拿 ID (或從 query/body 拿，視您的實作)
+    const userId = (req as any).user?.userId || req.body.userId;
+
+    await deleteRatingService(ratingId, userId);
+
+    res.status(200).json({ message: "✅ 評論已刪除" });
+  } catch (error: any) {
+    console.error("❌ deleteRating 錯誤：", error);
+    res.status(500).json({ message: error.message || "刪除失敗" });
   }
 }

@@ -8,7 +8,8 @@ import { EventStatus } from "../../generated/prisma/client.js";
 export const listPublicEvents = async (
   type: string, 
   limit: number = 10,
-  categoryId?: number
+  categoryId?: number,
+  region?: string
 ) => {
   
   const queryOptions: any = {
@@ -37,7 +38,18 @@ export const listPublicEvents = async (
   if (categoryId) {
     queryOptions.where.category_id = categoryId;
   }
+  if (region && region !== '全部') {
+    // 處理 "台" vs "臺" 的異體字
+    const keywords = [region];
+    if (region.includes('台')) keywords.push(region.replace('台', '臺'));
+    if (region.includes('臺')) keywords.push(region.replace('臺', '台'));
 
+    // 只要地址或地點名稱包含 "任一" 關鍵字即可
+    queryOptions.where.OR = keywords.flatMap(kw => [
+      { location_name: { contains: kw } },
+      { address: { contains: kw } }
+    ]);
+  }
   if (type === 'popular') {
     queryOptions.orderBy = { start_time: 'asc' };
   } else if (type === 'new') {
@@ -108,6 +120,12 @@ export const getPublicEventById = async (eventId: number) => {
           }
         }
       },
+      ratings: {
+        include: {
+          user: { select: { name: true, avatar: true } } // 抓取評價者的名字和頭像
+        },
+        orderBy: { created_at: 'desc' } // 新的評價在前面
+      }
     }
   });
 
@@ -145,6 +163,19 @@ export const getPublicEventById = async (eventId: number) => {
         stock_quantity: v.stock_quantity,
       })),
     }));
+    const formattedReviews = event.ratings.map(r => ({
+    id: r.id,
+    user_id: r.user_id, // [新增] 這行很重要！
+    user_name: r.user.name,
+    user_avatar: r.user.avatar,
+    rating: r.rating,
+    comment: r.comment,
+    created_at: r.created_at.toISOString().split('T')[0],
+  }));
+  const totalRating = event.ratings.reduce((sum, r) => sum + r.rating, 0);
+  const averageRating = event.ratings.length > 0 
+    ? parseFloat((totalRating / event.ratings.length).toFixed(1)) 
+    : 0;
 
   return {
     id: event.id,
@@ -159,8 +190,10 @@ export const getPublicEventById = async (eventId: number) => {
     organizer: organizerInfo,
     ticketTypes: formattedTicketTypes,
     products: formattedProducts,
-    // [新增] 回傳類別物件
     category: event.category, 
+    reviews: formattedReviews,
+    rating_average: averageRating,
+    rating_count: event.ratings.length,
   };
 };
 

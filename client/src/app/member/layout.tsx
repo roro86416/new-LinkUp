@@ -34,12 +34,12 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
 
   // 1. 依照您的需求排序選單
   const menuItems = [
-    { name: '會員設定', href: '/member?section=會員設定', icon: UserIcon },
-    { name: '通知管理', href: '/member?section=通知管理', icon: BellIcon }, // 原本叫訊息管理
+    { name: '我的通知', href: '/member?section=我的通知', icon: BellIcon }, // 原本叫訊息管理
     { name: '我的訂單', href: '/member?section=我的訂單', icon: TicketIcon },
     { name: '我的收藏', href: '/member?section=我的收藏', icon: HeartIcon },
     { name: '折價券',   href: '/member?section=折價券',   icon: GiftIcon },
     { name: '幸運抽獎', href: '/member?section=幸運抽獎', icon: SparklesIcon },
+    { name: '會員設定', href: '/member?section=會員設定', icon: UserIcon },
   ];
 
   if (loading || !user) {

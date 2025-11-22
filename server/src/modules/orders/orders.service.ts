@@ -19,11 +19,57 @@ const generateQrCode = (): string => {
 export const findOrdersByUserService = async (userId: string) => {
   const orders = await prisma.order.findMany({
     where: { user_id: userId },
-    include: { items: true },
+    include: {
+      items: {
+        include: {
+          ticketType: {
+            include: {
+              event: {
+                select: { id: true, title: true } // 抓取 ID 和 標題
+              }
+            }
+          }
+        }
+      }
+    },
     orderBy: { created_at: "desc" },
   });
-  return orders;
+
+  const eventIds = new Set<number>();
+  orders.forEach(order => {
+    order.items.forEach(item => {
+      if (item.ticketType?.event?.id) {
+        eventIds.add(item.ticketType.event.id);
+      }
+    });
+  });
+
+  // 3. 一次性查詢使用者對這些活動是否已評價
+  const userRatings = await prisma.eventRating.findMany({
+    where: {
+      user_id: userId,
+      event_id: { in: Array.from(eventIds) }
+    },
+    select: { event_id: true }
+  });
+
+  // 轉成 Set 方便快速比對
+  const ratedEventIds = new Set(userRatings.map(r => r.event_id));
+
+  // 4. 組合回傳資料
+  return orders.map(order => {
+    // 找出訂單對應的活動 (通常取第一個 TicketType 的活動)
+    const eventData = order.items.find(i => i.ticketType?.event)?.ticketType?.event;
+
+    return {
+      ...order,
+      event: eventData, // 方便前端直接取用
+      is_reviewed: eventData ? ratedEventIds.has(eventData.id) : false // [新增] 評價狀態旗標
+    };
+  });
 };
+
+
 
 /**
  * @desc 查詢單筆訂單詳情 (已修正：包含 event 資料)
@@ -41,7 +87,7 @@ export const findOrderByIdService = async (userId: string, orderId: number) => {
           // [新增] 必須包含 TicketType -> Event，才能拿到活動資訊
           ticketType: {
             include: {
-              event: true, 
+              event: true,
             }
           }
         },
@@ -67,13 +113,13 @@ export const findOrderByIdService = async (userId: string, orderId: number) => {
 
 // 定義用於 Prisma 建立 OrderItem 的資料結構
 type OrderItemInputData = {
-    item_type: ItemType;
-    ticket_type_id?: string;
-    product_variant_id?: number;
-    item_name: string;
-    variant_description?: string;
-    quantity: number;
-    unit_price: Decimal;
+  item_type: ItemType;
+  ticket_type_id?: string;
+  product_variant_id?: number;
+  item_name: string;
+  variant_description?: string;
+  quantity: number;
+  unit_price: Decimal;
 };
 
 /**
@@ -83,7 +129,7 @@ export const createOrderService = async (
   userId: string,
   body: OrderCreateBody
 ) => {
-  
+
   // 1. 從 body 中解構出我們需要的資料
   // [核心修改] 我們現在直接使用 items，而不是去撈購物車
   const { attendees, items, ...billingInfo } = body;
@@ -94,13 +140,13 @@ export const createOrderService = async (
   }
 
   const result = await prisma.$transaction(async (tx) => {
-    
+
     // 2. 初始化變數
     let subtotal = new Decimal(0);
     const orderItemsData: OrderItemInputData[] = [];
     const productUpdates: { id: number; quantity: number }[] = [];
     const ticketUpdates: { id: string; quantity: number }[] = [];
-    
+
     // 用於追蹤票券項目，以便稍後驗證人數
     const ticketItemsInOrder: {
       ticketTypeId: string;
@@ -122,8 +168,8 @@ export const createOrderService = async (
 
         // [安全驗證] 從資料庫查詢商品資訊 (取代購物車查詢)
         const variant = await tx.productVariant.findUniqueOrThrow({
-            where: { id: item.product_variant_id },
-            include: { product: true }
+          where: { id: item.product_variant_id },
+          include: { product: true }
         });
 
         // 計算單價 (Base + Offset)
@@ -143,8 +189,8 @@ export const createOrderService = async (
 
         // [安全驗證] 從資料庫查詢票券資訊 (取代購物車查詢)
         const ticket = await tx.ticketType.findUniqueOrThrow({
-            where: { id: item.ticket_type_id },
-            include: { event: true }
+          where: { id: item.ticket_type_id },
+          include: { event: true }
         });
 
         unitPrice = ticket.price;
@@ -155,7 +201,7 @@ export const createOrderService = async (
           throw new Error(`活動票券 ${itemName} 數量不足。剩餘: ${availableQuantity}`);
         }
         ticketUpdates.push({ id: ticket.id, quantity: quantity });
-        
+
         // 記錄這是票券，稍後比對 attendees
         ticketItemsInOrder.push({
           ticketTypeId: ticket.id,
@@ -176,11 +222,11 @@ export const createOrderService = async (
         quantity: quantity,
         unit_price: unitPrice, // 使用資料庫查出的價格
       });
-    } 
+    }
 
-    
+
     // 4. 總金額計算與安全檢查
-    
+
     // 驗證持票人數量是否與購買的票券總數相符
     const totalTicketsCount = ticketItemsInOrder.reduce((sum, item) => sum + item.quantity, 0);
     if (totalTicketsCount !== attendees.length) {
@@ -188,16 +234,16 @@ export const createOrderService = async (
     }
 
     let discountAmount = new Decimal(0);
-    let totalAmount = subtotal.sub(discountAmount); 
+    let totalAmount = subtotal.sub(discountAmount);
 
     // [安全檢查] 比對後端計算的金額與前端傳來的金額
     if (totalAmount.toNumber() !== billingInfo.total_amount) {
-        console.warn(`金額不符警告：後端計算 ${totalAmount}, 前端傳送 ${billingInfo.total_amount}`);
-        // 如果您希望嚴格一點，可以取消下面這行的註解
-        // throw new Error("訂單金額驗證失敗，請重新整理頁面後再試。");
+      console.warn(`金額不符警告：後端計算 ${totalAmount}, 前端傳送 ${billingInfo.total_amount}`);
+      // 如果您希望嚴格一點，可以取消下面這行的註解
+      // throw new Error("訂單金額驗證失敗，請重新整理頁面後再試。");
     }
-    
-    const orderNumber = generateOrderNumber(); 
+
+    const orderNumber = generateOrderNumber();
     const expiryDate = new Date();
     expiryDate.setMinutes(expiryDate.getMinutes() + 15); // 30 分鐘到期
 
@@ -206,7 +252,7 @@ export const createOrderService = async (
       data: {
         order_number: orderNumber,
         user_id: userId,
-        status: OrderStatus.pending, 
+        status: OrderStatus.pending,
         billing_name: billingInfo.billing_name,
         billing_phone: billingInfo.billing_phone,
         billing_email: billingInfo.billing_email,
@@ -220,7 +266,7 @@ export const createOrderService = async (
         coupon_code: billingInfo.coupon_code,
         items: {
           createMany: {
-            data: orderItemsData, 
+            data: orderItemsData,
           },
         },
       },
@@ -235,7 +281,7 @@ export const createOrderService = async (
 
     for (const orderItem of newOrder.items) {
       if (orderItem.item_type === ItemType.ticket_types && orderItem.ticket_type_id) {
-        
+
         for (let i = 0; i < orderItem.quantity; i++) {
           const attendee = attendees[attendeeIndex];
           if (!attendee) {
@@ -258,15 +304,15 @@ export const createOrderService = async (
         }
       }
     }
-    
+
     // 6b. 扣除庫存 (Product & TicketType)
-    const productUpdatePromises = productUpdates.map(update => 
+    const productUpdatePromises = productUpdates.map(update =>
       tx.productVariant.update({
         where: { id: update.id },
         data: { stock_quantity: { decrement: update.quantity } },
       })
     );
-    
+
     const ticketUpdatePromises = ticketUpdates.map(update =>
       tx.ticketType.update({
         where: { id: update.id },
@@ -276,11 +322,11 @@ export const createOrderService = async (
 
     // 執行所有資料庫變更
     await Promise.all([
-      ...productUpdatePromises, 
+      ...productUpdatePromises,
       ...ticketUpdatePromises,
-      ...ticketCreatePromises 
+      ...ticketCreatePromises
     ]);
-    
+
     await tx.notification.create({
       data: {
         type: "transaction",
@@ -299,13 +345,13 @@ export const createOrderService = async (
     // 7. 返回完整的訂單資料
     const completeOrder = await tx.order.findUniqueOrThrow({
       where: { id: newOrder.id },
-      include: { 
+      include: {
         items: {
           include: {
-            ticket: true, 
+            ticket: true,
           }
-        }, 
-        coupon: true 
+        },
+        coupon: true
       },
     });
 
@@ -348,7 +394,7 @@ export const cancelOrderService = async (userId: string, orderId: number) => {
         where: { id: item.ticket_type_id! },
         data: { total_quantity: { increment: item.quantity } }
       }));
-      
+
     await Promise.all([...productUpdates, ...ticketUpdates]);
 
     return { message: "訂單已成功取消，庫存已回補。" };

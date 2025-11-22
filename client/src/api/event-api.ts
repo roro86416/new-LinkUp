@@ -13,20 +13,21 @@ export interface CategoryData {
 
 export interface EventDetailData {
   id: number;
+  user_id: string;
   title: string;
   subtitle?: string;
-  description: string; 
+  description: string;
   cover_image: string;
   start_time: string;
   end_time: string;
   location_name: string;
   address: string;
-  
+
   category?: {
     id: number;
     name: string;
   } | string;
-  
+
   organizer: {
     id?: string;
     name: string;
@@ -35,8 +36,8 @@ export interface EventDetailData {
   };
   ticketTypes: any[];
   products?: any[];
-  
-  price_range?: string; 
+
+  price_range?: string;
   remaining_tickets?: number;
   rating_average?: number;
   rating_count?: number;
@@ -67,7 +68,7 @@ export interface AnnouncementData {
   id: number;
   title: string;
   content?: string;
-  cover_image?: string; 
+  cover_image?: string;
   linkUrl?: string;
 }
 
@@ -79,8 +80,8 @@ export interface AnnouncementData {
  */
 export async function getCategories(limit?: number): Promise<CategoryData[]> {
   try {
-    const url = limit 
-      ? `/api/v1/events/categories?limit=${limit}` 
+    const url = limit
+      ? `/api/v1/events/categories?limit=${limit}`
       : `/api/v1/events/categories`;
     const response = await apiClient.get<ApiResponse<CategoryData[]>>(url);
     return response.data || [];
@@ -97,22 +98,20 @@ export async function getEventDetail(id: number): Promise<EventDetailData> {
   try {
     const response = await apiClient.get<ApiResponse<EventDetailData>>(`/api/v1/events/${id}`);
     const data = response.data;
-    
+
     // 模擬評價資料
     if (!data.reviews) {
-       data.reviews = [
-         { id: 1, user_name: "Alex", rating: 5, comment: "非常棒的活動！場地規劃得很好。", created_at: "2024-01-10" },
-         { id: 2, user_name: "Jamie", rating: 4, comment: "內容豐富，但排隊稍久。", created_at: "2024-01-12" },
-       ];
-       data.rating_average = 4.5;
-       data.rating_count = 120;
+      data.reviews = [
+        { id: 1, user_name: "Alex", rating: 5, comment: "非常棒的活動！場地規劃得很好。", created_at: "2024-01-10" },
+        { id: 2, user_name: "Jamie", rating: 4, comment: "內容豐富，但排隊稍久。", created_at: "2024-01-12" },
+      ];
     }
 
     // 模擬類別資料
     if (!data.category) {
-        data.category = "精選活動"; 
+      data.category = "精選活動";
     }
-    
+
     return data;
   } catch (error) {
     console.error(`[event-api] 獲取活動詳情失敗 (ID: ${id}):`, error);
@@ -127,9 +126,10 @@ export async function getEventDetail(id: number): Promise<EventDetailData> {
  * [修改] 增加 categoryId 參數
  */
 export async function getEvents(
-  type: 'popular' | 'new' | 'all' | 'featured', 
+  type: 'popular' | 'new' | 'all' | 'featured',
   limit: number,
-  categoryId?: number // [新增]
+  categoryId?: number,
+  region?: string
 ): Promise<EventCardData[]> {
   const apiType = type === 'featured' ? 'popular' : type;
   // 組合 URL
@@ -137,7 +137,7 @@ export async function getEvents(
   if (categoryId) {
     endpoint += `&category_id=${categoryId}`;
   }
-  
+  if (region && region !== '全部') endpoint += `&region=${encodeURIComponent(region)}`;
   try {
     const response = await apiClient.get<ApiResponse<EventCardData[]>>(endpoint);
     return response?.data || [];
@@ -153,21 +153,21 @@ export async function getEvents(
  */
 export async function getEventWeather(eventId: number): Promise<WeatherData | null> {
   try {
-    const endpoint = `/api/events/${eventId}/weather`; 
+    const endpoint = `/api/events/${eventId}/weather`;
     const response = await apiClient.get<ApiResponse<any>>(endpoint);
     const weatherData = response.data?.weather;
-    
+
     if (!weatherData) return null;
 
     return {
-        isForecast: weatherData.isForecast,
-        stationName: weatherData.stationName,
-        obsTime: weatherData.obsTime,
-        temperature: weatherData.temperature,
-        humidity: weatherData.humidity,
-        windSpeed: weatherData.windSpeed,
-        rainfall: weatherData.rainfall,
-        weatherDesc: weatherData.weatherDesc,
+      isForecast: weatherData.isForecast,
+      stationName: weatherData.stationName,
+      obsTime: weatherData.obsTime,
+      temperature: weatherData.temperature,
+      humidity: weatherData.humidity,
+      windSpeed: weatherData.windSpeed,
+      rainfall: weatherData.rainfall,
+      weatherDesc: weatherData.weatherDesc,
     };
   } catch (error) {
     console.error(`[event-api] 獲取天氣失敗:`, error);
@@ -181,13 +181,31 @@ export async function getEventWeather(eventId: number): Promise<WeatherData | nu
 export async function getAnnouncements(): Promise<AnnouncementData[]> {
   await new Promise(resolve => setTimeout(resolve, 300));
   return [
-    { 
-      id: 1, title: "【系統公告】LinkUp 2.0 全新改版上線！", 
+    {
+      id: 1, title: "【系統公告】LinkUp 2.0 全新改版上線！",
       cover_image: "https://images.unsplash.com/photo-1516280440614-6697288d5d38?q=80&w=2070", linkUrl: "/announcements/1"
     },
-    { 
-      id: 2, title: "【會員權益】新註冊會員送 100 元。", 
+    {
+      id: 2, title: "【會員權益】新註冊會員送 100 元。",
       cover_image: "https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?q=80&w=2070", linkUrl: "/announcements/2"
     },
   ];
+}
+/**
+ * [新增] 檢查是否可以評價
+ */
+export async function checkCanReview(eventId: number): Promise<boolean> {
+  try {
+    // apiClient 預設會攔截請求並加上 Token (前提是您的 apiClient 有實作 interceptor)
+    // 如果您的 apiClient 沒有自動加 Token，這裡就會失敗 (401 Unauthorized)
+    const response = await apiClient.get<any>(`/api/v1/events/${eventId}/can-review`);
+
+    // [除錯] 可以在這裡印出回應
+    console.log("checkCanReview API Response:", response);
+
+    return response.canReview || false;
+  } catch (error) {
+    console.error("checkCanReview API Error:", error);
+    return false;
+  }
 }

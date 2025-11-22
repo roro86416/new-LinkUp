@@ -322,7 +322,6 @@ export default function AccountSettings() {
                     <select className={inputFieldClasses} value={formData.country} onChange={handleSelectChange("country")}>
                         <option value="" disabled className="text-black">請選擇</option>
                         <option value="台灣" className="text-black">台灣</option>
-                        <option value="台灣">台灣</option>
                         <option value="中國" className="text-black">中國</option>
                         <option value="日本" className="text-black">日本</option>
                         <option value="韓國" className="text-black">韓國</option>

@@ -64,7 +64,7 @@ await tx.notification.create({
           data: {
             type: "system", // 這裡用 system 或是 transaction 都可以
             title: "訂單取消通知",
-            message: `您的訂單 #${order.order_number} 因超過付款時限（30分鐘），系統已自動取消。\n如需購買請重新下單。`,
+            message: `您的訂單 #${order.order_number} 因超過付款時限（15分鐘），系統已自動取消。\n如需購買請重新下單。`,
             sent_at: new Date(),
             userStatuses: {
               create: {

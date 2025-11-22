@@ -10,10 +10,10 @@ export const listEvents = async (req: Request, res: Response) => {
     //從查詢參數中獲取 type 和 limit(如果前端沒提供，給予預設值)
     const type = (req.query.type as string) || "all";
     const limit = Number(req.query.limit) || 10;
-
+const region = req.query.region ? String(req.query.region) : undefined;
     const categoryId = req.query.category_id ? Number(req.query.category_id) : undefined;
     //呼叫 service 函式，並傳入參數
-    const data = await svc.listPublicEvents(type, limit, categoryId);
+    const data = await svc.listPublicEvents(type, limit, categoryId, region);
     res.json({ status: "success", data });
   } catch (error) {
     // 如果 service 層 (prisma) 發生錯誤，捕捉它並回傳 500

@@ -3,12 +3,14 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { MagnifyingGlassIcon, FunnelIcon, ArrowsUpDownIcon, XMarkIcon, TagIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, FunnelIcon, ArrowsUpDownIcon, XMarkIcon, TagIcon, ArrowUpIcon, ArrowDownIcon, MapPinIcon } from '@heroicons/react/24/outline';
 // [修改] 引入 getCategories 與 CategoryData
 import { getEvents, getCategories, CategoryData } from '../../api/event-api';
 import { EventCardData } from '../../components/card/EventCard';
 import HomeEventCard from '../../components/card/HomeEventCard';
 import { useFavorites } from '../../components/content/member/FavoritesContext';
+
+const REGIONS = ['全部', '台北', '新北', '桃園', '新竹', '台中', '台南', '高雄', '宜蘭', '花蓮', '台東', '屏東', '基隆', '嘉義'];
 
 const SORT_OPTIONS = [
   { label: '最新發布', value: 'newest' },
@@ -36,7 +38,7 @@ export default function EventsPage() {
   // [修改] 改用 selectedCategoryId (number | null)
   const initialCatId = searchParams.get('category_id');
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(initialCatId ? Number(initialCatId) : null);
-  
+  const [selectedRegion, setSelectedRegion] = useState(searchParams.get('region') || '全部');
   const [sortBy, setSortBy] = useState(searchParams.get('sort') || 'newest');
   const [showMobileFilters, setShowMobileFilters] = useState(false);
 
@@ -45,10 +47,15 @@ export default function EventsPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // 平行請求：抓取類別清單 & 抓取活動列表 (帶入 category_id)
         const [catsData, eventsData] = await Promise.all([
-          getCategories(), // 抓全部類別
-          getEvents('all', 100, selectedCategoryId || undefined)
+          getCategories(),
+          // [修正重點] 這裡把 selectedRegion 傳進去了！
+          getEvents(
+            'all', 
+            100, 
+            selectedCategoryId || undefined, 
+            selectedRegion === '全部' ? undefined : selectedRegion
+          )
         ]);
         
         setCategories(catsData);
@@ -60,7 +67,7 @@ export default function EventsPage() {
       }
     };
     fetchData();
-  }, [selectedCategoryId]); // [關鍵] 當類別 ID 改變時，重新向後端抓取活動
+  }, [selectedCategoryId, selectedRegion]);
 
   // 2. 同步 URL (當篩選條件改變時)
   const updateUrl = useCallback(() => {
@@ -68,10 +75,11 @@ export default function EventsPage() {
     if (searchTerm) params.set('search', searchTerm);
     // [修改] 將 category_id 寫入 URL
     if (selectedCategoryId) params.set('category_id', selectedCategoryId.toString());
+    if (selectedRegion && selectedRegion !== '全部') params.set('region', selectedRegion);
     if (sortBy !== 'newest') params.set('sort', sortBy);
     
     router.replace(`/eventlist?${params.toString()}`, { scroll: false });
-  }, [searchTerm, selectedCategoryId, sortBy, router]);
+  }, [searchTerm, selectedCategoryId, selectedRegion, sortBy, router]);
 
   useEffect(() => {
     updateUrl();
@@ -207,6 +215,17 @@ export default function EventsPage() {
             {/* 篩選器與排序 (桌面版) */}
             
             <div className="hidden md:flex gap-3 w-full md:w-auto">
+{/* 地點篩選 */}
+              <div className="relative min-w-[120px]">
+                <select 
+                  value={selectedRegion}
+                  onChange={(e) => setSelectedRegion(e.target.value)}
+                  className="w-full appearance-none bg-black/20 border border-white/20 text-white py-3 pl-4 pr-10 rounded-xl focus:outline-none focus:border-[#EF9D11] cursor-pointer hover:bg-black/30 transition font-bold"
+                >
+                  {REGIONS.map(r => <option key={r} value={r} className="text-black">{r}</option>)}
+                </select>
+                <MapPinIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+              </div>
               {/* 類別篩選 (動態渲染) */}
               <div className="relative min-w-[140px]">
                 <select 
@@ -313,7 +332,7 @@ export default function EventsPage() {
             {sortBy !== 'newest' && currentSortLabel && (
                 <button 
                     onClick={() => setSortBy('newest')}
-                    className="group px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/50 text-blue-400 text-xs font-medium flex items-center gap-1 hover:bg-blue-500 hover:text-white transition-all"
+                    className="group px-3 py-1 rounded-full bg-blue-500/50 border border-blue-500/70 text-blue-400 text-xs font-medium flex items-center gap-1 hover:bg-blue-500 hover:text-white transition-all"
                 >
                     <ArrowsUpDownIcon className="w-3 h-3" />
                     {currentSortLabel}
@@ -323,9 +342,23 @@ export default function EventsPage() {
 
             {/* 若無任何篩選，顯示預設標籤 */}
             {!searchTerm && !selectedCategoryId && sortBy === 'newest' && (
-                 <div className="px-3 py-1 rounded-full  bg-white/10 border border-white/20 text-white/60 text-xs font-medium">
-                    所有活動
-                 </div>
+                 <button 
+                    // 這裡沒有 onClick 動作，純展示，或者您可以做「重置」功能
+                    className="group px-3 py-1 rounded-full bg-white/50 border border-white/70 text-white text-xs font-medium flex items-center gap-1 transition-all cursor-default"
+                >
+                    <TagIcon className="w-3 h-3" />
+                    顯示所有活動
+                </button>
+            )}
+            {selectedRegion !== '全部' && (
+                <button 
+                    onClick={() => setSelectedRegion('全部')}
+                    className="group px-3 py-1 rounded-full bg-green-500/20 border border-green-500/50 text-green-400 text-xs font-medium flex items-center gap-1 hover:bg-green-500 hover:text-white transition-all"
+                >
+                    <MapPinIcon className="w-3 h-3" />
+                    {selectedRegion}
+                    <XMarkIcon className="w-3 h-3 group-hover:text-white" />
+                </button>
             )}
         </div>
         </div>
