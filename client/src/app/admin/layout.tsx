@@ -1,50 +1,27 @@
-//系統管理員的權限保護與頁面佈局元件（Admin Auth + Layout）
-
 'use client';
 
-import { ReactNode, useEffect, useCallback } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { useAdminUser } from '../../context/auth/AdminUserContext';
-import UserLayout from '../../components/layout/userAdmin/UserLayout';
-
-function AdminAuth({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const { adminUser, loading } = useAdminUser();
-  const isLoginPage = pathname === '/admin/login';
-
-  useEffect(() => {
-    if (loading) return;
-
-    // 如果在登入頁，但已有登入狀態，導向後台首頁
-    if (isLoginPage) {
-      if (adminUser) router.replace('/admin');
-    }
-
-    // 如果不在登入頁，且沒有登入狀態，導向登入頁
-    if (!isLoginPage && !adminUser) {
-      router.replace('/admin/login');
-    }
-  }, [adminUser, isLoginPage, loading, router]);
-
-  // 在驗證過程中，或需要重導向時，不渲染任何內容避免畫面閃爍
-  if (loading || (!isLoginPage && !adminUser) || (isLoginPage && adminUser)) {
-    return null;
-  }
-
-  // 在登入頁且未登入
-  if (isLoginPage && !adminUser) {
-    return <>{children}</>;
-  }
-
-  // 在後台頁面且已登入
-  if (!isLoginPage && adminUser) {
-    return <UserLayout type="admin">{children}</UserLayout>;
-  }
-
-  return null;
-}
+import { useEffect, useState } from 'react';
+import UserLayout from '../../components/layout/UserLayout';
+import { useModal } from '../../context/auth/ModalContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <AdminAuth>{children}</AdminAuth>;
+  const { openAdminLogin } = useModal();
+  // ⭐️ 使用函式進行延遲初始化，此函式只會在客戶端初次渲染時執行一次
+  const [isVerified] = useState(() => {
+    // 這個檢查只會在客戶端執行，伺服器端永遠返回 false
+    if (typeof window === 'undefined') {
+      return false;
+    }
+    return !!localStorage.getItem('admin_token');
+  });
+
+  useEffect(() => {
+    // 現在 effect 的職責很單純：如果未驗證，就打開登入視窗
+    if (!isVerified) {
+      openAdminLogin();
+    }
+  }, [isVerified, openAdminLogin]);
+
+  // 如果未驗證，Modal 會覆蓋在上面；如果已驗證，則正常顯示 children。
+  return <UserLayout type="admin">{isVerified ? children : null}</UserLayout>;
 }

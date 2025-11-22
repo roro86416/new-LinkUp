@@ -1,4 +1,4 @@
-import { PrismaClient } from "../generated/prisma/client.js";
+import { PrismaClient } from "../generated/prisma/client";
 
 // 建立一個 PrismaClient 的單一實體
 const prisma = new PrismaClient();

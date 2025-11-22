@@ -104,7 +104,7 @@ export default function EmailLoginModal() {
           <input
             type="email"
             placeholder="電子郵件"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:bg-white focus:text-gray-900"
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-800 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#658AD0]"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />

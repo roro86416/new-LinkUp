@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "NodeNext",
-    "moduleResolution": "NodeNext", 
+    "moduleResolution": "NodeNext", //"NodeNext" 告訴 TypeScript 應該像 Node.js 運行時一樣去檢查 package.json 的 exports 欄位或最新的模組解析規則，從而 成功定位 到 bcryptjs 的主檔案和 @types 中的型別定義。
     "outDir": "./dist",
     "rootDir": "./src",
     "esModuleInterop": true,
@@ -10,8 +10,6 @@
     "strict": true,
     "skipLibCheck": true
   },
-    "include": ["src/**/*"],
-
   "exclude": [
     "node_modules",
     "dist",

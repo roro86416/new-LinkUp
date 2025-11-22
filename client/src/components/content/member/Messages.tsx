@@ -1,286 +1,268 @@
-// new-LinkUp/client/src/components/content/member/Messages.tsx
-'use client';
-
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import NotificationDetailModal from './NotificationDetailModal';
-import {
-  ClockIcon,
-  CheckCircleIcon,
-  MegaphoneIcon,
-  ExclamationTriangleIcon,
-  MagnifyingGlassIcon
-} from '@heroicons/react/24/outline';
-import { apiClient } from '../../../api/auth/apiClient';
+import React, { useState, useMemo, useCallback } from 'react';
 
 // ----------------------------------------------------
-// 1. 類型定義
+// 1. 類型定義 (Type Definitions)
 // ----------------------------------------------------
-interface Notification {
-  id: string;
-  type: '活動提醒' | '報名成功' | '系統公告' | '活動變更' | '訂單通知' | '交易通知'; // 擴充後端可能回傳的類型
+
+// 定義訊息資料的結構
+interface Message {
+  id: number;
+  type: 'registration_success' | 'payment_reminder' | 'attendance_notice' | 'event_reminder';
   title: string;
   content: string;
-  sentAt: string;
+  date: string;
   isRead: boolean;
+  eventName: string;
 }
 
+// 定義 MessageCard 組件的 Props 結構
 interface MessageCardProps {
-  message: Notification;
-  onToggleRead: (id: string) => void;
-  onDelete: (id: string, title: string) => void;
+  message: Message;
+  // onToggleRead 接收訊息 ID (number) 並返回 void
+  onToggleRead: (id: number) => void;
+  // onDelete 接收訊息 ID (number) 和標題 (string) 並返回 void
+  onDelete: (id: number, title: string) => void;
 }
 
 // ----------------------------------------------------
-// 2. 配置與樣式
+// 2. 模擬資料與配置 (Initial State & Config)
 // ----------------------------------------------------
-const typeConfigs: { [key: string]: { icon: React.ElementType; color: string; label: string; } } = {
-  '活動提醒': { icon: ClockIcon, color: 'text-yellow-400', label: '活動提醒' },
-  '報名成功': { icon: CheckCircleIcon, color: 'text-green-400', label: '報名成功' },
-  '系統公告': { icon: MegaphoneIcon, color: 'text-blue-400', label: '系統公告' },
-  '活動變更': { icon: ExclamationTriangleIcon, color: 'text-red-400', label: '活動變更' },
-  // 對應後端 Enum
-  'event': { icon: ClockIcon, color: 'text-yellow-400', label: '活動提醒' },
-  'transaction': { icon: CheckCircleIcon, color: 'text-green-400', label: '交易通知' },
-  'announcement': { icon: MegaphoneIcon, color: 'text-blue-400', label: '系統公告' },
+
+// 模擬資料 (Initial Mock Data) - 使用 Message[] 類型
+const initialMessageData: Message[] = [
+  { id: 1, type: 'registration_success', title: '恭喜！您已成功報名「智慧城市研討會」', content: '您已成功報名 2025/11/15 舉辦的「智慧城市研討會」。請留意後續通知，活動出席通知將於活動前一天發送。', date: '2025/10/25 10:30', isRead: false, eventName: '智慧城市研討會' },
+  { id: 2, type: 'payment_reminder', title: '【重要】「AI 工作坊」繳款期限將至！', content: '您的活動「AI 工作坊」繳款期限為 2025/11/02，請盡快完成繳費，以免影響報名資格。', date: '2025/10/30 14:00', isRead: false, eventName: 'AI 工作坊' },
+  { id: 3, type: 'attendance_notice', title: '「網頁設計趨勢」活動出席通知', content: '您報名的活動將於明天 2025/10/31 舉行！請提前準備好您的電子票券。地點：台北國際會議中心。', date: '2025/10/30 08:00', isRead: false, eventName: '網頁設計趨勢' },
+  { id: 4, type: 'event_reminder', title: '活動提醒：「資料分析入門」將在一小時後開始！', content: '「資料分析入門」將於 15:00 開始，請您立即前往線上會議室或活動地點。', date: '2025/10/29 14:00', isRead: true, eventName: '資料分析入門' },
+  { id: 5, type: 'payment_reminder', title: '「商業攝影教學」繳款已過期通知', content: '很抱歉，您的活動「商業攝影教學」繳款期限已過，您的報名資格已取消。', date: '2025/10/28 16:20', isRead: true, eventName: '商業攝影教學' },
+  { id: 6, type: 'registration_success', title: '報名成功：數位行銷大師班', content: '您已成功報名 2025/12/01 的「數位行銷大師班」。', date: '2025/10/27 09:00', isRead: true, eventName: '數位行銷大師班' },
+  { id: 7, type: 'event_reminder', title: '倒數一天：「區塊鏈技術應用」', content: '您報名的「區塊鏈技術應用」活動將於明天開始，請做好最後準備！', date: '2025/10/29 10:00', isRead: false, eventName: '區塊鏈技術應用' },
+];
+
+// 圖標和顏色配置 (使用 inline SVG 保持單一檔案)
+const getTypeConfig = (type: Message['type']) => {
+  const iconBaseProps = { className: "h-6 w-6" };
+  const svgPathMap = {
+    'registration_success': {
+      path: "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z",
+      color: "text-green-500",
+      label: '報名成功',
+    },
+    'payment_reminder': {
+      path: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+      color: "text-red-500",
+      label: '繳費提醒',
+    },
+    'attendance_notice': {
+      path: "M12 19l9 2-9-18-9 18 9-2zm0 0v-8",
+      color: "text-gray-500", // 出席通知改為中性灰色
+      label: '出席通知',
+    },
+    'event_reminder': {
+      path: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+      color: "text-yellow-500",
+      label: '活動提醒',
+    },
+  };
+
+  const config = svgPathMap[type];
+
+  if (!config) {
+    return { icon: null, label: '一般通知' };
+  }
+
+  const Icon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" {...iconBaseProps} className={`${iconBaseProps.className} ${config.color}`}>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={config.path} />
+    </svg>
+  );
+
+  return { icon: <Icon />, label: config.label };
 };
 
 // ----------------------------------------------------
-// 3. 訊息卡片組件 (深色玻璃風格)
+// 3. 組件：訊息卡片 (Message Card Component)
 // ----------------------------------------------------
+
 const MessageCard: React.FC<MessageCardProps> = ({ message, onToggleRead, onDelete }) => {
-  // 根據 type 取得設定，若無則用預設
-  const config = typeConfigs[message.type] || typeConfigs[message.type] || { icon: MegaphoneIcon, color: 'text-gray-400', label: '一般通知' };
-  
-  // 未讀：亮一點的背景；已讀：暗淡背景
-  const bgClass = message.isRead ? 'bg-white/5 border-transparent' : 'bg-white/10 border-l-4 border-orange-500';
-  const textClass = message.isRead ? 'text-gray-400' : 'text-white font-medium';
+  const { icon, label } = getTypeConfig(message.type);
+  const isReadClass = message.isRead ? 'bg-white border-l-4 border-l-gray-300' : 'bg-orange-50 border-l-4 border-l-orange-500';
+  const readToggleText = message.isRead ? '標記為未讀' : '標記為已讀';
 
   return (
-    <div
-      className={`p-5 rounded-2xl shadow-lg flex flex-col sm:flex-row items-start justify-between hover:bg-white/15 transition-all duration-300 cursor-pointer ${bgClass}`}
-    >
-      <div className="flex-grow min-w-0 pr-4 mb-3 sm:mb-0">
-        <div className="flex items-center gap-2 mb-1">
-            <config.icon className={`w-5 h-5 ${config.color}`} />
-            <span className={`text-xs px-2 py-0.5 rounded-full bg-white/10 ${config.color}`}>{config.label}</span>
-            <span className="text-xs text-gray-500">{new Date(message.sentAt).toLocaleString()}</span>
+    <div id={`message-${message.id}`}
+      className={`message-card p-5 rounded-xl shadow-md transition duration-200 ease-in-out ${isReadClass} hover:translate-y-[-2px] hover:shadow-xl`}>
+
+      <div className="flex items-start justify-between">
+        {/* 左側內容 */}
+        <div className="flex-grow min-w-0 pr-4">
+          <div className="flex items-center space-x-3 mb-2">
+            {icon}
+            <h2 className="text-lg font-semibold text-gray-900 truncate">
+              {message.title}
+            </h2>
+            {!message.isRead && (
+              <span className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0" title="未讀訊息"></span>
+            )}
+          </div>
+          <p className="text-sm text-gray-600 mb-2 whitespace-normal">{message.content}</p>
+          <div className="text-xs text-gray-400 mt-1 flex items-center space-x-3">
+            <span className="px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full font-medium">{label}</span>
+            <span>{message.date}</span>
+          </div>
         </div>
-        <h3 className={`text-lg truncate ${textClass}`}>{message.title}</h3>
-        <p className="text-sm text-gray-400 mt-1 truncate">{message.content}</p>
-      </div>
-      
-      <div className="flex gap-2 self-end sm:self-center flex-shrink-0">
-        <button 
-            onClick={(e) => { e.stopPropagation(); onToggleRead(message.id); }} 
-            className="text-xs font-medium text-orange-400 hover:text-white border border-orange-500/50 hover:bg-orange-500 px-3 py-1.5 rounded-lg transition"
-        >
-          {message.isRead ? '標示未讀' : '標示已讀'}
-        </button>
-        <button 
-            onClick={(e) => { e.stopPropagation(); onDelete(message.id, message.title); }} 
-            className="text-xs font-medium text-red-400 hover:text-white border border-red-500/50 hover:bg-red-500 px-3 py-1.5 rounded-lg transition"
-        >
-          刪除
-        </button>
+
+        {/* 右側操作按鈕 */}
+        <div className="flex flex-col space-y-2 flex-shrink-0">
+          <button onClick={() => onToggleRead(message.id)} className="text-xs font-medium text-orange-600 hover:text-orange-800 transition duration-150 p-1 rounded-md hover:bg-orange-50 whitespace-nowrap">
+            {readToggleText}
+          </button>
+          <button onClick={() => onDelete(message.id, message.title)}
+            className="text-xs font-medium text-red-500 hover:text-red-700 transition duration-150 p-1 rounded-md hover:bg-red-50">
+            刪除
+          </button>
+        </div>
       </div>
     </div>
   );
 };
 
+
 // ----------------------------------------------------
-// 4. 主組件
+// 4. 主組件 (App Component)
 // ----------------------------------------------------
-const Messages: React.FC = () => {
-  const [messageData, setMessageData] = useState<Notification[]>([]);
+
+const App: React.FC = () => {
+  // 使用 Message[] 作為 useState 的類型
+  const [messageData, setMessageData] = useState<Message[]>(initialMessageData);
   const [currentFilter, setCurrentFilter] = useState<'all' | 'unread' | 'read'>('all');
   const [currentSearchTerm, setCurrentSearchTerm] = useState('');
-  const [viewingNotification, setViewingNotification] = useState<Notification | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  const fetchMessages = useCallback(async () => {
-    setIsLoading(true);
-    let apiData: Notification[] = [];
-    let localData: Notification[] = [];
-
-    // 1. 嘗試讀取 API (後端 UserNotificationStatus)
-    try {
-      const res = await apiClient.get<{data: Notification[]}>('/api/notifications'); 
-      // 注意：如果您的後端回傳 { status: "success", data: [...] }，要取 res.data
-      // 假設 apiClient 已經處理過這層，或者後端直接回陣列。這裡做個防呆：
-      const rawData = Array.isArray(res) ? res : (res as any).data; 
-      if (Array.isArray(rawData)) {
-          apiData = rawData.map((item: any) => ({
-            ...item,
-            id: item.id.toString() // 確保 ID 是字串
-          }));
-      }
-    } catch (error) {
-      console.error("API 讀取失敗 (可能未登入):", error);
-    }
-
-    // 2. 讀取 LocalStorage (demo_notifications)
-    try {
-      const saved = localStorage.getItem('demo_notifications');
-      if (saved) localData = JSON.parse(saved);
-    } catch (error) {
-      console.error("LocalStorage 讀取失敗:", error);
-    }
-
-    // 3. 合併並排序 (新到舊)
-    const merged = [...localData, ...apiData].sort((a, b) => 
-      new Date(b.sentAt).getTime() - new Date(a.sentAt).getTime()
-    );
-    
-    // 簡單去重 (如果 ID 有衝突)
-    const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
-
-    setMessageData(unique);
-    setIsLoading(false);
-  }, []);
-
-  useEffect(() => {
-    fetchMessages();
-    // 監聽可能的更新事件
-    const handler = () => { fetchMessages(); };
-    window.addEventListener('notifications-updated', handler);
-    return () => window.removeEventListener('notifications-updated', handler);
-  }, [fetchMessages]);
-
+  // Tab 定義 (使用 useMemo 來確保計數只在 messageData 變化時重新計算)
   const tabs = useMemo(() => [
     { id: 'all', name: '全部', count: messageData.length },
     { id: 'unread', name: '未讀', count: messageData.filter(m => !m.isRead).length },
     { id: 'read', name: '已讀', count: messageData.filter(m => m.isRead).length },
   ], [messageData]);
 
+  // 篩選和搜尋邏輯 (使用 useMemo 來避免不必要的重複計算)
   const filteredMessages = useMemo(() => {
     let list = messageData;
     const lowerSearchTerm = currentSearchTerm.toLowerCase().trim();
 
-    if (currentFilter === 'unread') list = list.filter(m => !m.isRead);
-    else if (currentFilter === 'read') list = list.filter(m => m.isRead);
+    // 1. 執行 Tab 篩選
+    if (currentFilter === 'unread') {
+      list = list.filter(m => !m.isRead);
+    } else if (currentFilter === 'read') {
+      list = list.filter(m => m.isRead);
+    }
 
+    // 2. 執行搜尋篩選
     if (lowerSearchTerm) {
       list = list.filter(m =>
         m.title.toLowerCase().includes(lowerSearchTerm) ||
-        m.content.toLowerCase().includes(lowerSearchTerm)
+        m.content.toLowerCase().includes(lowerSearchTerm) ||
+        m.eventName.toLowerCase().includes(lowerSearchTerm)
       );
     }
+
     return list;
   }, [messageData, currentFilter, currentSearchTerm]);
 
-  // 切換讀取狀態
-  const toggleReadStatus = useCallback(async (id: string) => {
-    // 判斷是 Local 還是 API (假設 API ID 是數字轉字串，Local ID 通常有特定格式或也是數字)
-    // 這裡簡單嘗試：先試 API，失敗再試 Local (或者根據 ID 特徵)
-    
-    // 樂觀更新 UI
-    setMessageData(prev => prev.map(m => m.id === id ? { ...m, isRead: !m.isRead } : m));
 
-    try {
-        await apiClient.patch(`/api/notifications/${id}/read`, {});
-    } catch (e) {
-        // 如果 API 失敗，可能是 Local 資料
-        try {
-            const saved = localStorage.getItem('demo_notifications');
-            const list: Notification[] = saved ? JSON.parse(saved) : [];
-            const updated = list.map(n => n.id === id ? { ...n, isRead: !n.isRead } : n);
-            localStorage.setItem('demo_notifications', JSON.stringify(updated));
-        } catch (localErr) { console.error(localErr); }
-    }
-    // 告訴小鈴鐺更新數字
-    window.dispatchEvent(new Event('notifications-updated'));
+  // 處理函數
+  const toggleReadStatus = useCallback((id: number) => {
+    setMessageData(prevData => prevData.map(msg =>
+      msg.id === id ? { ...msg, isRead: !msg.isRead } : msg
+    ));
   }, []);
 
-  // 刪除訊息
-  const deleteMessage = useCallback(async (id: string, title: string) => {
-    if (!window.confirm(`確定要刪除訊息：「${title}」嗎？`)) return;
-
-    // 樂觀更新
-    setMessageData(prev => prev.filter(m => m.id !== id));
-
-    try {
-        await apiClient.delete(`/api/notifications/${id}`);
-    } catch (e) {
-         try {
-            const saved = localStorage.getItem('demo_notifications');
-            const list: Notification[] = saved ? JSON.parse(saved) : [];
-            const updated = list.filter(n => n.id !== id);
-            localStorage.setItem('demo_notifications', JSON.stringify(updated));
-        } catch (localErr) { console.error(localErr); }
+  const deleteMessage = useCallback((id: number, title: string) => {
+    // 使用 window.confirm 替代 alert/confirm (React 應用中應使用 Modal)
+    if (window.confirm(`確定要刪除訊息：「${title}」嗎？`)) {
+      setMessageData(prevData => prevData.filter(msg => msg.id !== id));
+      console.log(`Message ID ${id} deleted.`);
     }
   }, []);
 
-  const handleCardClick = (notification: Notification) => {
-    setViewingNotification(notification);
-    if (!notification.isRead) {
-      toggleReadStatus(notification.id);
-    }
-  };
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCurrentSearchTerm(e.target.value);
+  }, []);
 
-  if (isLoading) return <div className="text-center py-20 text-gray-400">載入訊息中...</div>;
+  const setFilter = useCallback((filterId: 'all' | 'unread' | 'read') => {
+    setCurrentFilter(filterId);
+  }, []);
+
 
   return (
-    <div className="w-full mx-auto animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <header className="mb-8">
-        <h1 className="text-2xl font-extrabold text-white mb-2">通知管理</h1>
-        <p className="text-gray-400">查看您的所有活動通知、訂單狀態與系統公告。</p>
+    <div id="app" className="w-full mx-auto">
+      <header>
+        <h1 className="text-2xl font-extrabold text-gray-900 mb-2">
+          訊息中心
+        </h1>
+        <p className="text-gray-500">管理您的所有活動通知和提醒。</p>
       </header>
 
-      {/* 篩選與搜尋 (玻璃工具列) */}
-      <div className="p-4 mb-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md sticky top-4 z-20 shadow-lg">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="flex gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
-            {tabs.map(tab => (
-              <button 
-                key={tab.id} 
-                onClick={() => setCurrentFilter(tab.id as 'all')}
-                className={`px-4 py-2 text-sm rounded-lg transition whitespace-nowrap font-bold
-                    ${tab.id === currentFilter 
-                        ? 'bg-[#EF9D11] text-white shadow-lg' 
-                        : 'text-gray-400 hover:text-white hover:bg-white/10'
-                    }`}
-              >
-                {tab.name} <span className="opacity-70 ml-1 text-xs bg-black/20 px-1.5 py-0.5 rounded-full">{tab.count}</span>
-              </button>
-            ))}
+      {/* 篩選器和搜尋框區域 */}
+      <div className=" p-4  mt-4 sticky top-0 z-10">
+        <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 sm:space-x-4">
+
+          {/* 篩選 Tabs */}
+          <div className="flex-shrink-0 w-full sm:w-auto">
+            <div id="filter-tabs" className="inline-flex rounded-lg bg-gray-100 p-1">
+              {tabs.map(tab => {
+                const isActive = tab.id === currentFilter;
+                const activeClass = isActive ?
+                  'bg-white text-orange-600 shadow-sm font-semibold'
+                  : 'text-gray-500 hover:text-gray-700 font-medium';
+
+                return (
+                  <button key={tab.id} onClick={() => setFilter(tab.id as 'all' | 'unread' | 'read')}
+                    className={`px-3 py-1.5 text-sm rounded-lg transition duration-150 ${activeClass}`}>
+                    {tab.name} ({tab.count})
+                  </button>
+                );
+              })}
+            </div>
           </div>
+
+          {/* 搜尋框 */}
           <div className="relative w-full sm:max-w-xs">
-            <input 
-                type="text" 
-                placeholder="搜尋通知..." 
-                className="w-full bg-black/20 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder-gray-500 focus:ring-1 focus:ring-[#EF9D11] focus:border-[#EF9D11] outline-none transition"
-                onChange={(e) => setCurrentSearchTerm(e.target.value)} 
-                value={currentSearchTerm} 
-            />
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+            <input type="text" id="search-input" placeholder="搜尋標題、內容或活動名稱..."
+              className="w-full border-gray-300 rounded-lg pl-10 pr-4 py-2 text-sm shadow-sm focus:ring-orange-500 focus:border-orange-500 transition duration-150"
+              onChange={handleSearch}
+              value={currentSearchTerm} />
+            {/* 搜尋圖標 */}
+            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
           </div>
         </div>
       </div>
 
       {/* 訊息列表 */}
-      <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-        {filteredMessages.length === 0 ? (
-           <div className="text-center py-20 bg-white/5 border border-white/10 rounded-2xl">
-               <MegaphoneIcon className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-               <p className="text-gray-400">目前沒有任何訊息</p>
-           </div>
-        ) : (
-          filteredMessages.map(message => (
-            <div key={message.id} onClick={() => handleCardClick(message)}>
-              <MessageCard message={message} onToggleRead={toggleReadStatus} onDelete={deleteMessage} />
-            </div>
-          ))
-        )}
+      <div id="message-list" className={`message-list-container space-y-4 max-h-[70vh] overflow-y-auto pr-2 ${filteredMessages.length === 0 ? 'hidden' : 'block'}`}>
+        {filteredMessages.map(message => (
+          <MessageCard
+            key={message.id}
+            message={message}
+            onToggleRead={toggleReadStatus}
+            onDelete={deleteMessage}
+          />
+        ))}
       </div>
 
-      {viewingNotification && (
-          <NotificationDetailModal 
-            notification={viewingNotification} 
-            onClose={() => setViewingNotification(null)} 
-          />
-      )}
+      {/* 空狀態/無結果提示 */}
+      <div id="empty-state" className={`text-center py-20 bg-white rounded-xl shadow-lg ${filteredMessages.length === 0 ? 'block' : 'hidden'}`}>
+        <svg className="mx-auto h-12 w-12 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+        </svg>
+        <h3 className="mt-2 text-lg font-medium text-gray-900">沒有符合條件的訊息</h3>
+        <p className="mt-1 text-sm text-gray-500">請嘗試更改篩選或搜尋條件。</p>
+      </div>
+
     </div>
   );
 };
 
-export default Messages;
+export default App;
