@@ -116,13 +116,17 @@ export default function ArticleHeader({ article }: ArticleHeaderProps) {
       {/* 4. 影像元件: 強調深度與動態感 */}
       <div className="relative w-full lg:w-[450px] flex-shrink-0 h-[300px] rounded-2xl overflow-hidden 
                     shadow-2xl border-4 border-white transform transition-transform duration-500 hover:scale-[1.02]">
-        <Image
-          src={article.image}
-          alt={article.title}
-          fill
-          priority={true} 
-          sizes="(max-width: 1024px) 100vw, 450px" 
-          className="object-cover"
+        <img
+        src={article.image}
+    alt={article.title}
+    className="object-cover w-full h-full"
+    loading="lazy"
+          // src={article.image}
+          // alt={article.title}
+          // fill
+          // priority={true} 
+          // sizes="(max-width: 1024px) 100vw, 450px" 
+          // className="object-cover"
         />
         {/* 增加一個影像上方的半透明疊層來增加質感 */}
         <div className="absolute inset-0 bg-black/10 mix-blend-multiply pointer-events-none"></div>

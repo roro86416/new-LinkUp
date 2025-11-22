@@ -1,11 +1,15 @@
-interface ArticleContentProps {
-  content: string;
-}
+"use client";
 
-export default function ArticleContent({ content }: ArticleContentProps) {
+import { sanitizeHTML } from "./sanitizeHTML";
+import "../../globals.css"
+
+export default function ArticleContent({ content }: { content: string }) {
+  const safeHTML = sanitizeHTML(content);
+
   return (
-    <article className="prose max-w-none mb-16">
-      <p>{content}</p>
-    </article>
+    <article
+      className="prose prose-lg max-w-none prose-img:rounded-lg prose-img:shadow-lg prose-h2:text-2xl prose-h3:text-xl prose-p:leading-7"
+      dangerouslySetInnerHTML={{ __html: safeHTML }}
+    />
   );
 }
