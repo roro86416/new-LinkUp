@@ -1,4 +1,3 @@
-// components/cards/FeaturedCard.tsx
 "use client";
 
 interface FeaturedCardProps {

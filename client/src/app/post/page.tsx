@@ -1,18 +1,42 @@
 import FeaturedCard from "./post-component/card/FeaturedCard";
 import GridCard from "./post-component/card/Gridcard";
 import HorizontalCard from "./post-component/card/HorizontalCard";
+import CreatorButton from "../post/post-component/ui/CreatorButton"
+import FeaturedCarousel from "./post-component/card/FeaturedCarousel";
 
+
+
+const FEATURED_ITEMS = [
+  {
+    image: "http://localhost:3001/uploads/slide1.jpg",
+    category: "Community",
+    title: "My Event Full Life: Scott Robertson",
+    description: "An inside look at the story behind the scenes…",
+    href: "/post/my-event",
+  },
+  {
+    image: "http://localhost:3001/uploads/slide4.jpg", 
+    category: "Tech",
+    title: "The Future of Event Ticketing",
+    description: "How blockchain is changing the game.",
+    href: "/post/ticketing-future",
+  },
+  {
+    image: "http://localhost:3001/uploads/file-1763002748572-179630978.webp", 
+    category: "Design",
+    title: "Stage Design Trends of 2025",
+    description: "Visual inspiration for your next big show.",
+    href: "/post/design-trends",
+  },
+];
 export default function HomePage() {
   return (
     <div className="space-y-24">
       {/* Hero / Featured Section */}
       <section className="max-w-6xl mx-auto px-4">
-        <FeaturedCard
-          image="http://localhost:3001/uploads/slide1.jpg"
-          category="Community"
-          title="My Event Full Life: Scott Robertson"
-          description="An inside look at the story behind the scenes…"
-          href="/post/my-event"
+        <FeaturedCarousel 
+          items={FEATURED_ITEMS} // 傳入輪播資料
+          interval={5000}        // 設定每 5 秒切換一次
         />
       </section>
 
@@ -24,7 +48,7 @@ export default function HomePage() {
             image="http://localhost:3001/uploads/file-1763002748572-179630978.webp"
             title="How Music Festivals Shape Culture"
             category="Culture"
-            href="/post/editor1"
+            href="/post/detail"
           />
           <GridCard
             image="http://localhost:3001/uploads/file-1763002748572-179630978.webp"
@@ -145,6 +169,7 @@ export default function HomePage() {
           />
         </div>
       </section>
+       <CreatorButton href="../post/backend/admin/create-post"/>
     </div>
   );
 }
