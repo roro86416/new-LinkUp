@@ -14,5 +14,14 @@ export const loginSchema = z.object({
   password: z.string().min(6, "密碼至少 6 碼"),
 });
 
+export const googleLoginSchema = z.object({
+  // 前端可能送 credential 或 idToken，兩種都吃
+  credential: z.string().optional(),
+  idToken: z.string().optional(),
+}).refine((d) => d.credential || d.idToken, {
+  message: "credential 或 idToken 必須至少提供一個",
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type GoogleLoginInput = z.infer<typeof googleLoginSchema>;

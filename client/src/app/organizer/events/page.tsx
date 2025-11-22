@@ -1,9 +1,7 @@
-// client/src/app/(organizer)/events/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { apiFetch } from '../../../utils/api';
 import {
   Badge,
   Box,
@@ -17,6 +15,7 @@ import {
   Title,
 } from '@mantine/core';
 import {
+  API_BASE_URL,
   OrganizerEvent,
   formatDateTime,
   statusToLabel,
@@ -29,24 +28,16 @@ export default function OrganizerEventsPage() {
   const [copyingId, setCopyingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // 取得活動列表
   const fetchEvents = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // ✅ 改用 apiFetch：它會自動帶 token / baseURL / credentials（依你 utils/api.ts 的設定）
-      const res = await apiFetch('/api/v1/organizer/events', {
-        method: 'GET',
+      const res = await fetch(`${API_BASE_URL}/api/v1/organizer/events`, {
+        credentials: 'include',
       });
 
-      if (!res.ok) {
-        // 常見：401/403 就提示先登入
-        if (res.status === 401 || res.status === 403) {
-          throw new Error('請先以主辦方身分登入');
-        }
-        throw new Error('載入活動失敗');
-      }
+      if (!res.ok) throw new Error('載入活動失敗');
 
       const json = await res.json();
       setEvents(json.data ?? []);
@@ -59,26 +50,21 @@ export default function OrganizerEventsPage() {
   };
 
   useEffect(() => {
-    void fetchEvents();
+    fetchEvents();
   }, []);
 
-  // 刪除活動
   const handleDelete = async (id: number) => {
     if (!window.confirm('確定要刪除此活動嗎？')) return;
 
     try {
       setDeletingId(id);
 
-      const res = await apiFetch(`/api/v1/organizer/events/${id}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/v1/organizer/events/${id}`,
+        { method: 'DELETE', credentials: 'include' }
+      );
 
-      if (!res.ok) {
-        if (res.status === 401 || res.status === 403) {
-          throw new Error('權限不足或尚未登入主辦方');
-        }
-        throw new Error('刪除失敗');
-      }
+      if (!res.ok) throw new Error('刪除失敗');
 
       await fetchEvents();
       alert('刪除成功');
@@ -90,21 +76,16 @@ export default function OrganizerEventsPage() {
     }
   };
 
-  // 複製活動
   const handleCopy = async (id: number) => {
     try {
       setCopyingId(id);
 
-      const res = await apiFetch(`/api/v1/organizer/events/${id}/copy`, {
-        method: 'POST',
-      });
+      const res = await fetch(
+        `${API_BASE_URL}/api/v1/organizer/events/${id}/copy`,
+        { method: 'POST', credentials: 'include' }
+      );
 
-      if (!res.ok) {
-        if (res.status === 401 || res.status === 403) {
-          throw new Error('權限不足或尚未登入主辦方');
-        }
-        throw new Error('複製失敗');
-      }
+      if (!res.ok) throw new Error('複製失敗');
 
       await fetchEvents();
       alert('複製成功');
@@ -119,7 +100,6 @@ export default function OrganizerEventsPage() {
   return (
     <Box p="xl">
       <Stack gap="xl">
-        {/* 標題區 + 建立按鈕 */}
         <Group justify="space-between">
           <div>
             <Title order={2}>活動管理</Title>
@@ -128,13 +108,16 @@ export default function OrganizerEventsPage() {
             </Text>
           </div>
 
-          {/* ✅ 在 (organizer) route group 底下，所以路徑就是 /events/new */}
-          <Button component={Link} href="/events/new" radius="xl" size="md">
+          <Button
+            component={Link}
+            href="/organizer/events/new"
+            radius="xl"
+            size="md"
+          >
             ＋ 建立新活動
           </Button>
         </Group>
 
-        {/* 活動列表卡片 */}
         <Card shadow="sm" padding="lg" radius="md" withBorder pos="relative">
           <LoadingOverlay visible={loading} />
 
@@ -157,7 +140,6 @@ export default function OrganizerEventsPage() {
             </Table.Thead>
 
             <Table.Tbody>
-              {/* 沒資料時顯示空狀態 */}
               {events.length === 0 && !loading && (
                 <Table.Tr>
                   <Table.Td colSpan={6}>
@@ -168,7 +150,6 @@ export default function OrganizerEventsPage() {
                 </Table.Tr>
               )}
 
-              {/* 列出每一筆活動 */}
               {events.map((event) => (
                 <Table.Tr key={event.id}>
                   <Table.Td>{event.id}</Table.Td>
@@ -214,18 +195,16 @@ export default function OrganizerEventsPage() {
 
                   <Table.Td>
                     <Group gap="xs" justify="flex-start" wrap="wrap">
-                      {/* 編輯按鈕：走 /events/[id]/edit */}
                       <Button
                         size="xs"
                         variant="outline"
                         radius="xl"
                         component={Link}
-                        href={`/events/${event.id}/edit`}
+                        href={`/organizer/events/${event.id}/edit`}
                       >
                         編輯
                       </Button>
 
-                      {/* 刪除 */}
                       <Button
                         size="xs"
                         variant="outline"
@@ -237,7 +216,6 @@ export default function OrganizerEventsPage() {
                         刪除
                       </Button>
 
-                      {/* 複製 */}
                       <Button
                         size="xs"
                         variant="outline"

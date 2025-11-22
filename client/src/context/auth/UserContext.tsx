@@ -7,7 +7,8 @@ export interface User {
   name: string;
   avatar: string;
   email: string;
-  provider: string; // Add provider to the User type
+  provider: string; 
+  role:string;
 }
 
 interface DecodedUser {
