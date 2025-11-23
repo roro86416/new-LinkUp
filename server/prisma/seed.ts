@@ -35,7 +35,7 @@ const prisma = new PrismaClient();
 async function seedAdmin() {
   console.log("🌱 正在開始管理員 Seeding...");
   const adminEmail = "admin@example.com";
-  const adminPassword = "password123"; 
+  const adminPassword = "password123";
 
   const existingAdmin = await prisma.admin.findUnique({
     where: { email: adminEmail },
@@ -72,7 +72,7 @@ async function main() {
 
   // 2️⃣ 建立 12 個測試用 Organizer (包含 User)
   console.log("🏢 建立 12 個測試用 Organizer...");
-  
+
   const createdOrganizers = [];
   const commonPasswordHash = await bcrypt.hash("password123", 10); // 統一密碼
 
@@ -80,7 +80,7 @@ async function main() {
     // 2.1 建立 User
     const user = await prisma.user.upsert({
       where: { email: orgData.email },
-      update: { name: orgData.name }, 
+      update: { name: orgData.name },
       create: {
         email: orgData.email,
         password_hash: commonPasswordHash,
@@ -94,7 +94,7 @@ async function main() {
     // [修正] 將 description 改為 org_description 以符合 Schema
     const organizer = await prisma.organizer.upsert({
       where: { user_id: user.id },
-      update: { 
+      update: {
         org_name: orgData.name,
         org_description: orgData.org_desc // 更新時也同步更新描述
       },
@@ -105,18 +105,18 @@ async function main() {
         is_verified: true,
       },
     });
-    
+
     createdOrganizers.push(organizer);
   }
-  
+
   console.log(`✅ 成功建立 ${createdOrganizers.length} 個 Organizer 組織。`);
 
   // -----------------------------------------------
   // 4️⃣ 清除舊資料 (針對這 12 個測試組織)
   // -----------------------------------------------
-  
+
   console.log("🧹 正在清除舊的假資料 (Events, Tickets, Products, Images)...");
-  
+
   const organizerIds = createdOrganizers.map(o => o.id);
 
   // (A) 刪除「票種」(TicketType)
@@ -128,7 +128,7 @@ async function main() {
   // 先找出與這些 Organizer 活動相關的 Product IDs
   const productsToDelete = await prisma.product.findMany({
     where: {
-      eventLinks: { 
+      eventLinks: {
         some: {
           event: { organizer_id: { in: organizerIds } }
         }
@@ -143,7 +143,7 @@ async function main() {
     await prisma.productVariant.deleteMany({
       where: { product_id: { in: productIdsToDelete } }
     });
-    
+
     // 2. 刪除 EventsProducts (關聯表)
     await prisma.eventsProducts.deleteMany({
       where: { product_id: { in: productIdsToDelete } }
@@ -192,12 +192,12 @@ async function main() {
   // 5️⃣ 迴圈建立新活動 (Mock Data) - 平均分配給 12 個組織
   // -----------------------------------------------
   console.log("🎟️  正在建立活動假資料...");
-  
+
   let eventCounter = 0;
 
   for (const categoryName in eventsByCategory) {
     const eventsToCreate = eventsByCategory[categoryName];
-    
+
     if (eventsToCreate.length === 0) continue;
 
     const category = await prisma.category.findFirst({
@@ -223,7 +223,7 @@ async function main() {
         },
         ticketTypes: data.ticketTypes,
         productLinks: data.productLinks,
-        images: data.images, 
+        images: data.images,
       };
 
       await prisma.event.create({

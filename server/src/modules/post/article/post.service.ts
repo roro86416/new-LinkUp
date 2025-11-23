@@ -13,7 +13,7 @@ const normalizeTags = (tags?: string[] | string) => {
 export const createPost = async (payload: CreatePostInput, author_id: string) => {
   const blocks = JSON.parse(payload.content || "[]");
 
-  // 🔥 先處理分類（string → PostCategory）
+  // 處理分類（string → PostCategory）
   const categoryName = payload.category.trim();
 
   // 用 findFirst（非 findUnique），因為沒有 unique constraint
@@ -27,13 +27,15 @@ export const createPost = async (payload: CreatePostInput, author_id: string) =>
     });
   }
 
-  // 🔥 建立文章，使用 category.id
+  // 建立文章，包含 status 與 published_at
   const newPost = await prisma.userPost.create({
     data: {
       title: payload.title,
       content: payload.content,
       author_id,
       category_id: category.id,
+      status: "approved",          // ✅ 改成 enum 裡的合法值
+      published_at: new Date(),     // ✅ 設定文章發布時間
     },
   });
 
@@ -77,3 +79,16 @@ export const createPost = async (payload: CreatePostInput, author_id: string) =>
 
   return newPost;
 };
+
+export async function getPostByIdService(id: number) {
+  return prisma.userPost.findUnique({
+    where: { id },
+    include: {
+      author: true,
+      category: true,
+      images: true,
+      tags: { include: { tag: true } },
+      reviews: true,
+    },
+  });
+}

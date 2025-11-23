@@ -245,7 +245,7 @@ export const createOrderService = async (
 
     const orderNumber = generateOrderNumber();
     const expiryDate = new Date();
-    expiryDate.setMinutes(expiryDate.getMinutes() + 15); // 30 分鐘到期
+    expiryDate.setMinutes(expiryDate.getMinutes() + 15); // 15 分鐘到期
 
     // 5. 建立訂單 (Order) 與 訂單項目 (OrderItem)
     const newOrder = await tx.order.create({
