@@ -128,7 +128,7 @@ export default function HomePage() {
                 image="http://localhost:3001/uploads/file-1763376404896-842942761.jpg"
                 title="聖誕節的溫馨時刻與傳統"
                 category="節慶活動"
-                href="/post/community-new"
+                href="/post/detail1/1"
               />
               <GridCard
                 image="http://localhost:3001/uploads/file-1763835776791-838774558.jpg"

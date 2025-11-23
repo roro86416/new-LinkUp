@@ -74,7 +74,7 @@ export default async function ArticlePage({
         </figcaption>
       </figure>
     `,
-    createdAt: "2025-11-09",
+    createdAt: "2025-11-24",
     image: "http://localhost:3001/uploads/file-1763376404896-842942761.jpg",
     author: { name: "Max", id: 1 },
     category: { name: "節慶活動", id: 1 },

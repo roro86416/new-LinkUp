@@ -34,11 +34,11 @@ export default function DashboardPostsPage() {
     },
 {
       id: "3",
-      title: "前端學習心得",
-      coverImage: "http://localhost:3001/uploads/file-1763088247815-714015603.jpg",
-      category: "技術",
-      tags: ["React", "Next.js"],
-      createdAt: "2025-03-20",
+      title: "聖誕節的溫馨時刻與傳統",
+      coverImage: "http://localhost:3001/uploads/file-1763376404896-842942761.jpg",
+      category: "節慶活動",
+      tags: ["聖誕節", "節慶","家庭"],
+      createdAt: "2025-11-24",
     },
   ]);
 
