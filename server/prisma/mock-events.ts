@@ -1,1011 +1,546 @@
-// new-LinkUp/server/prisma/mock-events.ts
-import { Prisma, EventStatus, EventType } from "../src/generated/prisma/client.js";
+// 
+// 這是 "server" 專案中的 "mock-events.ts"
+// (已補完所有 13 個分類，共 26 筆活動)
+//
 
-// ----------------------------------------------------------------------
-// 輔助函式：生成 5 個標準週邊商品 (滿足需求：至少五樣加購商品)
-// 對應 Schema: EventsProducts -> Product -> ProductVariant
-// ----------------------------------------------------------------------
-const generateStandardProducts = (eventName: string) => {
-  const keywords = eventName.substring(0, 2);
-  return {
-    create: [
-      {
-        product: {
-          create: {
-            name: `${eventName.substring(0, 6)} 限定紀念 T-Shirt`,
-            description: `這款 ${eventName} 專屬紀念 T-Shirt 採用 100% 有機棉製作，觸感柔軟且透氣，適合各種場合穿著。設計理念源自於活動的主視覺，簡約而不失風格，是您參加本次活動的最佳紀念品。共有黑白兩色可供選擇。`,
-            base_price: 690,
-            image_url: `https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80`,
-            is_published: true,
-            variants: {
-              create: [
-                { option1_value: "S", stock_quantity: 50 },
-                { option1_value: "M", stock_quantity: 100 },
-                { option1_value: "L", stock_quantity: 80 },
-                { option1_value: "XL", price_offset: 50, stock_quantity: 30 },
-              ],
-            },
-          },
-        },
-      },
-      {
-        product: {
-          create: {
-            name: `${keywords}風格 經典帆布托特包`,
-            description: "加厚帆布材質，耐重且實用，內附小暗袋可收納鑰匙與手機。印有活動專屬 Logo，大容量設計讓您輕鬆裝下筆電與隨身物品，是日常通勤或逛展購物的環保好選擇。",
-            base_price: 450,
-            image_url: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=800&q=80",
-            is_published: true,
-            variants: {
-              create: [{ option1_value: "單一尺寸", stock_quantity: 150 }],
-            },
-          },
-        },
-      },
-      {
-        product: {
-          create: {
-            name: `${eventName} 典藏馬克杯`,
-            description: "陶瓷高溫燒製，手感溫潤，杯身印有本次活動的獨家插畫。適合在辦公室或居家使用，讓您在喝咖啡的同時，也能回憶起活動的美好時刻。附贈精美紙盒包裝，送禮自用兩相宜。",
-            base_price: 350,
-            image_url: "https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?auto=format&fit=crop&w=800&q=80",
-            is_published: true,
-            variants: {
-              create: [{ option1_value: "經典白", stock_quantity: 100 }],
-            },
-          },
-        },
-      },
-      {
-        product: {
-          create: {
-            name: "活動限定防水貼紙組 (5入)",
-            description: "精選 5 款不同設計的防水貼紙，採用高品質 PVC 材質，抗曬不褪色。可以貼在筆記型電腦、行李箱、水壺或安全帽上，展現您的獨特個性與對本次活動的熱愛。",
-            base_price: 150,
-            image_url: "https://images.unsplash.com/photo-1572375992501-4b0892d50c69?auto=format&fit=crop&w=800&q=80",
-            is_published: true,
-            variants: {
-              create: [{ option1_value: "Default", stock_quantity: 300 }],
-            },
-          },
-        },
-      },
-      {
-        product: {
-          create: {
-            name: `${keywords}潮流 刺繡老帽`,
-            description: "經典老帽版型，適合各種臉型修飾。正面採用精緻立體刺繡工藝，呈現活動主題字樣，背面調節扣可自由調整頭圍。選用透氣布料，四季皆宜，是您穿搭的必備單品。",
-            base_price: 580,
-            image_url: "https://images.unsplash.com/photo-1588850561407-ed78c282e89b?auto=format&fit=crop&w=800&q=80",
-            is_published: true,
-            variants: {
-              create: [
-                { option1_value: "極夜黑", stock_quantity: 40 },
-                { option1_value: "海軍藍", stock_quantity: 40 },
-              ],
-            },
-          },
-        },
-      },
-      {
-        product: {
-          create: {
-            name: `${eventName} 紀念金屬徽章`,
-            description: "採用高品質鋅合金製作，表面琺瑯上色，色彩飽和且質感厚實。背後附有蝴蝶扣，可牢固別在包包或衣服上。極具收藏價值，是資深粉絲不可錯過的限定小物。",
-            base_price: 200,
-            image_url: "https://images.unsplash.com/photo-1602408948268-62ba3712e23e?auto=format&fit=crop&w=800&q=80",
-            is_published: true,
-            variants: {
-              create: [{ option1_value: "單一款式", stock_quantity: 200 }],
-            },
-          },
-        },
-      },
-    ],
-  };
-};
-
-// ----------------------------------------------------------------------
-// 輔助函式：生成活動圖庫 (Event Images)
-// ----------------------------------------------------------------------
-const generateEventImages = (category: string, seed: number) => {
-  let keywords = "event";
-  switch (category) {
-    case "課程": keywords = "workshop,class,coding,teacher"; break;
-    case "展覽": keywords = "exhibition,art,gallery,museum"; break;
-    case "派對": keywords = "party,concert,music,club"; break;
-    case "聚會": keywords = "meeting,friends,coffee,talk"; break;
-    case "市集": keywords = "market,craft,food,stall"; break;
-    case "比賽": keywords = "competition,sport,game,contest"; break;
-    case "表演": keywords = "stage,performance,theater,band"; break;
-    case "研討會": keywords = "conference,seminar,business,speaker"; break;
-    case "分享會": keywords = "speech,sharing,story,audience"; break;
-    case "見面會": keywords = "fan,meetup,idol,signature"; break;
-    case "宣傳活動": keywords = "press,launch,media,camera"; break;
-    case "導覽": keywords = "tour,guide,city,history"; break;
-    case "體驗": keywords = "diy,crafting,making,hands-on"; break;
-  }
-  
-  return {
-    create: [
-      { image: { create: { image_url: `https://source.unsplash.com/800x600/?${keywords}&sig=${seed}` } } },
-      { image: { create: { image_url: `https://source.unsplash.com/800x600/?${keywords}&sig=${seed + 100}` } } },
-      { image: { create: { image_url: `https://source.unsplash.com/800x600/?${keywords}&sig=${seed + 200}` } } }
-    ]
-  };
-};
-
-// ----------------------------------------------------------------------
-// 輔助函式：生成長描述 (恢復長度，約 300-600 字)
-// ----------------------------------------------------------------------
-const generateDescription = (organizer: string, topic: string, highlight: string) => {
-  const text = `
-    親愛的朋友們，歡迎蒞臨由「${organizer}」精心策劃的年度重磅盛事——${topic}！這不僅僅是一場普通的活動，更是一次心靈與感官的深度旅程。我們致力於為每一位參與者打造最優質、最難忘的體驗，無論您是該領域的資深專家，還是充滿好奇的初學者，這裡都有屬於您的精彩時刻與學習機會。
-
-    本次活動的絕對亮點在於${highlight}。為了呈現最完美的內容，我們特別邀請了業內頂尖的講師、表演者與職人，日以繼夜地籌備，只為大家帶來前所未有的視聽震撼與知識分享。在活動期間，您將有機會與來自各地的同好交流互動，激盪出創意的火花，建立起長久的友誼。我們深信，人與人之間真誠的連結，是推動世界進步最大的力量，也是我們舉辦這場活動的初衷。
-
-    除此之外，「${organizer}」更在現場準備了豐富的互動環節與驚喜好禮。只要完成指定任務或打卡分享，就有機會獲得我們獨家設計的限量紀念品，數量有限，送完為止！現場環境經過專業團隊的精心佈置，每一個角落都充滿了設計巧思與美學細節，絕對是您拍照打卡的最佳景點。我們也特別重視活動的舒適度，從動線規劃、休息區域到餐飲服務，每一個細節都經過反覆推敲與模擬，只為給您最賓至如歸的感受。
-
-    別再猶豫了！名額非常有限，錯過這次精彩的${topic}，可能要再等好久。趕快邀請您的親朋好友一同報名參加，讓我們一起在這個美好的季節裡，創造屬於我們的美好回憶。期待在活動現場見到您熱情的笑容！若有任何疑問，歡迎隨時透過官方網站或社群媒體與我們聯繫。
-  `.replace(/\s+/g, '').trim(); // 移除多餘空白與換行
-  return text;
-};
-
-// ----------------------------------------------------------------------
-// 主要活動資料
-// ----------------------------------------------------------------------
-
+// 我們移除 Prisma 類型，只保留資料
 export const mockEventsData = [
-  // ==========================================
-  // 1. 課程 (Category) - 6 筆
-  // ==========================================
+  // --- 1. 課程 (Category) ---
   {
-    title: "【課程】2025 全端開發衝刺班：React 與 Next.js",
-    subtitle: "打造你的第一個 SaaS 產品",
-    description: generateDescription("台灣數位技能策進會", "全端開發衝刺班", "實戰導向的專案開發與雲端部署教學，帶你從零完成一個具備商業價值的產品"),
-    cover_image: "https://images.unsplash.com/photo-1633356122544-f134324a6cee?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("課程", 101),
+    title: "【課程】React 全端開發實戰營",
+    subtitle: "從零到一部署您的網站",
+    description: "學習 React, Next.js, Prisma 和 Tailwind，打造全端應用。",
+    cover_image: "/slide1.jpg",
     start_time: new Date("2025-12-01T09:00:00Z"),
     end_time: new Date("2025-12-05T17:00:00Z"),
-    location_name: "T-Hub 內科創新育成基地",
-    address: "台北市內湖區瑞光路335號",
-    latitude: new Prisma.Decimal(25.079),
-    longitude: new Prisma.Decimal(121.575),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "早鳥票", price: 3500, total_quantity: 50, sale_start_time: new Date("2025-10-01"), sale_end_time: new Date("2025-11-30") }] },
-    productLinks: generateStandardProducts("React 全端課程"),
+    location_name: "線上直播",
+    address: "Zoom 會議室",
+    latitude: 25.0339,
+    longitude: 121.5645,
+    status: "APPROVED",
+    event_type: "ONLINE",
+    ticketTypes: {
+      create: [
+        { name: "課程票", price: 3500, total_quantity: 100, sale_start_time: new Date("2025-10-01T12:00:00Z"), sale_end_time: new Date("2025-11-30T12:00:00Z") }
+      ]
+    },
   },
   {
-    title: "【課程】職人手沖咖啡進階大師班",
-    subtitle: "探索風味的極致",
-    description: generateDescription("福爾摩沙咖啡研究室", "手沖咖啡大師班", "從生豆挑選、烘焙曲線到萃取理論的完整解析，讓你在家也能煮出冠軍級的好咖啡"),
-    cover_image: "https://images.unsplash.com/photo-1497935586351-b67a49e012bf?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("課程", 102),
-    start_time: new Date("2025-12-15T14:00:00Z"),
-    end_time: new Date("2025-12-15T17:00:00Z"),
-    location_name: "台南美術館二館 - 咖啡講堂",
-    address: "台南市中西區忠義路二段1號",
-    latitude: new Prisma.Decimal(22.990),
-    longitude: new Prisma.Decimal(120.203),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "學員票", price: 1200, total_quantity: 20, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2025-12-14") }] },
-    productLinks: generateStandardProducts("手沖咖啡"),
-  },
-  {
-    title: "【課程】商業攝影與光影美學",
-    subtitle: "用鏡頭說出品牌故事",
-    description: generateDescription("視覺光影工作室", "商業攝影工作坊", "專業棚燈運用與商品修圖實戰技巧，教你如何拍出有質感且具備商業吸引力的商品照片"),
-    cover_image: "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("課程", 103),
-    start_time: new Date("2026-01-10T10:00:00Z"),
-    end_time: new Date("2026-01-10T17:00:00Z"),
-    location_name: "駁二共創基地",
-    address: "高雄市鹽埕區大勇路11號",
-    latitude: new Prisma.Decimal(22.620),
-    longitude: new Prisma.Decimal(120.281),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "一般票", price: 2500, total_quantity: 30, sale_start_time: new Date("2025-12-01"), sale_end_time: new Date("2026-01-09") }] },
-    productLinks: generateStandardProducts("商業攝影"),
-  },
-  {
-    title: "【課程】日式花藝與空間佈置",
-    subtitle: "生活中的禪意美學",
-    description: generateDescription("京都流花道台灣分會", "日式花藝課程", "草月流基礎技法與現代居家花藝應用，透過花草的姿態，為生活空間注入寧靜與美感"),
-    cover_image: "https://images.unsplash.com/photo-1587334274328-64186a80aeee?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("課程", 104),
-    start_time: new Date("2025-12-20T13:00:00Z"),
-    end_time: new Date("2025-12-20T16:00:00Z"),
-    location_name: "審計新村",
-    address: "台中市西區民生路368巷",
-    latitude: new Prisma.Decimal(24.146),
-    longitude: new Prisma.Decimal(120.662),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "體驗票", price: 1800, total_quantity: 15, sale_start_time: new Date("2025-11-15"), sale_end_time: new Date("2025-12-19") }] },
-    productLinks: generateStandardProducts("日式花藝"),
-  },
-  {
-    title: "【課程】AI 生成式藝術創作入門",
-    subtitle: "Midjourney 與 Stable Diffusion 實戰",
-    description: generateDescription("未來視覺實驗室", "AI 藝術創作課", "從 Prompt 詠唱到 ControlNet 精準控制的完整流程，讓 AI 成為你最強大的創作助手"),
-    cover_image: "https://images.unsplash.com/photo-1675271591211-607bf83e0683?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("課程", 105),
-    start_time: new Date("2025-12-08T19:00:00Z"),
-    end_time: new Date("2025-12-08T21:30:00Z"),
-    location_name: "線上直播 (Zoom)",
-    address: "線上活動",
-    latitude: new Prisma.Decimal(25.033),
-    longitude: new Prisma.Decimal(121.565),
-    status: EventStatus.APPROVED,
-    event_type: EventType.ONLINE,
-    ticketTypes: { create: [{ name: "直播票", price: 600, total_quantity: 200, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2025-12-07") }] },
-    productLinks: generateStandardProducts("AI 藝術"),
-  },
-  {
-    title: "【課程】新手衝浪訓練營",
-    subtitle: "擁抱海洋的熱情",
-    description: generateDescription("宜蘭極酷衝浪俱樂部", "新手衝浪營", "專業教練一對一指導，保證站板成功的安心課程，享受被海浪推著走的快感"),
-    cover_image: "https://images.unsplash.com/photo-1502680390469-be75c86b636f?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("課程", 106),
-    start_time: new Date("2026-03-15T09:00:00Z"),
-    end_time: new Date("2026-03-15T16:00:00Z"),
-    location_name: "烏石港衝浪街",
-    address: "宜蘭縣頭城鎮港口路",
-    latitude: new Prisma.Decimal(24.870),
-    longitude: new Prisma.Decimal(121.840),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "全日票 (含板)", price: 2200, total_quantity: 40, sale_start_time: new Date("2026-01-01"), sale_end_time: new Date("2026-03-14") }] },
-    productLinks: generateStandardProducts("衝浪課程"),
+    title: "【課程】手沖咖啡入門",
+    subtitle: "品味生活的美好",
+    description: "從選豆到沖煮，咖啡大師帶您領略精品咖啡的魅力。",
+    cover_image: "https://images.unsplash.com/photo-1559496417-e7f25cb247f3?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-11-25T14:00:00Z"),
+    end_time: new Date("2025-11-25T16:00:00Z"),
+    location_name: "台北市大安區",
+    address: "某咖啡廳",
+    latitude: 25.0330,
+    longitude: 121.5654,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [
+        { name: "體驗票", price: 600, total_quantity: 20, sale_start_time: new Date("2025-10-01T12:00:00Z"), sale_end_time: new Date("2025-11-24T12:00:00Z") }
+      ]
+    },
   },
 
-  // ==========================================
-  // 2. 展覽 (Category) - 6 筆
-  // ==========================================
+  // --- 2. 展覽 (Category) ---
   {
-    title: "【展覽】2026 未來科技博覽會",
-    subtitle: "預見十年後的生活",
-    description: generateDescription("台灣科技部創新司", "未來科技展", "5G、量子電腦與智慧城市的最新應用展示，親身體驗改變世界的黑科技"),
-    cover_image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("展覽", 201),
-    start_time: new Date("2026-01-05T09:00:00Z"),
-    end_time: new Date("2026-01-08T17:00:00Z"),
-    location_name: "南港展覽館二館",
-    address: "台北市南港區經貿二路2號",
-    latitude: new Prisma.Decimal(25.057),
-    longitude: new Prisma.Decimal(121.616),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "參觀證", price: 300, total_quantity: 5000, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2026-01-05") }] },
-    productLinks: generateStandardProducts("未來科技"),
+    title: "【展覽】城市光影攝影展",
+    subtitle: "捕捉動人的光影瞬間",
+    description: "集結頂尖攝影師，捕捉城市中最動人的光影瞬間。",
+    cover_image: "/slide2.jpg",
+    start_time: new Date("2025-11-20T10:00:00Z"),
+    end_time: new Date("2025-12-20T18:00:00Z"),
+    location_name: "華山文創園區",
+    address: "台北市中正區八德路一段1號",
+    latitude: 25.0441,
+    longitude: 121.5298,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [
+        { name: "全票", price: 350, total_quantity: 1000, sale_start_time: new Date("2025-10-01T12:00:00Z"), sale_end_time: new Date("2025-12-20T18:00:00Z") }
+      ]
+    },
   },
   {
-    title: "【展覽】印象莫內：光影沈浸展",
-    subtitle: "走進大師的畫作之中",
-    description: generateDescription("國際藝術策展中心", "莫內光影展", "結合 360 度巨型投影，重現吉維尼花園的夢幻場景，讓您彷彿置身於19世紀的法國"),
-    cover_image: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("展覽", 202),
-    start_time: new Date("2025-12-10T10:00:00Z"),
-    end_time: new Date("2026-03-10T18:00:00Z"),
-    location_name: "高雄流行音樂中心",
-    address: "高雄市鹽埕區真愛路1號",
-    latitude: new Prisma.Decimal(22.619),
-    longitude: new Prisma.Decimal(120.287),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "全票", price: 450, total_quantity: 3000, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2026-03-10") }] },
-    productLinks: generateStandardProducts("印象莫內"),
-  },
-  {
-    title: "【展覽】台灣鐵道百年風華特展",
-    subtitle: "穿梭時空的火車之旅",
-    description: generateDescription("交通部台灣鐵路管理局", "鐵道百年展", "展出珍貴的蒸汽火車頭與歷代車票、制服演變，帶您回顧台灣鐵道發展的輝煌歷史"),
-    cover_image: "https://images.unsplash.com/photo-1474487548417-781cb71495f3?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("展覽", 203),
-    start_time: new Date("2025-12-01T09:00:00Z"),
-    end_time: new Date("2026-02-28T17:00:00Z"),
-    location_name: "國立台灣博物館鐵道部園區",
-    address: "台北市大同區延平北路一段2號",
-    latitude: new Prisma.Decimal(25.048),
-    longitude: new Prisma.Decimal(121.512),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "入園門票", price: 100, total_quantity: 2000, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2026-02-28") }] },
-    productLinks: generateStandardProducts("鐵道風華"),
-  },
-  {
-    title: "【展覽】當代插畫藝術節",
-    subtitle: "Illustrator Art Festival",
-    description: generateDescription("亞洲插畫協會", "當代插畫藝術節", "匯集台日韓百位新銳插畫家，展現多元風格的創作能量，是插畫迷絕對不能錯過的年度盛會"),
-    cover_image: "https://images.unsplash.com/photo-1541963463532-d68292c34b19?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("展覽", 204),
-    start_time: new Date("2025-11-28T10:00:00Z"),
-    end_time: new Date("2025-12-01T18:00:00Z"),
-    location_name: "松山文創園區",
-    address: "台北市信義區光復南路133號",
-    latitude: new Prisma.Decimal(25.043),
-    longitude: new Prisma.Decimal(121.560),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "單日票", price: 250, total_quantity: 1500, sale_start_time: new Date("2025-10-20"), sale_end_time: new Date("2025-11-30") }] },
-    productLinks: generateStandardProducts("插畫藝術"),
-  },
-  {
-    title: "【展覽】深海奧秘：生物螢光特展",
-    subtitle: "探索黑暗中的微光",
-    description: generateDescription("國立海洋生物博物館", "深海生物展", "透過高科技互動裝置，帶您潛入萬米深海，一窺奇幻的生物螢光現象，認識神秘的深海生態"),
-    cover_image: "https://images.unsplash.com/photo-1582967788606-a171f1080ca8?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("展覽", 205),
-    start_time: new Date("2026-01-20T09:00:00Z"),
-    end_time: new Date("2026-04-20T17:00:00Z"),
-    location_name: "Xpark 都會水生公園",
-    address: "桃園市中壢區春德路105號",
-    latitude: new Prisma.Decimal(25.017),
-    longitude: new Prisma.Decimal(121.220),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "特展套票", price: 550, total_quantity: 2000, sale_start_time: new Date("2025-12-01"), sale_end_time: new Date("2026-04-20") }] },
-    productLinks: generateStandardProducts("深海特展"),
-  },
-  {
-    title: "【展覽】安藤忠雄：建築之旅",
-    subtitle: "清水模的詩意",
-    description: generateDescription("築生文化協會", "安藤忠雄建築展", "展出大師歷年經典作品手稿與模型，解析光與影的空間哲學，感受清水模建築的獨特魅力"),
-    cover_image: "https://images.unsplash.com/photo-1486718448742-163732cd1544?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("展覽", 206),
-    start_time: new Date("2025-12-15T10:00:00Z"),
-    end_time: new Date("2026-02-15T18:00:00Z"),
-    location_name: "富邦美術館",
-    address: "台北市信義區松高路",
-    latitude: new Prisma.Decimal(25.039),
-    longitude: new Prisma.Decimal(121.566),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "早鳥優待票", price: 320, total_quantity: 1000, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2025-12-14") }] },
-    productLinks: generateStandardProducts("建築展"),
+    title: "【展覽】沉浸式藝術體驗",
+    subtitle: "結合聲光與數位藝術",
+    description: "帶您進入前所未有的奇幻世界。",
+    cover_image: "https://images.unsplash.com/photo-1547891654-e66ed7ebb968?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-11-15T10:00:00Z"),
+    end_time: new Date("2026-01-15T18:00:00Z"),
+    location_name: "高雄駁二藝術特區",
+    address: "高雄市鹽埕區大勇路1號",
+    latitude: 22.623,
+    longitude: 120.281,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [
+        { name: "預售票", price: 700, total_quantity: 500, sale_start_time: new Date("2025-10-01T12:00:00Z"), sale_end_time: new Date("2025-11-14T12:00:00Z") },
+        { name: "現場票", price: 900, total_quantity: 1000, sale_start_time: new Date("2025-11-15T10:00:00Z"), sale_end_time: new Date("2026-01-15T18:00:00Z") }
+      ]
+    },
   },
 
-  // ==========================================
-  // 3. 派對 (Category) - 6 筆
-  // ==========================================
+  // --- 3. 派對 (Category) ---
   {
-    title: "【派對】2026 跨年電音狂歡夜",
-    subtitle: "Countdown to 2026",
-    description: generateDescription("ShowHouse 娛樂集團", "跨年電音派對", "百大 DJ 輪番上陣，搭配千萬級雷射燈光秀，High 翻整晚不睡覺，用最強的節奏迎接新的一年"),
+    title: "【派對】跨年煙火派對",
+    subtitle: "迎接 2026！",
+    description: "在絢爛的煙火下，與大家一同迎接嶄新的一年。",
     cover_image: "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("派對", 301),
     start_time: new Date("2025-12-31T21:00:00Z"),
-    end_time: new Date("2026-01-01T04:00:00Z"),
-    location_name: "大佳河濱公園",
-    address: "台北市中山區",
-    latitude: new Prisma.Decimal(25.076),
-    longitude: new Prisma.Decimal(121.550),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "早鳥暢飲票", price: 2000, total_quantity: 1000, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2025-12-30") }] },
-    productLinks: generateStandardProducts("跨年派對"),
+    end_time: new Date("2026-01-01T01:00:00Z"),
+    location_name: "頂樓派對空間",
+    address: "台北市信義區",
+    latitude: 25.0339,
+    longitude: 121.5645,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "入場券", price: 1500, total_quantity: 200, sale_start_time: new Date("2025-11-01T12:00:00Z"), sale_end_time: new Date("2025-12-30T12:00:00Z") }]
+    },
   },
   {
-    title: "【派對】高空 Rooftop 爵士之夜",
-    subtitle: "微醺與夜景",
-    description: generateDescription("Skyline 爵士俱樂部", "屋頂爵士派對", "在城市天際線的包圍下，享受現場爵士樂團的即興演奏與精緻調酒，是下班後放鬆的最佳選擇"),
+    title: "【派對】白色主題之夜",
+    subtitle: "全場 DRESS CODE: 白色",
+    description: "DJ 現場放送，享受純白的電子音樂之夜。",
     cover_image: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("派對", 302),
-    start_time: new Date("2025-11-29T20:00:00Z"),
-    end_time: new Date("2025-11-29T23:30:00Z"),
-    location_name: "CÉ LA VI Taipei",
-    address: "台北市信義區松智路17號48樓",
-    latitude: new Prisma.Decimal(25.035),
-    longitude: new Prisma.Decimal(121.566),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "入場票(含一杯酒)", price: 1200, total_quantity: 100, sale_start_time: new Date("2025-10-29"), sale_end_time: new Date("2025-11-28") }] },
-    productLinks: generateStandardProducts("爵士派對"),
-  },
-  {
-    title: "【派對】K-POP Random Play Dance",
-    subtitle: "隨機舞蹈路演",
-    description: generateDescription("韓流舞蹈推廣社", "隨機舞蹈派對", "播放時下最夯的 K-POP 舞曲，歡迎所有熱愛舞蹈的朋友一起加入圓圈，展現你的舞蹈實力"),
-    cover_image: "https://images.unsplash.com/photo-1535525153412-5a42439a210d?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("派對", 303),
-    start_time: new Date("2025-12-06T16:00:00Z"),
-    end_time: new Date("2025-12-06T20:00:00Z"),
-    location_name: "台中勤美草悟道",
-    address: "台中市西區公益路68號",
-    latitude: new Prisma.Decimal(24.151),
-    longitude: new Prisma.Decimal(120.663),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "參加券", price: 100, total_quantity: 300, sale_start_time: new Date("2025-11-06"), sale_end_time: new Date("2025-12-05") }] },
-    productLinks: generateStandardProducts("K-POP"),
-  },
-  {
-    title: "【派對】復古迪斯可滑輪派對",
-    subtitle: "Roller Disco Night",
-    description: generateDescription("復古時光機", "滑輪迪斯可", "穿上四輪溜冰鞋，在閃亮的迪斯可球下，隨著 80 年代金曲滑行起舞，重回那個美好的黃金年代"),
-    cover_image: "https://images.unsplash.com/photo-1545128485-c400e7702796?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("派對", 304),
-    start_time: new Date("2025-12-13T19:00:00Z"),
-    end_time: new Date("2025-12-13T22:00:00Z"),
-    location_name: "大魯閣滑輪場",
-    address: "新竹市北區湳雅街91-2號",
-    latitude: new Prisma.Decimal(24.818),
-    longitude: new Prisma.Decimal(120.966),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "入場含租鞋", price: 450, total_quantity: 80, sale_start_time: new Date("2025-11-13"), sale_end_time: new Date("2025-12-12") }] },
-    productLinks: generateStandardProducts("復古派對"),
-  },
-  {
-    title: "【派對】Silent Disco 靜音狂歡",
-    subtitle: "沈浸在自己的節奏",
-    description: generateDescription("耳朵蟲音樂祭", "靜音派對", "全場無擴音設備，戴上專屬無線耳機，切換三個頻道的 DJ 音樂，在安靜的環境中享受獨特的狂歡體驗"),
-    cover_image: "https://images.unsplash.com/photo-1583316283399-8cb78576852e?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("派對", 305),
-    start_time: new Date("2025-12-20T21:00:00Z"),
-    end_time: new Date("2025-12-21T01:00:00Z"),
-    location_name: "華山 1914 草原",
-    address: "台北市中正區八德路一段1號",
-    latitude: new Prisma.Decimal(25.044),
-    longitude: new Prisma.Decimal(121.529),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "耳機租借票", price: 600, total_quantity: 200, sale_start_time: new Date("2025-11-20"), sale_end_time: new Date("2025-12-19") }] },
-    productLinks: generateStandardProducts("Silent Disco"),
-  },
-  {
-    title: "【派對】金色聖誕面具舞會",
-    subtitle: "Masquerade Ball",
-    description: generateDescription("皇家活動策劃", "聖誕化妝舞會", "著正式服裝與精緻面具出席，在奢華的宴會廳中尋找你的舞伴，度過一個充滿神秘與浪漫的聖誕夜"),
-    cover_image: "https://images.unsplash.com/photo-1516633083837-6e546c2758a4?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("派對", 306),
-    start_time: new Date("2025-12-24T19:00:00Z"),
-    end_time: new Date("2025-12-25T00:00:00Z"),
-    location_name: "台北文華東方酒店",
-    address: "台北市松山區敦化北路158號",
-    latitude: new Prisma.Decimal(25.056),
-    longitude: new Prisma.Decimal(121.551),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "貴賓票", price: 3500, total_quantity: 150, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2025-12-23") }] },
-    productLinks: generateStandardProducts("面具舞會"),
+    start_time: new Date("2025-11-22T22:00:00Z"),
+    end_time: new Date("2025-11-23T04:00:00Z"),
+    location_name: "OMNI Nightclub",
+    address: "台北市大安區忠孝東路四段201號",
+    latitude: 25.0419,
+    longitude: 121.551,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "男士票", price: 1000, total_quantity: 150, sale_start_time: new Date("2025-10-01T12:00:00Z"), sale_end_time: new Date("2025-11-22T12:00:00Z") },
+      { name: "女士票", price: 800, total_quantity: 150, sale_start_time: new Date("2025-10-01T12:00:00Z"), sale_end_time: new Date("2025-11-22T12:00:00Z") }]
+    },
   },
 
-  // ==========================================
-  // 4. 聚會 (Category) - 6 筆
-  // ==========================================
+  // --- 4. 聚會 (Category) ---
   {
-    title: "【聚會】App 開發者技術交流會",
-    subtitle: "iOS & Android 實戰分享",
-    description: generateDescription("GDG Taipei", "開發者聚會", "針對移動端開發的最新技術趨勢進行分享，包含 Flutter, SwiftUI 與 Jetpack Compose，歡迎開發者一同交流"),
-    cover_image: "https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("聚會", 401),
-    start_time: new Date("2025-11-26T19:00:00Z"),
-    end_time: new Date("2025-11-26T21:30:00Z"),
-    location_name: "AppWorks 之初創投",
-    address: "台北市信義區基隆路一段178號",
-    latitude: new Prisma.Decimal(25.042),
-    longitude: new Prisma.Decimal(121.565),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "免費報名", price: 0, total_quantity: 80, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2025-11-25") }] },
-    productLinks: generateStandardProducts("開發者"),
-  },
-  {
-    title: "【聚會】週五桌遊之夜",
+    title: "【聚會】桌遊派對夜",
     subtitle: "策略與歡笑",
-    description: generateDescription("快樂桌遊推廣會", "桌遊聚會", "精選數十款熱門派對與策略桌遊，現場有教學人員帶領，新手也能輕鬆上手，是認識新朋友的好機會"),
-    cover_image: "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("聚會", 402),
-    start_time: new Date("2025-12-05T19:00:00Z"),
-    end_time: new Date("2025-12-05T23:00:00Z"),
-    location_name: "女巫店",
-    address: "台北市大安區新生南路三段56巷7號",
-    latitude: new Prisma.Decimal(25.021),
-    longitude: new Prisma.Decimal(121.533),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "入場費(含飲料)", price: 300, total_quantity: 40, sale_start_time: new Date("2025-11-05"), sale_end_time: new Date("2025-12-04") }] },
-    productLinks: generateStandardProducts("桌遊夜"),
-  },
-  {
-    title: "【聚會】多語言交換 Language Exchange",
-    subtitle: "用語言交朋友",
-    description: generateDescription("Global Friends Taiwan", "語言交換", "提供英語、日語、韓語、西語等換桌交流時間，結識來自世界各地的朋友，練習外語的同時拓展國際視野"),
-    cover_image: "https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("聚會", 403),
-    start_time: new Date("2025-12-12T19:30:00Z"),
-    end_time: new Date("2025-12-12T22:00:00Z"),
-    location_name: "Brass Monkey",
-    address: "台北市中山區復興北路166號",
-    latitude: new Prisma.Decimal(25.054),
-    longitude: new Prisma.Decimal(121.544),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "低消入場", price: 250, total_quantity: 100, sale_start_time: new Date("2025-11-12"), sale_end_time: new Date("2025-12-11") }] },
-    productLinks: generateStandardProducts("語言交換"),
-  },
-  {
-    title: "【聚會】加密貨幣投資者早餐會",
-    subtitle: "比特幣減半後的趨勢",
-    description: generateDescription("區塊鏈共識實驗室", "加密貨幣聚會", "在輕鬆的早餐氛圍中，交流區塊鏈技術應用與加密貨幣市場分析，分享投資心得與未來展望"),
-    cover_image: "https://images.unsplash.com/photo-1518546305927-5a5b40a57217?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("聚會", 404),
-    start_time: new Date("2025-12-20T09:00:00Z"),
-    end_time: new Date("2025-12-20T11:00:00Z"),
-    location_name: "Louisa Coffee 品牌旗艦店",
-    address: "台北市大安區信義路二段",
-    latitude: new Prisma.Decimal(25.034),
-    longitude: new Prisma.Decimal(121.530),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "早餐費", price: 200, total_quantity: 30, sale_start_time: new Date("2025-11-20"), sale_end_time: new Date("2025-12-19") }] },
-    productLinks: generateStandardProducts("區塊鏈"),
-  },
-  {
-    title: "【聚會】毛小孩公園野餐趴",
-    subtitle: "以狗會友",
-    description: generateDescription("汪星人俱樂部", "寵物野餐", "帶著家裡的狗狗貓貓一起到公園草地奔跑，主人們也能交流飼養心得，共度愉快的午後時光"),
-    cover_image: "https://images.unsplash.com/photo-1548199973-03cce0bbc87b?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("聚會", 405),
-    start_time: new Date("2025-11-30T14:00:00Z"),
-    end_time: new Date("2025-11-30T17:00:00Z"),
-    location_name: "迎風狗運動公園",
-    address: "台北市松山區莊敬里",
-    latitude: new Prisma.Decimal(25.071),
-    longitude: new Prisma.Decimal(121.556),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "免費參加", price: 0, total_quantity: 200, sale_start_time: new Date("2025-10-30"), sale_end_time: new Date("2025-11-29") }] },
-    productLinks: generateStandardProducts("寵物聚會"),
-  },
-  {
-    title: "【聚會】獨立書店讀書會",
-    subtitle: "本月選書：原子習慣",
-    description: generateDescription("巷弄讀書會", "週末讀書會", "深入導讀暢銷書籍，透過分組討論分享閱讀心得，將知識轉化為行動，一起培養閱讀的好習慣"),
-    cover_image: "https://images.unsplash.com/photo-1481627834876-b7833e8f5570?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("聚會", 406),
-    start_time: new Date("2025-12-14T14:30:00Z"),
-    end_time: new Date("2025-12-14T16:30:00Z"),
-    location_name: "青鳥書店",
-    address: "台北市中正區八德路一段1號",
-    latitude: new Prisma.Decimal(25.044),
-    longitude: new Prisma.Decimal(121.529),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "場地費", price: 150, total_quantity: 20, sale_start_time: new Date("2025-11-14"), sale_end_time: new Date("2025-12-13") }] },
-    productLinks: generateStandardProducts("讀書會"),
-  },
-
-  // ==========================================
-  // 5. 市集 (Category) - 6 筆
-  // ==========================================
-  {
-    title: "【市集】好朋友手作市集",
-    subtitle: "原創設計 x 手感溫度",
-    description: generateDescription("好朋友市集策展團隊", "手作市集", "集結 50 攤原創手作職人，販售布藝、飾品、陶藝與插畫周邊，感受手作的獨特魅力與溫暖"),
-    cover_image: "https://images.unsplash.com/photo-1452860606245-08befc0ff44b?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("市集", 501),
-    start_time: new Date("2025-12-06T11:00:00Z"),
-    end_time: new Date("2025-12-07T18:00:00Z"),
-    location_name: "四四南村",
-    address: "台北市信義區松勤街50號",
-    latitude: new Prisma.Decimal(25.031),
-    longitude: new Prisma.Decimal(121.561),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "免費入場", price: 0, total_quantity: 5000, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2025-12-07") }] },
-    productLinks: generateStandardProducts("手作市集"),
-  },
-  {
-    title: "【市集】台南巷弄美食嘉年華",
-    subtitle: "吃遍府城好味道",
-    description: generateDescription("台南觀光推廣局", "美食市集", "網羅台南在地隱藏版美食與人氣餐車，讓你一站式吃遍牛肉湯、碗粿與特色甜點，滿足你的味蕾"),
-    cover_image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("市集", 502),
-    start_time: new Date("2025-12-13T12:00:00Z"),
-    end_time: new Date("2025-12-14T20:00:00Z"),
-    location_name: "藍晒圖文創園區",
-    address: "台南市南區西門路一段689巷",
-    latitude: new Prisma.Decimal(22.984),
-    longitude: new Prisma.Decimal(120.198),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "園遊券", price: 200, total_quantity: 3000, sale_start_time: new Date("2025-11-13"), sale_end_time: new Date("2025-12-14") }] },
-    productLinks: generateStandardProducts("美食市集"),
-  },
-  {
-    title: "【市集】台北復古古著市集",
-    subtitle: "Vintage Market",
-    description: generateDescription("Old School 俱樂部", "古著市集", "匯集全台精選古著賣家，從美式工裝到日系昭和洋裝，挖寶尋找屬於你的時代風格，展現獨特個性"),
-    cover_image: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("市集", 503),
+    description: "集結各式經典與新潮桌遊，與好友們一較高下。",
+    cover_image: "https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80",
     start_time: new Date("2025-11-29T13:00:00Z"),
-    end_time: new Date("2025-11-30T19:00:00Z"),
-    location_name: "華山 1914 紅磚區",
-    address: "台北市中正區八德路一段1號",
-    latitude: new Prisma.Decimal(25.044),
-    longitude: new Prisma.Decimal(121.529),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "入場費", price: 50, total_quantity: 2000, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2025-11-30") }] },
-    productLinks: generateStandardProducts("古著市集"),
+    end_time: new Date("2025-11-29T22:00:00Z"),
+    location_name: "桌遊地下城",
+    address: "台北市中山區",
+    latitude: 25.051,
+    longitude: 121.52,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "場地費", price: 250, total_quantity: 50, sale_start_time: new Date("2025-10-01T12:00:00Z"), sale_end_time: new Date("2025-11-29T12:00:00Z") }]
+    },
   },
   {
-    title: "【市集】小農有機蔬果市集",
-    subtitle: "產地直送餐桌",
-    description: generateDescription("台灣友善耕作聯盟", "小農市集", "支持在地友善耕作農夫，販售當季新鮮有機蔬果、手作果醬與在地農產加工品，吃得健康又安心"),
-    cover_image: "https://images.unsplash.com/photo-1488459716781-31db52582fe9?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("市集", 504),
-    start_time: new Date("2025-12-20T08:00:00Z"),
-    end_time: new Date("2025-12-20T14:00:00Z"),
-    location_name: "希望廣場",
-    address: "台北市中正區林森北路",
-    latitude: new Prisma.Decimal(25.045),
-    longitude: new Prisma.Decimal(121.524),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "免費入場", price: 0, total_quantity: 3000, sale_start_time: new Date("2025-11-20"), sale_end_time: new Date("2025-12-20") }] },
-    productLinks: generateStandardProducts("小農市集"),
-  },
-  {
-    title: "【市集】歐洲夢幻聖誕市集",
-    subtitle: "Christmas Market",
-    description: generateDescription("歐洲經貿辦事處", "聖誕市集", "彷彿置身歐洲廣場，熱紅酒、薑餅人、烤香腸與璀璨的聖誕燈飾，感受濃濃的節慶氛圍，是聖誕節約會首選"),
-    cover_image: "https://images.unsplash.com/photo-1512389142860-9c449e58a543?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("市集", 505),
-    start_time: new Date("2025-12-19T17:00:00Z"),
-    end_time: new Date("2025-12-25T22:00:00Z"),
-    location_name: "信義香堤大道廣場",
-    address: "台北市信義區松壽路",
-    latitude: new Prisma.Decimal(25.036),
-    longitude: new Prisma.Decimal(121.567),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "免費入場", price: 0, total_quantity: 50000, sale_start_time: new Date("2025-11-19"), sale_end_time: new Date("2025-12-25") }] },
-    productLinks: generateStandardProducts("聖誕市集"),
-  },
-  {
-    title: "【市集】黑膠與卡帶復古市集",
-    subtitle: "Analog Sound",
-    description: generateDescription("感傷唱片行", "音樂市集", "專屬於類比音樂愛好者的盛會，交流經典黑膠唱片、卡帶與復古播放器材，找回被數位時代遺忘的聲音溫度"),
-    cover_image: "https://images.unsplash.com/photo-1484704849700-f032a568e944?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("市集", 506),
-    start_time: new Date("2026-01-10T13:00:00Z"),
-    end_time: new Date("2026-01-11T19:00:00Z"),
-    location_name: "松菸不只是圖書館",
-    address: "台北市信義區光復南路133號",
-    latitude: new Prisma.Decimal(25.043),
-    longitude: new Prisma.Decimal(121.560),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "免費入場", price: 0, total_quantity: 1000, sale_start_time: new Date("2025-12-10"), sale_end_time: new Date("2026-01-11") }] },
-    productLinks: generateStandardProducts("黑膠市集"),
+    title: "【聚會】行動應用開發者聚會",
+    subtitle: "iOS & Android",
+    description: "分享 iOS 與 Android 開發技巧，交流最新技術趨勢。",
+    cover_image: "https://images.unsplash.com/photo-1556740758-90de374c12ad?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-12-10T19:00:00Z"),
+    end_time: new Date("2025-12-10T21:00:00Z"),
+    location_name: "Google 台北辦公室",
+    address: "台北市信義區",
+    latitude: 25.0339,
+    longitude: 121.5645,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "免費報名", price: 0, total_quantity: 100, sale_start_time: new Date("2025-11-01T12:00:00Z"), sale_end_time: new Date("2025-12-09T12:00:00Z") }]
+    },
   },
 
-  // ==========================================
-  // 6. 比賽 (Category) - 2 筆
-  // ==========================================
+  // --- 5. 市集 (Category) ---
   {
-    title: "【比賽】2025 全國街舞大賽",
-    subtitle: "Battle for Glory",
-    description: generateDescription("台灣街舞推廣協會", "街舞大賽", "來自全國各地的頂尖舞者齊聚一堂，爭奪年度冠軍寶座，感受熱血沸騰的 Battle 現場，見證舞王的誕生"),
-    cover_image: "https://images.unsplash.com/photo-1508700115892-45ecd05ae2ad?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("比賽", 601),
-    start_time: new Date("2025-12-27T13:00:00Z"),
-    end_time: new Date("2025-12-27T21:00:00Z"),
-    location_name: "新北市民廣場",
-    address: "新北市板橋區中山路一段161號",
-    latitude: new Prisma.Decimal(25.011),
-    longitude: new Prisma.Decimal(121.462),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "觀眾票", price: 300, total_quantity: 1000, sale_start_time: new Date("2025-11-27"), sale_end_time: new Date("2025-12-26") }] },
-    productLinks: generateStandardProducts("街舞大賽"),
+    title: "【市集】寵物友善市集",
+    subtitle: "毛孩派對",
+    description: "帶上你的毛小孩，一起逛市集、交朋友。",
+    cover_image: "https://images.unsplash.com/photo-1529429617124-95b109e86bb8?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-11-30T11:00:00Z"),
+    end_time: new Date("2025-11-30T18:00:00Z"),
+    location_name: "華山文創園區",
+    address: "台北市中正區八德路一段1號",
+    latitude: 25.0441,
+    longitude: 121.5298,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "免費入場", price: 0, total_quantity: 10000, sale_start_time: new Date("2025-10-01T12:00:00Z"), sale_end_time: new Date("2025-11-30T11:00:00Z") }]
+    },
   },
   {
-    title: "【比賽】VR 電競射擊錦標賽",
-    subtitle: "虛擬戰場 誰與爭鋒",
-    description: generateDescription("虛擬實境電競聯盟", "VR 電競賽", "穿戴最新 VR 設備，進行 4v4 戰術射擊對戰，體驗沉浸式的未來電子競技，挑戰你的反應極限"),
-    cover_image: "https://images.unsplash.com/photo-1592478411213-61535f94e002?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("比賽", 602),
-    start_time: new Date("2026-01-17T10:00:00Z"),
-    end_time: new Date("2026-01-18T18:00:00Z"),
-    location_name: "三創生活園區 12F",
+    title: "【市集】街頭美食嘉年華",
+    subtitle: "滿足您的所有味蕾",
+    description: "匯集全台特色小吃，一場滿足您所有味蕾的盛宴。",
+    cover_image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-12-06T12:00:00Z"),
+    end_time: new Date("2025-12-07T20:00:00Z"),
+    location_name: "台南市藍晒圖文創園區",
+    address: "台南市南區西門路一段689巷",
+    latitude: 22.9842,
+    longitude: 120.198,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "園遊券", price: 200, total_quantity: 2000, sale_start_time: new Date("2025-10-15T12:00:00Z"), sale_end_time: new Date("2025-12-07T12:00:00Z") }]
+    },
+  },
+
+  // --- 6. 比賽 (Category) ---
+  {
+    title: "【比賽】VR 遊戲競技場",
+    subtitle: "Beat Saber 挑戰賽",
+    description: "戴上 VR 頭盔，進入虛擬世界，體驗前所未有的遊戲快感。",
+    cover_image: "https://images.unsplash.com/photo-1585620385358-402b2f6be8b?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-12-10T13:00:00Z"),
+    end_time: new Date("2025-12-10T18:00:00Z"),
+    location_name: "台北三創生活園區",
     address: "台北市中正區市民大道三段2號",
-    latitude: new Prisma.Decimal(25.044),
-    longitude: new Prisma.Decimal(121.532),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "選手報名費", price: 800, total_quantity: 32, sale_start_time: new Date("2025-12-01"), sale_end_time: new Date("2026-01-10") }] },
-    productLinks: generateStandardProducts("VR電競"),
+    latitude: 25.044,
+    longitude: 121.532,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "參賽券", price: 500, total_quantity: 50, sale_start_time: new Date("2025-11-01T12:00:00Z"), sale_end_time: new Date("2025-12-09T12:00:00Z") },
+      { name: "觀賽券", price: 100, total_quantity: 100, sale_start_time: new Date("2025-11-01T12:00:00Z"), sale_end_time: new Date("2025-12-09T12:00:00Z") }]
+    },
+  },
+  {
+    title: "【比賽】2025高雄水陸戲獅甲",
+    subtitle: "國際舞獅爭霸",
+    description: "睽違六年，國際級舞獅盛會再次回到高雄市立國際游泳池！",
+    cover_image: "/slide1.jpg", // [!] 使用您的範例圖
+    start_time: new Date("2025-11-24T14:00:00Z"),
+    end_time: new Date("2025-11-24T21:00:00Z"),
+    location_name: "高雄市立國際游泳池",
+    address: "高雄市苓雅區",
+    latitude: 22.62,
+    longitude: 120.3,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "A 區", price: 800, total_quantity: 300, sale_start_time: new Date("2025-10-01T12:00:00Z"), sale_end_time: new Date("2025-11-20T12:00:00Z") },
+      { name: "B 區", price: 500, total_quantity: 500, sale_start_time: new Date("2025-10-01T12:00:00Z"), sale_end_time: new Date("2025-11-20T12:00:00Z") }]
+    },
   },
 
-  // ==========================================
-  // 7. 表演 (Category) - 2 筆
-  // ==========================================
+  // --- 7. 表演 (Category) ---
   {
-    title: "【表演】大象體操《夢境》巡迴演唱會",
-    subtitle: "數字搖滾的奇幻旅程",
-    description: generateDescription("子皿有限公司", "樂團演唱會", "台灣最具代表性的數字搖滾樂團，以精湛的技巧與夢幻的旋律，帶給樂迷最純粹的感動，沉浸在音符編織的夢境中"),
+    title: "【表演】獨立樂團演唱會",
+    subtitle: "The Wall Live House",
+    description: "感受最純粹的音樂能量，支持本地獨立音樂創作。",
     cover_image: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("表演", 701),
-    start_time: new Date("2025-12-19T20:00:00Z"),
-    end_time: new Date("2025-12-19T22:30:00Z"),
-    location_name: "Legacy Taipei",
-    address: "台北市中正區八德路一段1號",
-    latitude: new Prisma.Decimal(25.044),
-    longitude: new Prisma.Decimal(121.529),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "搖滾區", price: 1200, total_quantity: 800, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2025-12-18") }] },
-    productLinks: generateStandardProducts("演唱會"),
+    start_time: new Date("2025-12-15T19:00:00Z"),
+    end_time: new Date("2025-12-15T22:00:00Z"),
+    location_name: "The Wall Live House",
+    address: "台北市文山區羅斯福路四段200號",
+    latitude: 25.018,
+    longitude: 121.533,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "預售票", price: 880, total_quantity: 150, sale_start_time: new Date("2025-11-01T12:00:00Z"), sale_end_time: new Date("2025-12-14T12:00:00Z") }]
+    },
   },
   {
-    title: "【表演】爆笑漫才之夜：雙人喜劇",
-    subtitle: "笑死人不償命",
-    description: generateDescription("卡米地喜劇俱樂部", "漫才表演", "由新銳漫才組合輪番上陣，用快節奏的吐槽與裝傻，為您帶來整晚的歡笑，釋放生活壓力的最佳解方"),
-    cover_image: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("表演", 702),
+    title: "【表演】週末電影馬拉松",
+    subtitle: "經典科幻之夜",
+    description: "連續播放《銀翼殺手》、《2001太空漫遊》，享受大銀幕的震撼。",
+    cover_image: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=800&q=80",
     start_time: new Date("2025-11-28T20:00:00Z"),
-    end_time: new Date("2025-11-28T22:00:00Z"),
-    location_name: "Comedy Plus",
-    address: "台北市中山區復興北路480號",
-    latitude: new Prisma.Decimal(25.063),
-    longitude: new Prisma.Decimal(121.543),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "一般票", price: 500, total_quantity: 150, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2025-11-27") }] },
-    productLinks: generateStandardProducts("漫才表演"),
+    end_time: new Date("2025-11-29T02:00:00Z"),
+    location_name: "光點華山電影館",
+    address: "台北市中正區八德路一段1號",
+    latitude: 25.0441,
+    longitude: 121.5298,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "套票", price: 600, total_quantity: 100, sale_start_time: new Date("2025-10-15T12:00:00Z"), sale_end_time: new Date("2025-11-27T12:00:00Z") }]
+    },
   },
 
-  // ==========================================
-  // 8. 研討會 (Category) - 2 筆
-  // ==========================================
+  // --- 8. 研討會 (Category) ---
   {
-    title: "【研討會】2025 永續能源與綠色科技高峰會",
-    subtitle: "淨零碳排的挑戰與機遇",
-    description: generateDescription("台灣綠能產業協會", "綠色科技研討會", "邀請產官學界專家，探討再生能源發展、碳權交易與企業 ESG 轉型策略，掌握綠色經濟的未來趨勢"),
-    cover_image: "https://images.unsplash.com/photo-1544531586-fde5298cdd40?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("研討會", 801),
-    start_time: new Date("2025-12-02T09:00:00Z"),
-    end_time: new Date("2025-12-02T17:00:00Z"),
-    location_name: "台北國際會議中心 TICC",
-    address: "台北市信義區信義路五段1號",
-    latitude: new Prisma.Decimal(25.033),
-    longitude: new Prisma.Decimal(121.564),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "一般票", price: 2000, total_quantity: 500, sale_start_time: new Date("2025-11-01"), sale_end_time: new Date("2025-12-01") }] },
-    productLinks: generateStandardProducts("綠能研討會"),
+    title: "【研討會】數位行銷實戰營",
+    subtitle: "提升品牌能見度",
+    description: "學習最新的數位行銷工具與策略，提升品牌能見度。",
+    cover_image: "https://images.unsplash.com/photo-1557862921-37829c790f19?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-12-05T09:00:00Z"),
+    end_time: new Date("2025-12-05T17:00:00Z"),
+    location_name: "線上直播",
+    address: "Google Meet",
+    latitude: 25.0339,
+    longitude: 121.5645,
+    status: "APPROVED",
+    event_type: "ONLINE",
+    ticketTypes: {
+      create: [{ name: "課程票", price: 1800, total_quantity: 100, sale_start_time: new Date("2025-10-15T12:00:00Z"), sale_end_time: new Date("2025-12-04T12:00:00Z") }]
+    },
   },
   {
-    title: "【研討會】生成式 AI 在醫療領域的應用",
-    subtitle: "智慧醫療新紀元",
-    description: generateDescription("數位醫療策進會", "AI 醫療研討會", "探討 AI 如何輔助診斷、加速新藥開發以及個性化醫療的未來發展，看見科技如何守護人類健康"),
-    cover_image: "https://images.unsplash.com/photo-1576091160550-217358c7b818?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("研討會", 802),
-    start_time: new Date("2026-01-15T14:00:00Z"),
-    end_time: new Date("2026-01-15T17:00:00Z"),
-    location_name: "台大醫院國際會議中心",
-    address: "台北市中正區徐州路2號",
-    latitude: new Prisma.Decimal(25.042),
-    longitude: new Prisma.Decimal(121.522),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "醫師票", price: 1000, total_quantity: 200, sale_start_time: new Date("2025-12-01"), sale_end_time: new Date("2026-01-14") }] },
-    productLinks: generateStandardProducts("醫療AI"),
-  },
-
-  // ==========================================
-  // 9. 分享會 (Category) - 2 筆
-  // ==========================================
-  {
-    title: "【分享會】背包客的流浪地圖：南美洲篇",
-    subtitle: "勇氣與冒險的故事",
-    description: generateDescription("旅行癮者俱樂部", "旅遊分享會", "講者將分享他在南美洲流浪半年的所見所聞，包含馬丘比丘的壯麗與亞馬遜雨林的神秘，啟發你對世界的探索慾望"),
-    cover_image: "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("分享會", 901),
-    start_time: new Date("2025-12-07T19:00:00Z"),
-    end_time: new Date("2025-12-07T21:00:00Z"),
-    location_name: "旅行思維空間",
-    address: "台北市大安區",
-    latitude: new Prisma.Decimal(25.030),
-    longitude: new Prisma.Decimal(121.550),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "入場費", price: 200, total_quantity: 50, sale_start_time: new Date("2025-11-07"), sale_end_time: new Date("2025-12-06") }] },
-    productLinks: generateStandardProducts("旅遊分享"),
-  },
-  {
-    title: "【分享會】自媒體經營心法：從 0 到 10 萬訂閱",
-    subtitle: "內容創作者的生存之道",
-    description: generateDescription("創作者加速器", "自媒體分享會", "知名 YouTuber 現身說法，分享頻道定位、腳本企劃與社群經營的實戰經驗，幫助你打造具影響力的個人品牌"),
-    cover_image: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("分享會", 902),
-    start_time: new Date("2026-01-08T19:30:00Z"),
-    end_time: new Date("2026-01-08T21:30:00Z"),
-    location_name: "線上直播 (YouTube)",
-    address: "線上",
-    latitude: new Prisma.Decimal(25.0),
-    longitude: new Prisma.Decimal(121.5),
-    status: EventStatus.APPROVED,
-    event_type: EventType.ONLINE,
-    ticketTypes: { create: [{ name: "直播票", price: 300, total_quantity: 500, sale_start_time: new Date("2025-12-01"), sale_end_time: new Date("2026-01-07") }] },
-    productLinks: generateStandardProducts("自媒體"),
+    title: "【研討會】區塊鏈技術與應用",
+    subtitle: "Web3 的未來",
+    description: "深入探討區塊鏈技術的基礎與未來應用潛力。",
+    cover_image: "/slide3.jpg", //
+    start_time: new Date("2025-11-28T14:00:00Z"),
+    end_time: new Date("2025-11-28T17:00:00Z"),
+    location_name: "台灣大學",
+    address: "台北市大安區羅斯福路四段1號",
+    latitude: 25.017,
+    longitude: 121.534,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "學生票", price: 300, total_quantity: 100, sale_start_time: new Date("2025-10-15T12:00:00Z"), sale_end_time: new Date("2025-11-27T12:00:00Z") },
+      { name: "一般票", price: 600, total_quantity: 100, sale_start_time: new Date("2025-10-15T12:00:00Z"), sale_end_time: new Date("2025-11-27T12:00:00Z") }]
+    },
   },
 
-  // ==========================================
-  // 10. 見面會 (Category) - 2 筆
-  // ==========================================
+  // --- 9. 分享會 (Category) ---
   {
-    title: "【見面會】人氣插畫家「貓貓蟲」簽名會",
-    subtitle: "療癒系萌主駕到",
-    description: generateDescription("文具文創小舖", "插畫家簽名會", "超人氣貼圖角色創作者舉辦年度簽名會，現場還有巨型公仔供粉絲合影留念，快來與你的偶像近距離接觸"),
-    cover_image: "https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("見面會", 1001),
+    title: "【分享會】居家調酒教學",
+    subtitle: "My Bar is Your Bar",
+    description: "學習基礎調酒技巧，在家也能輕鬆調製出美味雞尾酒。",
+    cover_image: "https://www.1shot.tw/wp-content/uploads/2021/03/1005px-Gin-tonic-1.jpg",
+    start_time: new Date("2025-12-18T19:30:00Z"),
+    end_time: new Date("2025-12-18T21:30:00Z"),
+    location_name: "線上直播",
+    address: "Zoom",
+    latitude: 25.0339,
+    longitude: 121.5645,
+    status: "APPROVED",
+    event_type: "ONLINE",
+    ticketTypes: {
+      create: [{ name: "教學票 (含材料包)", price: 650, total_quantity: 50, sale_start_time: new Date("2025-11-01T12:00:00Z"), sale_end_time: new Date("2025-12-15T12:00:00Z") }]
+    },
+  },
+  {
+    title: "【分享會】植栽與花藝設計",
+    subtitle: "綠化您的生活空間",
+    description: "學習如何用綠色植物與美麗花朵點綴您的生活空間。",
+    cover_image: "https://images.unsplash.com/photo-1587334274328-64186a80aeee?auto=format&fit=crop&w=800&q=80",
     start_time: new Date("2025-12-13T14:00:00Z"),
     end_time: new Date("2025-12-13T16:00:00Z"),
-    location_name: "誠品生活南西店",
-    address: "台北市中山區南京西路14號",
-    latitude: new Prisma.Decimal(25.052),
-    longitude: new Prisma.Decimal(121.520),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "簽名資格卷", price: 0, total_quantity: 100, sale_start_time: new Date("2025-11-13"), sale_end_time: new Date("2025-12-12") }] },
-    productLinks: generateStandardProducts("貓貓蟲"),
-  },
-  {
-    title: "【見面會】職業棒球球星見面會",
-    subtitle: "為冠軍喝采",
-    description: generateDescription("職棒球員工會", "球星見面會", "總冠軍 MVP 球員親臨現場，與球迷近距離互動遊戲，並分享奪冠心路歷程，是棒球迷絕對不能錯過的時刻"),
-    cover_image: "https://images.unsplash.com/photo-1508345228704-935cc84bf5e2?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("見面會", 1002),
-    start_time: new Date("2026-01-24T13:00:00Z"),
-    end_time: new Date("2026-01-24T15:00:00Z"),
-    location_name: "台北大巨蛋園區",
-    address: "台北市信義區忠孝東路四段",
-    latitude: new Prisma.Decimal(25.040),
-    longitude: new Prisma.Decimal(121.558),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "入場券", price: 500, total_quantity: 300, sale_start_time: new Date("2025-12-24"), sale_end_time: new Date("2026-01-23") }] },
-    productLinks: generateStandardProducts("職棒球星"),
+    location_name: "台北花市",
+    address: "台北市內湖區新湖三路28號",
+    latitude: 25.056,
+    longitude: 121.57,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "DIY 票", price: 700, total_quantity: 30, sale_start_time: new Date("2025-11-01T12:00:00Z"), sale_end_time: new Date("2025-12-12T12:00:00Z") }]
+    },
   },
 
-  // ==========================================
-  // 11. 宣傳活動 (Category) - 2 筆
-  // ==========================================
+  // --- 10. 見面會 (Category) ---
   {
-    title: "【宣傳】2026 台北國際電玩展展前記者會",
-    subtitle: "Game On!",
-    description: generateDescription("台北市電腦公會", "電玩展記者會", "搶先曝光 2026 電玩展參展大作與亮點活動，媒體與玩家不可錯過的情報前哨戰，第一手掌握最新的遊戲資訊"),
-    cover_image: "https://images.unsplash.com/photo-1593305841991-05c297ba4575?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("宣傳", 1101),
-    start_time: new Date("2026-01-10T14:00:00Z"),
-    end_time: new Date("2026-01-10T15:30:00Z"),
-    location_name: "寒舍艾美酒店",
-    address: "台北市信義區松仁路38號",
-    latitude: new Prisma.Decimal(25.039),
-    longitude: new Prisma.Decimal(121.568),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "媒體票", price: 0, total_quantity: 200, sale_start_time: new Date("2025-12-10"), sale_end_time: new Date("2025-12-10") }] }, // Fixed Sale time
-    productLinks: generateStandardProducts("電玩展"),
+    title: "【見面會】百萬 YouTuber 粉絲見面會",
+    subtitle: "近距離互動",
+    description: "與您最喜愛的 YouTuber 見面、互動並合影留念。",
+    cover_image: "https://images.unsplash.com/photo-1546410531-bb4ac68ab60b?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-12-20T14:00:00Z"),
+    end_time: new Date("2025-12-20T17:00:00Z"),
+    location_name: "台北國際會議中心 (TICC)",
+    address: "台北市信義區信義路五段1號",
+    latitude: 25.033,
+    longitude: 121.564,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "VIP 票 (含合影)", price: 1200, total_quantity: 100, sale_start_time: new Date("2025-11-15T12:00:00Z"), sale_end_time: new Date("2025-12-19T12:00:00Z") },
+      { name: "一般票", price: 600, total_quantity: 300, sale_start_time: new Date("2025-11-15T12:00:00Z"), sale_end_time: new Date("2025-12-19T12:00:00Z") }]
+    },
   },
   {
-    title: "【宣傳】電影《時空旅人》首映會",
-    subtitle: "年度科幻鉅獻",
-    description: generateDescription("星光影業", "電影首映會", "好萊塢巨星主演，導演與演員將出席紅毯儀式，邀請影迷搶先觀賞這部跨越時空的動人故事，見證史詩級的視覺饗宴"),
-    cover_image: "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("宣傳", 1102),
-    start_time: new Date("2025-12-20T18:00:00Z"),
-    end_time: new Date("2025-12-20T21:00:00Z"),
-    location_name: "西門國賓大戲院",
-    address: "台北市萬華區成都路88號",
-    latitude: new Prisma.Decimal(25.042),
-    longitude: new Prisma.Decimal(121.504),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "首映票", price: 0, total_quantity: 500, sale_start_time: new Date("2025-12-01"), sale_end_time: new Date("2025-12-19") }] },
-    productLinks: generateStandardProducts("電影首映"),
+    title: "【見面會】人氣作家簽書會",
+    subtitle: "新書《城市微光》",
+    description: "與作家面對面，分享創作背後的故事。",
+    cover_image: "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-11-23T15:00:00Z"),
+    end_time: new Date("2025-11-23T17:00:00Z"),
+    location_name: "誠品信義店",
+    address: "台北市信義區松高路11號",
+    latitude: 25.040,
+    longitude: 121.565,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "免費入場", price: 0, total_quantity: 200, sale_start_time: new Date("2025-10-15T12:00:00Z"), sale_end_time: new Date("2025-11-23T12:00:00Z") }]
+    },
   },
 
-  // ==========================================
-  // 12. 導覽 (Category) - 2 筆
-  // ==========================================
+  // --- 11. 宣傳活動 (Category) ---
   {
-    title: "【導覽】夜訪大稻埕：鬼怪傳說",
-    subtitle: "聽老房子說故事",
-    description: generateDescription("島內散步", "夜間導覽", "在夜晚的微光中，走訪迪化街的老洋樓，聽導覽老師講述流傳百年的鄉野奇談與歷史軼事，感受老台北的神秘面紗"),
+    title: "【宣傳】新品發表會：Future Phone",
+    subtitle: "看見未來",
+    description: "見證新一代智慧型手機的誕生。",
+    cover_image: "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-11-18T14:00:00Z"),
+    end_time: new Date("2025-11-18T15:00:00Z"),
+    location_name: "線上直播",
+    address: "YouTube Live",
+    latitude: 25.0339,
+    longitude: 121.5645,
+    status: "APPROVED",
+    event_type: "ONLINE",
+    ticketTypes: {
+      create: [{ name: "免費觀看", price: 0, total_quantity: 10000, sale_start_time: new Date("2025-10-15T12:00:00Z"), sale_end_time: new Date("2025-11-18T12:00:00Z") }]
+    },
+  },
+  {
+    title: "【宣傳】電玩展新作試玩",
+    subtitle: "搶先體驗",
+    description: "年度大作《賽博紀元》首次公開試玩。",
+    cover_image: "https://images.unsplash.com/photo-1580234811497-9df7fd2f357e?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2026-01-22T10:00:00Z"),
+    end_time: new Date("2026-01-25T18:00:00Z"),
+    location_name: "台北電玩展 (南港展覽館)",
+    address: "台北市南港區經貿二路1號",
+    latitude: 25.055,
+    longitude: 121.615,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "電玩展門票", price: 250, total_quantity: 5000, sale_start_time: new Date("2025-12-01T12:00:00Z"), sale_end_time: new Date("2026-01-25T12:00:00Z") }]
+    },
+  },
+
+  // --- 12. 導覽 (Category) ---
+  {
+    title: "【導覽】古蹟文化導覽",
+    subtitle: "走進大稻埕",
+    description: "跟隨歷史學家，探索城市中被遺忘的古老故事。",
     cover_image: "https://images.unsplash.com/photo-1569949381669-ecf31ae8e613?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("導覽", 1201),
-    start_time: new Date("2025-12-05T19:00:00Z"),
-    end_time: new Date("2025-12-05T21:00:00Z"),
-    location_name: "屈臣氏大藥房前",
-    address: "台北市大同區迪化街一段34號",
-    latitude: new Prisma.Decimal(25.055),
-    longitude: new Prisma.Decimal(121.510),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "導覽費", price: 600, total_quantity: 25, sale_start_time: new Date("2025-11-05"), sale_end_time: new Date("2025-12-04") }] },
-    productLinks: generateStandardProducts("大稻埕"),
+    start_time: new Date("2025-11-29T14:00:00Z"),
+    end_time: new Date("2025-11-29T16:00:00Z"),
+    location_name: "大稻埕霞海城隍廟",
+    address: "台北市大同區迪化街一段61號",
+    latitude: 25.056,
+    longitude: 121.511,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "導覽費", price: 150, total_quantity: 30, sale_start_time: new Date("2025-10-15T12:00:00Z"), sale_end_time: new Date("2025-11-28T12:00:00Z") }]
+    },
   },
   {
-    title: "【導覽】故宮博物院深度解說：青銅器時代",
-    subtitle: "禮樂文明的縮影",
-    description: generateDescription("歷史文物講堂", "博物館導覽", "專業講師深入淺出，帶您看懂毛公鼎、散氏盤上的銘文，了解三千年前的工藝與歷史，重現古代文明的輝煌"),
-    cover_image: "https://images.unsplash.com/photo-1599578705716-de708973f0f9?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("導覽", 1202),
-    start_time: new Date("2026-01-11T10:00:00Z"),
-    end_time: new Date("2026-01-11T12:00:00Z"),
+    title: "【導覽】博物館驚魂夜",
+    subtitle: "閉館後的奇妙冒險",
+    description: "夜宿博物館，探索展品在夜晚的秘密生活。",
+    cover_image: "https://images.unsplash.com/photo-1583896303253-17a604f057c7?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-12-12T20:00:00Z"),
+    end_time: new Date("2025-12-13T08:00:00Z"),
     location_name: "國立故宮博物院",
     address: "台北市士林區至善路二段221號",
-    latitude: new Prisma.Decimal(25.102),
-    longitude: new Prisma.Decimal(121.548),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "導覽費(不含門票)", price: 400, total_quantity: 20, sale_start_time: new Date("2025-12-11"), sale_end_time: new Date("2026-01-10") }] },
-    productLinks: generateStandardProducts("故宮導覽"),
+    latitude: 25.102,
+    longitude: 121.548,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "夜宿體驗票", price: 2500, total_quantity: 50, sale_start_time: new Date("2025-11-01T12:00:00Z"), sale_end_time: new Date("2025-12-10T12:00:00Z") }]
+    },
   },
 
-  // ==========================================
-  // 13. 體驗 (Category) - 2 筆
-  // ==========================================
+  // --- 13. 體驗 (Category) ---
   {
-    title: "【體驗】宜蘭三星蔥田拔蔥做餅",
-    subtitle: "產地到餐桌的美味",
-    description: generateDescription("三星農會推廣部", "農事體驗", "穿上雨鞋下田拔蔥，洗蔥，並親手揉麵團製作香酥的三星蔥油餅，適合全家大小的食農教育，體驗一日農夫的樂趣"),
-    cover_image: "https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("體驗", 1301),
-    start_time: new Date("2025-12-06T10:00:00Z"),
-    end_time: new Date("2025-12-06T14:00:00Z"),
-    location_name: "蔥仔寮體驗農場",
-    address: "宜蘭縣三星鄉東興路",
-    latitude: new Prisma.Decimal(24.665),
-    longitude: new Prisma.Decimal(121.650),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "體驗費", price: 350, total_quantity: 50, sale_start_time: new Date("2025-11-06"), sale_end_time: new Date("2025-12-05") }] },
-    productLinks: generateStandardProducts("三星蔥"),
+    title: "【體驗】星空下的瑜珈課",
+    subtitle: "釋放壓力",
+    description: "在寧靜的夜晚，跟隨星光伸展身心，釋放壓力。",
+    cover_image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-11-27T19:00:00Z"),
+    end_time: new Date("2025-11-27T20:30:00Z"),
+    location_name: "大安森林公園",
+    address: "台北市大安區新生南路二段1號",
+    latitude: 25.032,
+    longitude: 121.536,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "課程券", price: 450, total_quantity: 40, sale_start_time: new Date("2025-10-15T12:00:00Z"), sale_end_time: new Date("2025-11-26T12:00:00Z") }]
+    },
   },
   {
-    title: "【體驗】金工銀飾手作 DIY",
-    subtitle: "打造專屬紀念",
-    description: generateDescription("慢活金工工作室", "金工體驗", "在專業金工師傅指導下，從銀條敲打、退火、鋸切到拋光，親手打造一枚獨一無二的純銀戒指，送禮自用兩相宜"),
-    cover_image: "https://images.unsplash.com/photo-1603549098231-e26454cb1026?auto=format&fit=crop&w=800&q=80",
-    images: generateEventImages("體驗", 1302),
-    start_time: new Date("2025-12-25T14:00:00Z"),
-    end_time: new Date("2025-12-25T17:00:00Z"),
-    location_name: "松菸文創園區",
-    address: "台北市信義區光復南路133號",
-    latitude: new Prisma.Decimal(25.043),
-    longitude: new Prisma.Decimal(121.560),
-    status: EventStatus.APPROVED,
-    event_type: EventType.OFFLINE,
-    ticketTypes: { create: [{ name: "課程費(含材料)", price: 1800, total_quantity: 10, sale_start_time: new Date("2025-11-25"), sale_end_time: new Date("2025-12-24") }] },
-    productLinks: generateStandardProducts("金工體驗"),
+    title: "【體驗】山林健行與野餐",
+    subtitle: "走入大自然",
+    description: "遠離塵囂，走入山林，享受大自然的寧靜與美好。",
+    cover_image: "https://images.unsplash.com/photo-1454982523318-4b6396f39d3a?auto=format&fit=crop&w=800&q=80",
+    start_time: new Date("2025-12-06T08:00:00Z"),
+    end_time: new Date("2025-12-06T15:00:00Z"),
+    location_name: "陽明山國家公園",
+    address: "台北市北投區",
+    latitude: 25.16,
+    longitude: 121.54,
+    status: "APPROVED",
+    event_type: "OFFLINE",
+    ticketTypes: {
+      create: [{ name: "嚮導費 (含餐點)", price: 100, total_quantity: 25, sale_start_time: new Date("2025-11-01T12:00:00Z"), sale_end_time: new Date("2025-12-05T12:00:00Z") }]
+    },
   },
 ];
 
-// ----------------------------------------------------------------------
-// 3. 分類映射表 (用於 Seed 腳本)
-// ----------------------------------------------------------------------
+// [!!!] 3. "分類名稱" 和 "資料" 的映射
+// (注意：這裡的 key 必須 100% 符合您 seed.ts 中的 categories 陣列)
 export const eventsByCategory: Record<string, any[]> = {
-  "課程": mockEventsData.slice(0, 6),
-  "展覽": mockEventsData.slice(6, 12),
-  "派對": mockEventsData.slice(12, 18),
-  "聚會": mockEventsData.slice(18, 24),
-  "市集": mockEventsData.slice(24, 30),
-  "比賽": mockEventsData.slice(30, 32),
-  "表演": mockEventsData.slice(32, 34),
-  "研討會": mockEventsData.slice(34, 36),
-  "分享會": mockEventsData.slice(36, 38),
-  "見面會": mockEventsData.slice(38, 40),
-  "宣傳活動": mockEventsData.slice(40, 42),
-  "導覽": mockEventsData.slice(42, 44),
-  "體驗": mockEventsData.slice(44, 46),
+  "課程": [
+    mockEventsData[0], // React 全端
+    mockEventsData[1], // 手沖咖啡
+  ],
+  "展覽": [
+    mockEventsData[2], // 城市光影
+    mockEventsData[3], // 沉浸式藝術
+  ],
+  "派對": [
+    mockEventsData[4], // 跨年
+    mockEventsData[5], // 白色主題
+  ],
+  "聚會": [
+    mockEventsData[6], // 桌遊
+    mockEventsData[7], // 開發者聚會
+  ],
+  "市集": [
+    mockEventsData[8], // 寵物
+    mockEventsData[9], // 街頭美食
+  ],
+  "比賽": [
+    mockEventsData[10], // VR
+    mockEventsData[11], // 戲獅甲
+  ],
+  "表演": [
+    mockEventsData[12], // 獨立樂團
+    mockEventsData[13], // 電影馬拉松
+  ],
+  "研討會": [
+    mockEventsData[14], // 數位行銷
+    mockEventsData[15], // 區塊鏈
+  ],
+  "分享會": [
+    mockEventsData[16], // 居家調酒
+    mockEventsData[17], // 植栽
+  ],
+  "見面會": [
+    mockEventsData[18], // YouTuber
+    mockEventsData[19], // 簽書會
+  ],
+  "宣傳活動": [
+    mockEventsData[20], // 新品發表
+    mockEventsData[21], // 電玩展
+  ],
+  "導覽": [
+    mockEventsData[22], // 古蹟
+    mockEventsData[23], // 博物館
+  ],
+  "體驗": [
+    mockEventsData[24], // 瑜珈
+    mockEventsData[25], // 健行
+  ],
 };

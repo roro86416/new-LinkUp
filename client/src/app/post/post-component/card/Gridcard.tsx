@@ -1,4 +1,3 @@
-// components/cards/GridCard.tsx
 "use client";
 
 interface GridCardProps {
@@ -22,25 +21,46 @@ export default function GridCard({
     <a
       href={href}
       className="
-        block rounded-xl overflow-hidden 
+        block 
         bg-white 
         border border-neutral-200/30 
-        shadow-sm hover:shadow-md 
-        transition-all duration-300
+        shadow-xl 
+        hover:shadow-2xl 
+        hover:-translate-y-1 
+        transition-all duration-300 ease-in-out
+
+        flex flex-col 
+        h-84
+        rounded-2xl 
+        overflow-hidden
       "
     >
-      <div className="w-full h-48 overflow-hidden">
-        <img src={image} className="w-full h-full object-cover" />
-      </div>
+      {/* 🔥 圖片現在直接貼在卡片頂端，不再被 div 阻隔 */}
+      <img
+        src={image}
+        alt={title}
+        className="w-full h-40 object-cover transition-transform duration-300 hover:scale-[1.02]"
+      />
 
-      <div className="p-4">
+      <div className="p-5 flex-grow text-center">
         {category && (
-          <span className="text-xs text-neutral-600 uppercase tracking-wide">
+          <span
+            className="
+              inline-block 
+              text-xs font-medium 
+              text-indigo-700 
+              bg-indigo-100 
+              rounded-full 
+              px-3 py-1 
+              uppercase tracking-wider 
+              mb-2
+            "
+          >
             {category}
           </span>
         )}
 
-        <h3 className="text-lg font-semibold mt-1 leading-tight text-neutral-800">
+        <h3 className="text-xl font-semibold mt-1 leading-snug text-neutral-800">
           {title}
         </h3>
 

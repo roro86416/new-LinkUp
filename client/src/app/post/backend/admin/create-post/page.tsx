@@ -24,7 +24,8 @@ export default function CreatePostPage() {
     },
   });
 
-  const onSubmit = async (data: PostFormData) => {
+  const onSubmit = async (data: PostFormData) => { router.push("/post/detail1/1");
+};
 
 
 //     const authToken = localStorage.getItem('token'); 
@@ -38,67 +39,74 @@ export default function CreatePostPage() {
 //       return;
 //     }
     // --- content blocks ---
-    const contentJSON = JSON.stringify(
-      data.content.blocks.map((block) => {
-        if (block.type === "paragraph") {
-          return { type: "text", content: block.text };
-        } else if (block.type === "image") {
-          return { type: "image", content: block.url };
-        }
-      })
-    );
+    // const contentJSON = JSON.stringify(
+    //   data.content.blocks.map((block) => {
+    //     if (block.type === "paragraph") {
+    //       return { type: "text", content: block.text };
+    //     } else if (block.type === "image") {
+    //       return { type: "image", content: block.url };
+    //     }
+    //   })
+    // );
 
     // --- tags ---
-    const tagArray = data.tags
-      ? data.tags.split(",").map((t) => t.trim()).filter(Boolean)
-      : [];
+    // const tagArray = data.tags
+    //   ? data.tags.split(",").map((t) => t.trim()).filter(Boolean)
+    //   : [];
 
     // --- category 只要字串 ---
-    const categoryValue = data.category ? data.category.trim() : "";
+//     const categoryValue = data.category ? data.category.trim() : "";
+// const currentUserId = localStorage.getItem('user_id') || "7a57e4cd-dcd0-4126-a002-7a0ff251413f";
+//     // --- 最終 payload（完全符合後端 createPost） ---
+//     const payload = {
+//       title: data.title,
+//       coverImage: data.coverImage || null,
+//       category: categoryValue, // 字串
+//       content: contentJSON,
+//       tags: tagArray,
+//       author_id: currentUserId,
+//     };
 
-    // --- 最終 payload（完全符合後端 createPost） ---
-    const payload = {
-      title: data.title,
-      coverImage: data.coverImage || null,
-      category: categoryValue, // 字串
-      content: contentJSON,
-      tags: tagArray,
-    };
+    // console.log("📌 送到後端的 payload:", payload);
 
-    console.log("📌 送到後端的 payload:", payload);
+  //   try {
+  //     const res = await fetch("http://localhost:3001/api/post", {
+  //       method: "POST",
+  //       headers: {
+  //   "Content-Type": "application/json",
+  //   // "Authorization": `Bearer ${authToken}`,
+  // },
+  // // credentials: "include",
+  //       body: JSON.stringify(payload),
+  //     });
 
-    try {
-      const res = await fetch("http://localhost:3001/post", {
-        method: "POST",
-        headers: {
-    "Content-Type": "application/json",
-    // "Authorization": `Bearer ${authToken}`,
-  },
-  // credentials: "include",
-        body: JSON.stringify(payload),
-      });
+  //     const result = await res.json();
+  //     console.log("📌 後端回傳結果:", result);
 
-      const result = await res.json();
 
-      if (res.ok) {
-        console.log("文章上傳成功", result);
-        const newPostId = result.id;
-        if (newPostId) {
-          router.push(`/posts/${newPostId}`);
-        }
-      } else {
-        console.error("文章上傳失敗", result);
-      }
-    } catch (err) {
-      console.error("❌ 上傳錯誤", err);
-    }
-  };
+  //     if (res.ok) {
+  //       console.log("文章上傳成功", result);
+  //       // const newPostId = result.id;
+  //       if (res.ok && result.id) {
+  //         router.push(`/post/detail/${result.id}`);
+  //       }
+  //     } else {
+  //       console.error("文章上傳失敗", result);
+  //     }
+  //   } catch (err) {
+  //     console.error("❌ 上傳錯誤", err);
+  //   }
+  // };
 
   return (
     <FormProvider {...form}>
       <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="space-y-10 p-6 max-w-3xl mx-auto"
+        onSubmit={form.handleSubmit((data) => {
+      // 可以保留 payload 處理或直接跳轉
+      console.log("📌 form data:", data);
+      router.push("/post/detail1/1");
+       })}
+    className="space-y-10 p-6 max-w-3xl mx-auto"
       >
         <h1 className="text-2xl font-bold">新增文章</h1>
 
@@ -107,9 +115,16 @@ export default function CreatePostPage() {
         <ContentForm />
 
         <button
-          type="submit"
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 w-full"
-        >
+          type="submit"
+          className="
+            flex items-center justify-center gap-2
+            bg-blue-600 text-white font-bold text-lg
+            px-8 py-3 w-full 
+            rounded-xl shadow-xl transition-all duration-300 
+            hover:bg-blue-700 hover:shadow-2xl 
+            focus:outline-none focus:ring-4 focus:ring-blue-300
+          "
+        >
           送出文章
         </button>
       </form>
