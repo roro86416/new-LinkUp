@@ -9,6 +9,7 @@ import {
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 
+
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
@@ -26,7 +27,7 @@ export const authController = {
         name: user.name,
         avatar: user.avatar || null,
         role: user.role,
-        provider: user.provider || "local",
+        provider: "local",
       };
 
       const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "7d" });
@@ -53,7 +54,7 @@ export const authController = {
         name: user.name,
         avatar: user.avatar || null,
         role: user.role,
-        provider: user.provider || "local",
+        provider: "local",
       };
 
       const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "7d" });
@@ -115,7 +116,7 @@ export const authController = {
         name: user.name || payload.name,
         avatar: user.avatar || payload.picture || null,
         role: user.role,
-        provider: user.provider || "google",
+        provider: "google",
       };
 
       const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "7d" });

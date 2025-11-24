@@ -1,3 +1,4 @@
+// server/src/modules/event-stats/event-stats.service.ts
 import prisma from "../../utils/prisma-only.js";
 
 /**
@@ -13,14 +14,19 @@ export async function getPopularTagsService() {
       take: 10,
     });
 
-    // 再取出對應的標籤名稱
     const tagsWithNames = await Promise.all(
-      popularTags.map(async (t: { tag_id: string; _count: { tag_id: number } }) => {  // 替t增加明確型別
+      popularTags.map(async (t) => {
+        // tag_id 在 schema 裡是 Int
         const tag = await prisma.tag.findUnique({
           where: { id: t.tag_id },
-          select: { name: true },
+          select: { id: true, name: true },
         });
-        return { tagId: t.tag_id, name: tag?.name, count: t._count.tag_id };
+
+        return {
+          tagId: t.tag_id,
+          name: tag?.name,
+          count: t._count.tag_id,
+        };
       })
     );
 
@@ -45,11 +51,14 @@ export async function getMostFavoritedEventsService() {
       take: 10,
     });
 
-    // 補上活動資訊
     const events = await Promise.all(
-      favorites.map(async (f: { favoritable_id: string; _count: { favoritable_id: number } }) => {  // 替t增加明確型別
+      favorites.map(async (f) => {
+        // UserFavorite.favoritable_id 是 String，但 Event.id 是 Int
+        const eventId = Number(f.favoritable_id);
+        if (Number.isNaN(eventId)) return null;
+
         const event = await prisma.event.findUnique({
-          where: { id: f.favoritable_id },  // favoritable_id 是 string
+          where: { id: eventId },
           select: {
             id: true,
             title: true,
@@ -59,12 +68,14 @@ export async function getMostFavoritedEventsService() {
             location_name: true,
           },
         });
+
         if (!event) return null;
+
         return { ...event, favoriteCount: f._count.favoritable_id };
       })
     );
 
-    return events.filter((e: any) => e !== null);  // 替t增加明確型別
+    return events.filter((e) => e !== null);
   } catch (error) {
     console.error("❌ getMostFavoritedEventsService 錯誤：", error);
     throw error;
@@ -81,7 +92,7 @@ export async function getUpcomingEventsService() {
     const events = await prisma.event.findMany({
       where: {
         start_time: { gt: now },
-        status: "APPROVED", // 只顯示審核通過的活動
+        status: "APPROVED",
       },
       orderBy: { start_time: "asc" },
       take: 10,
