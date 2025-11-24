@@ -41,7 +41,7 @@ export default function AboutPage() {
                 className="object-cover opacity-60 group-hover:scale-105 transition-transform duration-[20s]"
                 priority
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0C2838] via-[#0C2838]/40 to-transparent"></div>
+              <div className="absolute inset-0 bg-linear-to-t from-[#0C2838] via-[#0C2838]/40 to-transparent"></div>
           </div>
 
           {/* 內容 */}
@@ -53,7 +53,7 @@ export default function AboutPage() {
               </span>
               <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 tracking-tight drop-shadow-2xl">
                 連結每一個<br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#EF9D11] via-yellow-400 to-orange-500">
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-[#EF9D11] via-yellow-400 to-orange-500">
                   精彩瞬間
                 </span>
               </h1>
@@ -69,7 +69,7 @@ export default function AboutPage() {
         <section>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Card 1 */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[32px] p-8 hover:bg-white/20 transition-all duration-300 hover:-translate-y-2 group shadow-lg">
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-4xl p-8 hover:bg-white/20 transition-all duration-300 hover:-translate-y-2 group shadow-lg">
               <div className="w-14 h-14 rounded-2xl bg-[#EF9D11]/20 border border-[#EF9D11]/30 flex items-center justify-center mb-6 group-hover:bg-[#EF9D11] transition-colors duration-500">
                 <FireIcon className="w-8 h-8 text-[#EF9D11] group-hover:text-white transition-colors" />
               </div>
@@ -80,7 +80,7 @@ export default function AboutPage() {
             </div>
 
             {/* Card 2 */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[32px] p-8 hover:bg-white/20 transition-all duration-300 hover:-translate-y-2 group shadow-lg">
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-4xl p-8 hover:bg-white/20 transition-all duration-300 hover:-translate-y-2 group shadow-lg">
               <div className="w-14 h-14 rounded-2xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center mb-6 group-hover:bg-blue-500 transition-colors duration-500">
                 <GlobeAsiaAustraliaIcon className="w-8 h-8 text-blue-400 group-hover:text-white transition-colors" />
               </div>
@@ -91,7 +91,7 @@ export default function AboutPage() {
             </div>
 
             {/* Card 3 */}
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-[32px] p-8 hover:bg-white/20 transition-all duration-300 hover:-translate-y-2 group shadow-lg">
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-4xl p-8 hover:bg-white/20 transition-all duration-300 hover:-translate-y-2 group shadow-lg">
               <div className="w-14 h-14 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center mb-6 group-hover:bg-purple-500 transition-colors duration-500">
                 <SparklesIcon className="w-8 h-8 text-purple-400 group-hover:text-white transition-colors" />
               </div>
@@ -116,7 +116,7 @@ export default function AboutPage() {
                 className="object-cover group-hover:scale-110 transition-transform duration-700" 
               />
               {/* 裝飾框線 */}
-              <div className="absolute inset-4 border border-white/20 rounded-[32px] pointer-events-none"></div>
+              <div className="absolute inset-4 border border-white/20 rounded-4xl pointer-events-none"></div>
             </div>
             <div className="w-full md:w-1/2 space-y-6">
               <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[#EF9D11] text-white mb-2 shadow-lg shadow-orange-500/50">
@@ -149,7 +149,7 @@ export default function AboutPage() {
                 fill 
                 className="object-cover group-hover:scale-110 transition-transform duration-700" 
               />
-              <div className="absolute inset-4 border border-white/20 rounded-[32px] pointer-events-none"></div>
+              <div className="absolute inset-4 border border-white/20 rounded-4xl pointer-events-none"></div>
             </div>
             <div className="w-full md:w-1/2 space-y-6 text-right md:text-left">
               <div className="md:text-right w-full flex flex-col md:items-end">
@@ -193,8 +193,8 @@ export default function AboutPage() {
                ].map((src, i) => (
                  <div key={i} className="group relative w-24 h-24 md:w-32 md:h-32 rounded-full p-1 cursor-pointer transition-all duration-300 hover:scale-110">
                     {/* 外框光暈 */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#EF9D11] to-transparent rounded-full animate-spin-slow opacity-70 group-hover:opacity-100"></div>
-                    <div className="absolute inset-[2px] bg-[#0C2838] rounded-full"></div>
+                    <div className="absolute inset-0 bg-linear-to-br from-[#EF9D11] to-transparent rounded-full animate-spin-slow opacity-70 group-hover:opacity-100"></div>
+                    <div className="absolute inset-0.5 bg-[#0C2838] rounded-full"></div>
                     
                     {/* 圖片 */}
                     <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-transparent">

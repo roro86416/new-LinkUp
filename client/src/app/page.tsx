@@ -240,11 +240,11 @@ export default function HomePage() {
         </section>
 
         {/* Hero Banner */}
-        <section className="relative w-full h-[450px] rounded-[32px] overflow-hidden shadow-2xl group bg-gray-900">
+        <section className="relative w-full h-[450px] rounded-4xl overflow-hidden shadow-2xl group bg-gray-900">
             {heroSlides.length > 0 ? heroSlides.map((slide, index) => (
                 <div key={slide.id} className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${index === currentHeroIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'}`}>
                     <img src={slide.image} alt={slide.title} className="w-full h-full object-cover transform transition-transform duration-[10s] scale-105 group-hover:scale-110 opacity-80" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+                    <div className="absolute inset-0 bg-linear-to-t from-black/90 via-black/40 to-transparent"></div>
                     <div className="absolute top-6 left-6 md:top-10 md:left-10 z-20">
                         <span className={`px-4 py-1.5 rounded-full text-xs font-bold text-white shadow-lg backdrop-blur-md flex items-center gap-1 ${slide.type === 'announcement' ? 'bg-[#EF9D11]' : 'bg-[#0C2838]/90 border border-white/20'}`}>
                             {slide.type === 'announcement' ? '📌 公告' : '🔥 主打'}
@@ -312,8 +312,8 @@ export default function HomePage() {
         </div>
 
         {/* 熱門活動 */}
-        <section className="bg-white/20 backdrop-blur-xl border border-white/40 rounded-[40px] p-6 md:p-10 shadow-xl relative overflow-hidden z-20">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#EF9D11] to-transparent opacity-50"></div>
+        <section className="bg-white/20 backdrop-blur-xl border border-white/40 rounded-4xl p-6 md:p-10 shadow-xl relative overflow-hidden z-20">
+            <div className="absolute top-0 left-0 w-full h-1 bg-linear-to-r from-transparent via-[#EF9D11] to-transparent opacity-50"></div>
             <div className="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
                 <div>
                     <h2 className="text-3xl font-bold text-[#0C2838] flex items-center gap-2">🔥 熱門活動 <span className="text-sm font-normal text-gray-500 bg-white/50 px-3 py-1 rounded-full">本週精選</span></h2>

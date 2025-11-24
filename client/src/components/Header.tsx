@@ -227,7 +227,7 @@ export default function Header() {
                   <div className="absolute right-0 mt-3 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="p-5 border-b border-gray-100 bg-gray-50/50">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 border border-gray-200">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 hrink-0 border border-gray-200">
                           {user.avatar ? <img src={user.avatar} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center bg-gray-400 text-white font-bold">{user.name?.[0]?.toUpperCase()}</div>}
                         </div>
                         <div className="flex-1 min-w-0">
