@@ -1,7 +1,11 @@
 // server/src/modules/auth/auth.controller.ts
 import { Request, Response } from "express";
 import { authService } from "./auth.service.js";
-import { registerSchema, loginSchema, googleLoginSchema } from "./auth.schema.js";
+import {
+  registerSchema,
+  loginSchema,
+  googleLoginSchema,
+} from "./auth.schema.js";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 
@@ -10,13 +14,12 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "";
 const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export const authController = {
-  /** 註冊 (修改：成功後直接回傳 Token) */
+  /** 註冊（成功後直接回傳 Token） */
   async register(req: Request, res: Response) {
     try {
       const parsed = registerSchema.parse(req.body);
       const user = await authService.register(parsed);
 
-      // 註冊成功當下，直接簽發 Token
       const tokenPayload = {
         userId: user.id,
         email: user.email,
@@ -26,7 +29,6 @@ export const authController = {
         provider: user.provider || "local",
       };
 
-      // 簽發 Token (效期 7 天)
       const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: "7d" });
 
       res.status(201).json({
@@ -70,6 +72,10 @@ export const authController = {
   async googleLogin(req: Request, res: Response) {
     try {
       const { credential } = googleLoginSchema.parse(req.body);
+
+      if (!credential) {
+        return res.status(400).json({ message: "缺少 Google credential" });
+      }
 
       // 1. 驗證 Google ID Token
       const ticket = await client.verifyIdToken({
