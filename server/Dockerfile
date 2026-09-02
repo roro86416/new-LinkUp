@@ -9,8 +9,8 @@ RUN apt-get update -y && apt-get install -y openssl
 WORKDIR /app
 
 # 複製依賴檔並安裝套件 (利用快取機制加速部署)
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+COPY package.json ./
+RUN pnpm install
 
 # 複製所有後端程式碼
 COPY . .
