@@ -1,8 +1,8 @@
-import app from "./app.js";
+import app from './app.js';
 
 // --- 伺服器設定 ---
-const port = process.env.PORT || 3001;
+const port = process.env.PORT || 3000;
 // --- 啟動伺服器 ---
 app.listen(port, () => {
-  console.log(`[server]: Server is running at http://localhost:${port}`);
+	console.log(`Server is running on port ${port}`);
 });
