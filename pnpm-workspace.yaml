@@ -6,9 +6,17 @@ onlyBuiltDependencies:
   - '@prisma/client'
   - '@prisma/engines'
   - bcrypt
+<<<<<<< HEAD
   - esbuild
   - msgpackr-extract
   - prisma
   - sharp
   - unrs-resolver
   - workerd
+=======
+  - core-js
+  - esbuild
+  - prisma
+  - sharp
+  - unrs-resolver
+>>>>>>> origin/main-final

@@ -9,6 +9,7 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+<<<<<<< HEAD
   "packageManager": "pnpm@10.15.0",
   "devDependencies": {
     "prisma": "^8.0.0-rc.12"
@@ -16,4 +17,7 @@
   "dependencies": {
     "@prisma/client": "^7.10.0"
   }
+=======
+  "packageManager": "pnpm@10.15.0"
+>>>>>>> origin/main-final
 }
