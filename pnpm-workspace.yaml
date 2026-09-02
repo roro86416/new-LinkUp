@@ -7,6 +7,8 @@ onlyBuiltDependencies:
   - '@prisma/engines'
   - bcrypt
   - esbuild
+  - msgpackr-extract
   - prisma
   - sharp
   - unrs-resolver
+  - workerd
