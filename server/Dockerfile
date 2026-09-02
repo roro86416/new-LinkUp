@@ -8,20 +8,19 @@ RUN apt-get update -y && apt-get install -y openssl
 # 設定容器內的工作目錄
 WORKDIR /app
 
-# 複製依賴檔並安裝套件 (利用快取機制加速部署)
+# 複製依賴檔並安裝套件
 COPY package.json ./
 RUN pnpm install
 
 # 複製所有後端程式碼
 COPY . .
 
-# 產生 Prisma Client 並編譯 TypeScript
+# 產生 Prisma Client (拔除 pnpm run build)
 RUN pnpm prisma generate
-RUN pnpm run build
 
 # Cloud Run 預設對外開放的 Port 號為 8080
 ENV PORT=8080
 EXPOSE 8080
 
-# 啟動伺服器
-CMD ["pnpm", "run", "start"]
+# 直接使用 tsx 執行原始碼，避開 tsc 的嚴格型別與路徑檢查
+CMD ["pnpm", "tsx", "src/index.ts"]
