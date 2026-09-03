@@ -1,6 +1,6 @@
 // new-LinkUp/client/src/app/(shop)/checkout/review/page.tsx
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { apiClient } from '../../../../api/auth/apiClient';
 import toast from 'react-hot-toast';
@@ -105,7 +105,7 @@ const formatVariant = (desc?: string) => {
 		.trim();
 };
 
-export default function ReviewPage() {
+function ReviewContent() {
 	const router = useRouter();
 	const searchParams = useSearchParams();
 	const orderId = searchParams.get('orderId');
@@ -375,5 +375,12 @@ export default function ReviewPage() {
 				</div>
 			</div>
 		</div>
+	);
+}
+export default function ReviewPage() {
+	return (
+		<Suspense fallback={<div>載入訂單資料中...</div>}>
+			<ReviewContent />
+		</Suspense>
 	);
 }
