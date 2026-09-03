@@ -169,10 +169,7 @@ export default function CheckoutInfoPage() {
 			};
 
 			// 呼叫後端建立訂單
-			const res = await apiClient.post<OrderApiResponse>(
-				'/api/v1/orders',
-				payload,
-			);
+			const res = await apiClient.post<any>('/api/v1/orders', payload);
 			const { orderId } = res.data;
 
 			// 訂單建立成功！清除購物車暫存 (因為訂單已成立，不需要暫存了)
