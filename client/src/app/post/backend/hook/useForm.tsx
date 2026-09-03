@@ -43,7 +43,7 @@ export default function CreatePostForm() {
 
 			{/* 標籤 (這裡用單一輸入示範，視你 UI 可改為 tag input) */}
 			<input
-				{...register('tags.0')}
+				{...register('tags')}
 				placeholder="輸入標籤"
 				className="border p-2 w-full"
 			/>
@@ -64,12 +64,12 @@ export default function CreatePostForm() {
 
 			{/* 活動連結 */}
 			<input
-				{...register('eventLink')}
+				{...register('link')}
 				placeholder="活動連結（選填）"
 				className="border p-2 w-full"
 			/>
-			{errors.eventLink && (
-				<p className="text-red-500">{errors.eventLink?.message as string}</p>
+			{errors.link && (
+				<p className="text-red-500">{errors.link?.message as string}</p>
 			)}
 
 			{/* 內容 */}
