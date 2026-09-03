@@ -17,13 +17,19 @@ datasource db {
 // ----------------------------------------------- 
 // --- Enums (所有列舉型別) ---
 // ----------------------------------------------- 
+<<<<<<< HEAD
 // 來自 模組一 (User)
+=======
+>>>>>>> origin/main-final
 enum Role {
   MEMBER
   ORGANIZER
 }
 
+<<<<<<< HEAD
 // 來自 模組一 (User)
+=======
+>>>>>>> origin/main-final
 enum Provider {
   GOOGLE
   GITHUB
@@ -33,14 +39,20 @@ enum Provider {
   APP
 }
 
+<<<<<<< HEAD
 // 來自 模組一 (Notification)
+=======
+>>>>>>> origin/main-final
 enum TargetType {
   USER
   ORGANIZER
   ALL
 }
 
+<<<<<<< HEAD
 // 來自 模組一 (Notification)
+=======
+>>>>>>> origin/main-final
 enum NotificationType {
   system
   event
@@ -49,54 +61,78 @@ enum NotificationType {
   announcement
 }
 
+<<<<<<< HEAD
 // 來自 模組一 (Notification)
+=======
+>>>>>>> origin/main-final
 enum TemplateTargetRole {
   user
   ORGANIZER
   ALL
 }
 
+<<<<<<< HEAD
 // 來自 模組一 (Review / Favorite)
+=======
+>>>>>>> origin/main-final
 enum FavoritableType {
   EVENT
   USER_POST
   ORGANIZER
 }
 
+<<<<<<< HEAD
 // 來自 模組一 (Review / Favorite)
+=======
+>>>>>>> origin/main-final
 enum ReviewTargetType {
   ORGANIZER
   EVENT
   USER_POST
 }
 
+<<<<<<< HEAD
 // 來自 模組一 (Review / Favorite)
+=======
+>>>>>>> origin/main-final
 enum ReviewStatus {
   PENDING
   APPROVED
   REJECTED
 }
 
+<<<<<<< HEAD
 // 來自 模組二 (Event)
+=======
+>>>>>>> origin/main-final
 enum EventStatus {
   PENDING
   APPROVED
   REJECTED
 }
 
+<<<<<<< HEAD
 // 來自 模組二 (Event)
+=======
+>>>>>>> origin/main-final
 enum EventType {
   OFFLINE
   ONLINE
 }
 
+<<<<<<< HEAD
 // 來自 模組二 (Coupon)
+=======
+>>>>>>> origin/main-final
 enum DiscountType {
   PERCENTAGE
   FIXED_AMOUNT
 }
 
+<<<<<<< HEAD
 // 來自 模組二 (CheckIn / Ticket)
+=======
+>>>>>>> origin/main-final
 enum CheckInStatus {
   SUCCESS
   DUPLICATE
@@ -108,7 +144,10 @@ enum TicketStatus {
   used
 }
 
+<<<<<<< HEAD
 // 來自 模組三 (Order / Cart)
+=======
+>>>>>>> origin/main-final
 enum ItemType {
   ticket_types
   products
@@ -127,7 +166,10 @@ enum DeliveryMethod {
   on_site_pickup
 }
 
+<<<<<<< HEAD
 // 來自 模組五 (Post)
+=======
+>>>>>>> origin/main-final
 enum PostStatus {
   pending
   approved
@@ -141,6 +183,7 @@ enum PostStatus {
 
 // --- 核心：用戶、組織、管理員 ---
 
+<<<<<<< HEAD
 // Table: users (帳號主表)
 model User {
   id                     String    @id @default(uuid()) // 我們決定用 UUID (String)
@@ -162,6 +205,26 @@ model User {
   providers       UserProvider[]
   organizer       Organizer?
   // [已補齊] 反向關聯
+=======
+model User {
+  id                     String    @id @default(uuid())
+  email                  String?   @unique
+  password_hash          String?
+  role                   Role
+  is_active              Boolean   @default(true)
+  password_reset_token   String?
+  password_reset_expires DateTime?
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+  name                   String
+  avatar                 String?
+  phone_number           String?
+  birth_date             DateTime?
+  address                String?
+
+  providers       UserProvider[]
+  organizer       Organizer?
+>>>>>>> origin/main-final
   notifications   UserNotificationStatus[]
   favorites       UserFavorite[]
   scannedCheckIns CheckIn[]
@@ -171,6 +234,7 @@ model User {
   posts           UserPost[]
   postReviews     PostReview[]
 
+<<<<<<< HEAD
   // --- Mapping (命名對應) ---
   @@map("users")
 }
@@ -184,11 +248,24 @@ model UserProvider {
   provider_id   String
   access_token  String?  // '可空'
   refresh_token String?  // '可空'
+=======
+  @@map("users")
+}
+
+model UserProvider {
+  id            String   @id @default(uuid())
+  user_id       String
+  provider      Provider
+  provider_id   String
+  access_token  String?  @db.Text // Token 可能很長，建議用 Text
+  refresh_token String?  @db.Text
+>>>>>>> origin/main-final
   linked_at     DateTime
   is_primary    Boolean  @default(false)
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
+<<<<<<< HEAD
   // --- Relations (關聯) ---
   user User @relation(fields: [user_id], references: [id])
 
@@ -209,10 +286,29 @@ model Organizer {
   org_phone       String?   // '可空'
   org_tax_id      String?   // '可空'
   org_description String?   // '可空'
+=======
+  user User @relation(fields: [user_id], references: [id])
+
+  @@unique([provider, provider_id])
+  @@index([user_id])
+
+  @@map("user_providers")
+}
+
+model Organizer {
+  id              String    @id @default(uuid())
+  user_id         String    @unique
+  org_name        String?
+  org_address     String?
+  org_phone       String?
+  org_tax_id      String?
+  org_description String?   @db.Text // [修改] 允許長描述
+>>>>>>> origin/main-final
   is_verified     Boolean   @default(false)
   created_at      DateTime  @default(now())
   updated_at      DateTime  @updatedAt
 
+<<<<<<< HEAD
   // --- Relations (關聯) ---
   user   User    @relation(fields: [user_id], references: [id])
   events Event[] // [已補齊] 反向關聯
@@ -224,12 +320,23 @@ model Organizer {
 // Table: admins (管理員表)
 model Admin {
   id            String   @id @default(uuid()) // 我們決定用 UUID (String)
+=======
+  user   User    @relation(fields: [user_id], references: [id])
+  events Event[]
+
+  @@map("organizers")
+}
+
+model Admin {
+  id            String   @id @default(uuid())
+>>>>>>> origin/main-final
   name          String
   email         String   @unique
   password_hash String
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
+<<<<<<< HEAD
   // --- Relations (關聯) ---
   // [已補齊] 反向關聯
   sentNotifications          Notification[]
@@ -238,11 +345,19 @@ model Admin {
   createdAnnouncements       Announcement[]
   
   // --- Mapping (命名對應) ---
+=======
+  sentNotifications            Notification[]
+  createdNotificationTemplates NotificationTemplate[]
+  reviews                      Review[]
+  createdAnnouncements         Announcement[]
+  
+>>>>>>> origin/main-final
   @@map("admins")
 }
 
 // --- 核心：系統功能 (通知, 審核, 公告) ---
 
+<<<<<<< HEAD
 // Table: notifications (通知主表)
 model Notification {
   id                Int       @id @default(autoincrement()) // 主鍵 (PK), 整數自動遞增
@@ -265,11 +380,33 @@ model Notification {
   userStatuses UserNotificationStatus[] // 一對多關聯
 
   // --- Indexes (索引) ---
+=======
+model Notification {
+  id                Int       @id @default(autoincrement())
+  template_id       String?
+  sender_admin_id   String?
+  target_type       TargetType @default(USER)
+  target_id         String?
+  type              NotificationType
+  title             String
+  message           String    @db.Text // [修改] 通知內容可能較長
+  event_id          Int?
+  link_url          String?
+  sent_at           DateTime?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
+
+  senderAdmin  Admin?                 @relation(fields: [sender_admin_id], references: [id])
+  template     NotificationTemplate?  @relation(fields: [template_id], references: [id])
+  userStatuses UserNotificationStatus[]
+
+>>>>>>> origin/main-final
   @@index([template_id])
   @@index([sender_admin_id])
   @@index([target_id])
   @@index([event_id])
 
+<<<<<<< HEAD
   // --- Mapping (命名對應) ---
   @@map("notifications")
 }
@@ -372,10 +509,97 @@ model Announcement {
   subtitle      String?   // 可為空
   content       String    // TEXT 對應 String
   link_url      String?   // 可為空
+=======
+  @@map("notifications")
+}
+
+model UserNotificationStatus {
+  id              Int       @id @default(autoincrement())
+  notification_id Int
+  user_id         String
+  is_read         Boolean   @default(false)
+  read_at         DateTime?
+  is_deleted      Boolean   @default(false)
+  deleted_at      DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  notification Notification @relation(fields: [notification_id], references: [id])
+  user         User         @relation(fields: [user_id], references: [id])
+
+  @@index([notification_id])
+  @@index([user_id])
+
+  @@map("user_notification_statuses")
+}
+
+model NotificationTemplate {
+  id           String             @id @default(uuid())
+  title        String
+  message      String             @db.Text // [修改]
+  type         NotificationType
+  target_role  TemplateTargetRole @default(ALL)
+  is_active    Boolean            @default(true)
+  scheduled_at DateTime?
+  created_by   String
+  created_at   DateTime           @default(now())
+  updated_at   DateTime           @updatedAt
+
+  createdByAdmin Admin          @relation(fields: [created_by], references: [id])
+  notifications  Notification[]
+
+  @@index([created_by])
+
+  @@map("notification_templates")
+}
+
+model UserFavorite {
+  id               Int             @id @default(autoincrement())
+  user_id          String
+  favoritable_id   String
+  favoritable_type FavoritableType
+  created_at       DateTime        @default(now())
+  updated_at       DateTime        @updatedAt
+
+  user User @relation(fields: [user_id], references: [id])
+
+  @@index([user_id])
+  @@index([favoritable_id, favoritable_type])
+
+  @@map("user_favorites")
+}
+
+model Review {
+  id          Int              @id @default(autoincrement())
+  target_type ReviewTargetType
+  target_id   String
+  status      ReviewStatus     @default(PENDING)
+  reviewed_by String?
+  reviewed_at DateTime?
+  reason      String?          @db.Text // [修改] 審核理由可能較長
+  created_at  DateTime         @default(now())
+  updated_at  DateTime         @updatedAt
+
+  reviewedByAdmin Admin? @relation(fields: [reviewed_by], references: [id])
+
+  @@index([reviewed_by])
+  @@index([target_id, target_type])
+
+  @@map("reviews")
+}
+
+model Announcement {
+  id            String    @id @default(uuid())
+  title         String
+  subtitle      String?
+  content       String    @db.Text // [修改] 公告內容通常很長
+  link_url      String?
+>>>>>>> origin/main-final
   start_date    DateTime
   end_date      DateTime
   display_order Int       @default(0)
   is_active     Boolean   @default(true)
+<<<<<<< HEAD
   created_by    String    // 外鍵 (FK) -> admins.id (String)
   created_at    DateTime  @default(now())
   updated_at    DateTime  @updatedAt
@@ -395,11 +619,29 @@ model Announcement {
 model AnnouncementImage {
   id              BigInt   @id @default(autoincrement()) // 主鍵 (PK) 保持 CSV 的 BIGINT
   announcement_id String   // 修正：必須是 String 才能關聯到 announcements.id
+=======
+  created_by    String
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  createdByAdmin Admin               @relation(fields: [created_by], references: [id])
+  images         AnnouncementImage[]
+
+  @@index([created_by])
+
+  @@map("announcements")
+}
+
+model AnnouncementImage {
+  id              BigInt   @id @default(autoincrement())
+  announcement_id String
+>>>>>>> origin/main-final
   image_url       String
   is_cover        Boolean  @default(false)
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
+<<<<<<< HEAD
   // --- Relations (關聯) ---
   announcement Announcement @relation(fields: [announcement_id], references: [id])
 
@@ -407,6 +649,12 @@ model AnnouncementImage {
   @@index([announcement_id])
 
   // --- Mapping (命名對應) ---
+=======
+  announcement Announcement @relation(fields: [announcement_id], references: [id])
+
+  @@index([announcement_id])
+
+>>>>>>> origin/main-final
   @@map("announcement_images")
 }
 
@@ -415,6 +663,7 @@ model AnnouncementImage {
 // --- 核心：活動 (Events) ---
 // ----------------------------------------------- 
 
+<<<<<<< HEAD
 // Table: events (活動主表)
 model Event {
   id               Int          @id @default(autoincrement()) // 主鍵 (PK)
@@ -422,6 +671,14 @@ model Event {
   title            String
   subtitle         String?      // 可為空
   description      String
+=======
+model Event {
+  id               Int          @id @default(autoincrement())
+  organizer_id     String
+  title            String
+  subtitle         String?
+  description      String       @db.Text // [★修改重點] 這裡改為 Text 即可存長文章
+>>>>>>> origin/main-final
   cover_image      String
   start_time       DateTime
   end_time         DateTime
@@ -431,17 +688,26 @@ model Event {
   longitude        Decimal
   status           EventStatus
   event_type       EventType
+<<<<<<< HEAD
   online_event_url String?      // 可為空
   category_id      Int          // 外鍵 (FK) -> categories.id
   created_at       DateTime     @default(now())
   updated_at       DateTime     @updatedAt
 
   // --- Relations (關聯) ---
+=======
+  online_event_url String?
+  category_id      Int
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+
+>>>>>>> origin/main-final
   organizer    Organizer       @relation(fields: [organizer_id], references: [id])
   category     Category        @relation(fields: [category_id], references: [id])
   guests       EventGuest[]
   ticketTypes  TicketType[]
   attachments  EventAttachment[]
+<<<<<<< HEAD
   productLinks EventsProducts[] // [已補齊] 反向關聯
   tags         EventTag[]       // [已補齊] 反向關聯
   ratings      EventRating[]    // [已補齊] 反向關聯
@@ -488,6 +754,44 @@ model EventAttachment {
   @@index([event_id])
 
   // --- Mapping (命名對應) ---
+=======
+  productLinks EventsProducts[]
+  tags         EventTag[]
+  ratings      EventRating[]
+  images       EventImage[]
+  relatedPosts UserPost[]
+
+  @@index([organizer_id])
+  @@index([category_id])
+
+  @@map("events")
+}
+
+model EventGuest {
+  id        Int      @id @default(autoincrement())
+  event_id  Int
+  name      String
+  bio       String   @db.Text // [修改] 嘉賓介紹可能較長
+  photo_url String
+
+  event Event @relation(fields: [event_id], references: [id])
+
+  @@index([event_id])
+
+  @@map("event_guests")
+}
+
+model EventAttachment {
+  id        Int      @id @default(autoincrement())
+  event_id  Int
+  file_name String
+  file_url  String
+
+  event Event @relation(fields: [event_id], references: [id])
+
+  @@index([event_id])
+
+>>>>>>> origin/main-final
   @@map("event_attachments")
 }
 
@@ -495,6 +799,7 @@ model EventAttachment {
 // --- 核心：商城與結帳 (Products, Cart, Order) ---
 // ----------------------------------------------- 
 
+<<<<<<< HEAD
 // Table: products (商品)
 model Product {
   id            Int      @id @default(autoincrement()) // 主鍵 (PK)
@@ -517,6 +822,26 @@ model ProductVariant {
   id             Int      @id @default(autoincrement()) // 主鍵 (PK)
   product_id     Int      // 外鍵 (FK) -> products.id
   sku            String?  @unique // 可為空
+=======
+model Product {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?  @db.Text // [修改] 商品描述
+  base_price    Decimal
+  image_url     String?
+  is_published  Boolean  @default(false)
+
+  variants      ProductVariant[]
+  eventLinks    EventsProducts[]
+
+  @@map("products")
+}
+
+model ProductVariant {
+  id             Int      @id @default(autoincrement())
+  product_id     Int
+  sku            String?  @unique
+>>>>>>> origin/main-final
   option1_name   String?
   option1_value  String?
   option2_name   String?
@@ -524,11 +849,15 @@ model ProductVariant {
   price_offset   Decimal  @default(0)
   stock_quantity Int      @default(0)
 
+<<<<<<< HEAD
   // --- Relations (關聯) ---
+=======
+>>>>>>> origin/main-final
   product      Product     @relation(fields: [product_id], references: [id])
   cartItems    CartItem[]
   orderItems   OrderItem[]
 
+<<<<<<< HEAD
   // --- Indexes (索引) ---
   @@index([product_id])
 
@@ -577,15 +906,58 @@ model CartItem {
   added_at             DateTime @default(now())
 
   // --- Relations (關聯) ---
+=======
+  @@index([product_id])
+
+  @@map("productVariant")
+}
+
+model EventsProducts {
+  event_id   Int
+  product_id Int
+
+  event   Event   @relation(fields: [event_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
+
+  @@id([event_id, product_id])
+
+  @@map("events_products")
+}
+
+model Cart {
+  id         Int      @id @default(autoincrement())
+  user_id    String   @unique
+  updated_at DateTime @updatedAt
+
+  user  User       @relation(fields: [user_id], references: [id])
+  items CartItem[]
+
+  @@map("cart")
+}
+
+model CartItem {
+  id                   Int      @id @default(autoincrement())
+  cart_id              Int
+  item_type            ItemType
+  ticket_type_id       String?
+  product_variant_id   Int?
+  quantity             Int
+  added_at             DateTime @default(now())
+
+>>>>>>> origin/main-final
   cart           Cart           @relation(fields: [cart_id], references: [id])
   ticketType     TicketType?    @relation(fields: [ticket_type_id], references: [id])
   productVariant ProductVariant? @relation(fields: [product_variant_id], references: [id])
 
+<<<<<<< HEAD
   // --- Indexes (索引) ---
+=======
+>>>>>>> origin/main-final
   @@index([cart_id])
   @@index([ticket_type_id])
   @@index([product_variant_id])
 
+<<<<<<< HEAD
   // --- Mapping (命名對應) ---
   @@map("cartItem")
 }
@@ -610,10 +982,35 @@ model Order {
   total_amount      Decimal
 
   // --- Relations (關聯) ---
+=======
+  @@map("cartItem")
+}
+
+model Order {
+  id                Int            @id @default(autoincrement())
+  order_number      String         @unique
+  user_id           String
+  discount_amount   Decimal        @default(0)
+  coupon_id         String?
+  coupon_code       String?
+  status            OrderStatus
+  billing_name      String
+  billing_phone     String
+  billing_email     String
+  billing_address   String?
+  payment_method    String?
+  created_at        DateTime       @default(now())
+  expires_at        DateTime
+  delivery_method   DeliveryMethod?
+  subtotal          Decimal
+  total_amount      Decimal
+
+>>>>>>> origin/main-final
   user   User      @relation(fields: [user_id], references: [id])
   coupon Coupon?   @relation(fields: [coupon_id], references: [id])
   items  OrderItem[]
 
+<<<<<<< HEAD
   // --- Indexes (索引) ---
   @@index([user_id])
   @@index([coupon_id])
@@ -641,11 +1038,38 @@ model OrderItem {
   ticket       Ticket?       // 一對一關聯
 
   // --- Indexes (索引) ---
+=======
+  @@index([user_id])
+  @@index([coupon_id])
+
+  @@map("order")
+}
+
+model OrderItem {
+  id                  Int       @id @default(autoincrement())
+  order_id            Int
+  item_type           ItemType
+  ticket_type_id      String?
+  product_variant_id  Int?
+  item_name           String
+  variant_description String?
+  quantity            Int
+  unit_price          Decimal
+
+  order        Order         @relation(fields: [order_id], references: [id])
+  ticketType   TicketType?   @relation(fields: [ticket_type_id], references: [id])
+  productVariant ProductVariant? @relation(fields: [product_variant_id], references: [id])
+  ticket       Ticket?
+
+>>>>>>> origin/main-final
   @@index([order_id])
   @@index([ticket_type_id])
   @@index([product_variant_id])
 
+<<<<<<< HEAD
   // --- Mapping (命名對應) ---
+=======
+>>>>>>> origin/main-final
   @@map("orderItem")
 }
 
@@ -654,16 +1078,23 @@ model OrderItem {
 // --- 核心：票務 (Tickets) ---
 // ----------------------------------------------- 
 
+<<<<<<< HEAD
 // Table: ticket_types (票券種類)
 model TicketType {
   id              String   @id @default(uuid()) // 主鍵 (PK)
   event_id        Int      // 外鍵 (FK) -> events.id
+=======
+model TicketType {
+  id              String   @id @default(uuid())
+  event_id        Int
+>>>>>>> origin/main-final
   name            String
   price           Decimal
   total_quantity  Int
   sale_start_time DateTime
   sale_end_time   DateTime
 
+<<<<<<< HEAD
   // --- Relations (關聯) ---
   event      Event       @relation(fields: [event_id], references: [id])
   orderItems OrderItem[]
@@ -730,6 +1161,61 @@ model CheckIn {
   @@index([scanner_id])
 
   // --- Mapping (命名對應) ---
+=======
+  event      Event       @relation(fields: [event_id], references: [id])
+  orderItems OrderItem[]
+  cartItems  CartItem[]
+
+  @@index([event_id])
+
+  @@map("ticket_types")
+}
+
+model Coupon {
+  id            String       @id @default(uuid())
+  code          String       @unique
+  discount_type DiscountType
+  value         Decimal
+  event_id      Int?
+  expires_at    DateTime
+  usage_limit   Int
+  
+  Order Order[]
+
+  @@index([event_id])
+
+  @@map("coupons")
+}
+
+model Ticket {
+  id            Int      @id @default(autoincrement())
+  order_item_id Int      @unique
+  name          String
+  email         String
+  phone         String
+  gender        String?
+  qr_code_data  String   @unique
+  status        String
+
+  orderItem OrderItem @relation(fields: [order_item_id], references: [id])
+  checkIn   CheckIn?
+
+  @@map("ticket")
+}
+
+model CheckIn {
+  id         Int           @id @default(autoincrement())
+  ticket_id  Int           @unique
+  scanner_id String
+  scan_time  DateTime?
+  status     CheckInStatus
+
+  ticket  Ticket @relation(fields: [ticket_id], references: [id])
+  scanner User   @relation(fields: [scanner_id], references: [id])
+
+  @@index([scanner_id])
+
+>>>>>>> origin/main-final
   @@map("check_ins")
 }
 
@@ -738,6 +1224,7 @@ model CheckIn {
 // --- 核心：分類 (Categories) & 社群 (Posts) ---
 // ----------------------------------------------- 
 
+<<<<<<< HEAD
 // Table: categories (活動類別表)
 model Category {
   id        Int       @id @default(autoincrement()) // 主鍵 (PK)
@@ -745,10 +1232,18 @@ model Category {
   parent_id Int?      // 可為空, 自我關聯
 
   // --- Relations (關聯) ---
+=======
+model Category {
+  id        Int       @id @default(autoincrement())
+  name      String
+  parent_id Int?
+
+>>>>>>> origin/main-final
   parent   Category?  @relation("CategoryHierarchy", fields: [parent_id], references: [id])
   children Category[] @relation("CategoryHierarchy")
   events   Event[]
 
+<<<<<<< HEAD
   // --- Indexes (索引) ---
   @@index([parent_id])
 
@@ -800,10 +1295,51 @@ model EventRating {
 
   // --- Indexes (索引) ---
   // (確保一個使用者對一個活動只能有一筆評價)
+=======
+  @@index([parent_id])
+
+  @@map("categories")
+}
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  eventLinks EventTag[]
+
+  @@map("tags")
+}
+
+model EventTag {
+  event_id Int
+  tag_id   Int
+
+  event Event @relation(fields: [event_id], references: [id])
+  tag   Tag   @relation(fields: [tag_id], references: [id])
+
+  @@id([event_id, tag_id])
+
+  @@map("event_tags")
+}
+
+model EventRating {
+  id         Int      @id @default(autoincrement())
+  event_id   Int
+  user_id    String
+  rating     Int
+  comment    String?  @db.Text // [修改] 評價內容
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  event Event @relation(fields: [event_id], references: [id])
+  user  User  @relation(fields: [user_id], references: [id])
+
+>>>>>>> origin/main-final
   @@unique([user_id, event_id], name: "uq_user_event_rating")
   
   @@index([event_id])
 
+<<<<<<< HEAD
   // --- Mapping (命名對應) ---
   @@map("event_rating")
 }
@@ -851,20 +1387,64 @@ model UserPost {
   article_id   Int?       // 外鍵 (FK) -> events.id (Int, 可為空)
 
   // --- Relations (關 lounging) ---
+=======
+  @@map("event_rating")
+}
+
+model Image {
+  id        Int     @id @default(autoincrement())
+  image_url String?
+
+  eventLinks EventImage[]
+
+  @@map("images")
+}
+
+model EventImage {
+  event_id Int
+  image_id Int
+
+  event Event @relation(fields: [event_id], references: [id])
+  image Image @relation(fields: [image_id], references: [id])
+
+  @@id([event_id, image_id])
+
+  @@map("event_images")
+}
+
+model UserPost {
+  id           Int        @id @default(autoincrement())
+  author_id    String
+  title        String
+  content      String     @db.Text // [修改] 投稿內容
+  category_id  Int
+  status       PostStatus @default(pending)
+  created_at   DateTime   @default(now())
+  published_at DateTime?
+  
+  article_id   Int?
+
+>>>>>>> origin/main-final
   author       User          @relation(fields: [author_id], references: [id])
   category     PostCategory  @relation(fields: [category_id], references: [id])
   images       PostImage[]
   tags         ContactTag[]
   reviews      PostReview[]
   
+<<<<<<< HEAD
   // (這就是我們討論的 'include' 用的關聯名稱)
   relatedEvent Event?        @relation(fields: [article_id], references: [id])
 
   // --- Indexes (索引) ---
+=======
+  relatedEvent Event?        @relation(fields: [article_id], references: [id])
+
+>>>>>>> origin/main-final
   @@index([author_id])
   @@index([category_id])
   @@index([article_id])
 
+<<<<<<< HEAD
   // --- Mapping (命名對應) ---
   @@map("user_posts")
 }
@@ -873,10 +1453,19 @@ model UserPost {
 model PostImage {
   id         Int      @id @default(autoincrement()) // 主鍵 (PK)
   post_id    Int      // 修正：外鍵 (FK) -> user_posts.id
+=======
+  @@map("user_posts")
+}
+
+model PostImage {
+  id         Int      @id @default(autoincrement())
+  post_id    Int
+>>>>>>> origin/main-final
   image_url  String
   is_cover   Boolean  @default(false)
   created_at DateTime @default(now())
 
+<<<<<<< HEAD
   // --- Relations (關聯) ---
   post UserPost @relation(fields: [post_id], references: [id])
 
@@ -950,3 +1539,60 @@ model PostReview {
   // --- Mapping (命名對應) ---
   @@map("post_reviews")
 }
+=======
+  post UserPost @relation(fields: [post_id], references: [id])
+
+  @@index([post_id])
+
+  @@map("post_images")
+}
+
+model PostCategory {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  posts UserPost[]
+
+  @@map("post_categories")
+}
+
+model PostTag {
+  id   Int    @id @default(autoincrement())
+  name String
+
+  posts ContactTag[]
+
+  @@map("post_tags")
+}
+
+model ContactTag {
+  post_id Int
+  tag_id  Int
+
+  post UserPost @relation(fields: [post_id], references: [id])
+  tag  PostTag  @relation(fields: [tag_id], references: [id])
+
+  @@id([post_id, tag_id])
+
+  @@index([tag_id])
+
+  @@map("contact_tags")
+}
+
+model PostReview {
+  id         Int      @id @default(autoincrement())
+  post_id    Int
+  user_id    String
+  content    String   @db.Text // [修改]
+  rating     Int
+  created_at DateTime @default(now())
+
+  post UserPost @relation(fields: [post_id], references: [id])
+  user User     @relation(fields: [user_id], references: [id])
+
+  @@index([post_id])
+  @@index([user_id])
+
+  @@map("post_reviews")
+}
+>>>>>>> origin/main-final

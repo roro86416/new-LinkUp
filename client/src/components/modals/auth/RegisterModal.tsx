@@ -2,171 +2,209 @@
 import { useModal } from '../../../context/auth/ModalContext';
 import { useState } from 'react';
 import Image from 'next/image';
+import toast from 'react-hot-toast';
 import { AiOutlineEye, AiOutlineEyeInvisible } from 'react-icons/ai';
+import { apiClient } from '../../../api/auth/apiClient';
+import { useUser } from '../../../context/auth/UserContext';
 
-interface RegisterResult {
-  message: string;
-  userId?: number;
-  token?: string;
-}
-
-// ✅ registerUser function
-async function registerUser(email: string, password: string): Promise<RegisterResult> {
-  const res = await fetch('http://localhost:3001/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
-  });
-
-  const result = await res.json();
-
-  if (!res.ok) {
-    throw new Error(result.message || '註冊失敗');
-  }
-
-  return result;
-}
 
 export default function RegisterModal() {
-  const { isRegisterOpen, closeRegister, openEmailLogin } = useModal();
+  // [新增] 取得 login 方法
+  const { login } = useUser();
+  const { isRegisterOpen, closeRegister, openLogin } = useModal();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [agree, setAgree] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   if (!isRegisterOpen) return null;
 
   const handleRegister = async () => {
-    if (!agree) {
-      setMessage('⚠️ 請先勾選同意條款');
-      return;
+    // ... (驗證邏輯保持不變) ...
+    if (!email || !password || !confirmPassword) {
+      setMessage('⚠️ 請填寫完整資訊'); return;
     }
-    if (!email || !password) {
-      setMessage('⚠️ 請填寫完整資訊');
-      return;
+    if (password.length < 8) {
+      setMessage('❌ 密碼長度至少需要 8 個字元'); return;
+    }
+    if (password !== confirmPassword) {
+      setMessage('❌ 密碼與確認密碼不一致'); return;
     }
 
     setLoading(true);
     setMessage(null);
 
     try {
-      const result = await registerUser(email, password);
-      console.log('✅ 註冊成功:', result);
+      // 呼叫後端註冊 API
+      const res: any = await apiClient.post('/api/auth/register', { email, password });
+      
+      if (res.token) {
+          // 1. 執行自動登入
+          login(res.token);
+          
+          // -------------------------------------------------------
+          // [新增] 2. 自動發送「歡迎通知」
+          // -------------------------------------------------------
+          if (res.user && res.user.userId) {
+             const welcomeNotification = {
+                id: `welcome_${Date.now()}`, // 獨特 ID
+                title: '🎉 歡迎加入 LinkUp！',
+                content: '很高興見到您！為了獲得更完整的體驗，快來完善您的個人基本資料吧！',
+                type: '系統公告',
+                sentAt: new Date().toISOString(),
+                isRead: false,
+                link: '/member?section=基本資料' // [關鍵] 設定跳轉連結
+             };
 
-      setMessage('🎉 註冊成功！');
-      setEmail('');
-      setPassword('');
+             try {
+                const userKey = `notifications_${res.user.userId}`;
+                const savedUser = localStorage.getItem(userKey);
+                const currentUserList = savedUser ? JSON.parse(savedUser) : [];
+                
+                // 將新通知加到最前面
+                const newList = [welcomeNotification, ...currentUserList];
+                localStorage.setItem(userKey, JSON.stringify(newList));
+                
+                // 觸發事件讓小鈴鐺立即更新
+                window.dispatchEvent(new CustomEvent('notifications-updated'));
+             } catch (e) {
+                console.error("發送歡迎通知失敗", e);
+             }
+          }
+          // -------------------------------------------------------
 
-      // 如果有 token，可以存起來
-      if (result.token) localStorage.setItem('token', result.token);
-
-      setTimeout(() => {
-        closeRegister();
-        openEmailLogin();
-      }, 1500);
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setMessage(`❌ ${err.message}`);
+          toast.success('註冊成功！已自動登入');
+          
+          setTimeout(() => {
+            closeRegister();
+          }, 1000);
       } else {
-        setMessage('❌ 發生未知錯誤');
+          // Fallback
+          setMessage('🎉 註冊成功！請登入');
+          setTimeout(() => {
+            closeRegister();
+            openLogin(); 
+          }, 1500);
       }
+
+    } catch (err: any) {
+       const errorMsg = err.response?.data?.error || err.message || '註冊失敗';
+       setMessage(`❌ ${errorMsg}`);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl p-8 w-[400px] relative shadow-lg">
-        <button
-          onClick={closeRegister}
-          className="absolute right-4 top-4 text-gray-400 hover:text-black text-xl cursor-pointer"
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[9999] p-4 animate-in fade-in duration-200">
+      <div className="bg-white rounded-[32px] w-full max-w-4xl h-[600px] flex overflow-hidden shadow-2xl relative">
+        
+        {/* 關閉按鈕 */}
+        <button 
+          onClick={closeRegister} 
+          className="absolute right-6 top-6 text-gray-400 hover:text-gray-800 z-10 p-2 rounded-full hover:bg-gray-100 transition-colors"
         >
-          ×
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
 
-        <div className="flex flex-col items-center mb-6">
-          <Image src="/logo/logoColor.png" alt="LOGO" width={130} height={45} />
-          <h2 className="text-2xl font-bold text-gray-800 text-center mt-4 mb-4">免費註冊</h2>
+        {/* 左側：視覺主圖 (Register Style) */}
+        <div className="hidden md:flex w-1/2 bg-orange-50 relative flex-col justify-between p-12 text-[#0C2838]">
+           {/* 換一張比較明亮的圖，或是保持一致 */}
+           <div className="absolute inset-0 opacity-90 mix-blend-multiply bg-[#EF9D11]"></div>
+           <div className="absolute inset-0 opacity-30">
+             <Image src="/tide3.jpg" alt="Register Background" fill className="object-cover grayscale" />
+           </div>
+           
+           <div className="relative z-10">
+             <h2 className="text-3xl font-bold leading-tight text-white tracking-wide">
+               領取登機證<br />
+               啟航探索娛樂宇宙
+             </h2>
+           </div>
+
+           <div className="relative z-10 text-white/90">
+             <p className="text-lg font-medium mb-2 flex items-center gap-2">
+               <span className="bg-white/20 p-1 rounded">🚀</span> 加入 LinkUp 艦隊
+             </p>
+             <p className="text-sm opacity-80 leading-relaxed">
+               全台最熱門的音樂祭、展覽與<br/>戶外活動座標，您的專屬票券管家已上線。
+             </p>
+           </div>
         </div>
 
-        <input
-          type="email"
-          placeholder="電子郵件"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="w-full mb-3 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#EF9D11] text-gray-800 placeholder-gray-500"
-        />
+        {/* 右側：註冊表單 */}
+        <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-10 bg-white">
+          <div className="w-full max-w-sm space-y-6">
+            
+            <div className="text-center">
+              <h3 className="text-2xl font-bold text-gray-800">建立新帳號</h3>
+              <p className="text-gray-500 text-sm mt-1">填寫以下資訊加入我們</p>
+            </div>
 
-        <div className="relative w-full mb-3">
-          <input
-            type={showPassword ? 'text' : 'password'}
-            placeholder="密碼 (至少8碼)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none text-gray-800 placeholder-gray-500 focus:ring-2 focus:ring-[#EF9D11]"
-          />
-          <button
-            type="button"
-            onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-800"
-          >
-            {showPassword ? <AiOutlineEye size={20} /> : <AiOutlineEyeInvisible size={20} />}
-          </button>
-        </div>
+            <div className="space-y-4">
+              <input
+                type="email"
+                placeholder="電子信箱"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EF9D11]/50 focus:border-[#EF9D11] transition-all text-gray-800 placeholder-gray-400"
+              />
 
-        <label className="flex items-center gap-2 mb-4 text-gray-700 text-sm select-none">
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={agree}
-              onChange={() => setAgree(!agree)}
-              className="peer appearance-none w-4 h-4 border border-gray-300 rounded bg-white checked:bg-[#EF9D11] cursor-pointer"
-            />
-            <svg
-              className="absolute left-0 top-0 w-4 h-4 text-white pointer-events-none opacity-0 peer-checked:opacity-100"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="3"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="設定密碼 (至少 8 碼)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EF9D11]/50 focus:border-[#EF9D11] transition-all text-gray-800 placeholder-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <AiOutlineEyeInvisible size={20} /> : <AiOutlineEye size={20} />}
+                </button>
+              </div>
+
+              <input
+                type={showPassword ? 'text' : 'password'}
+                placeholder="再次確認密碼"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="w-full px-5 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#EF9D11]/50 focus:border-[#EF9D11] transition-all text-gray-800 placeholder-gray-400"
+              />
+            </div>
+
+            <button
+              onClick={handleRegister}
+              disabled={loading}
+              className="w-full py-3.5 rounded-xl bg-[#EF9D11] hover:bg-[#d68b0e] text-white font-bold shadow-lg shadow-orange-200 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0"
             >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+              {loading ? '建立帳號中...' : '立即註冊'}
+            </button>
+
+            {message && (
+              <div className={`p-3 rounded-lg text-sm text-center ${message.includes('成功') ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+                {message}
+              </div>
+            )}
+
+            <p className="text-center text-sm text-gray-500">
+              已有帳號？{' '}
+              <button
+                onClick={() => { closeRegister(); openLogin(); }}
+                className="text-[#EF9D11] font-semibold hover:underline"
+              >
+                直接登入
+              </button>
+            </p>
+
           </div>
-          我已詳細並同意{' '}
-          <span className="text-[#EF9D11] cursor-pointer">使用者條款</span> &{' '}
-          <span className="text-[#EF9D11] cursor-pointer">隱私權保護政策</span>
-        </label>
-
-        <button
-          onClick={handleRegister}
-          disabled={!agree || loading}
-          className={`w-full py-2 rounded-lg transition-colors cursor-pointer ${agree ? 'bg-[#EF9D11] hover:bg-[#d9890e] text-white' : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-            }`}
-        >
-          {loading ? '註冊中...' : '註冊'}
-        </button>
-
-        {message && (
-          <p className="text-center text-sm mt-3 text-gray-700 whitespace-pre-wrap">{message}</p>
-        )}
-
-        <p className="text-center text-sm text-gray-700 mt-4">
-          已成為會員？{' '}
-          <span
-            onClick={() => {
-              closeRegister();
-              openEmailLogin();
-            }}
-            className="text-[#658AD0] hover:underline cursor-pointer"
-          >
-            立即登入！
-          </span>
-        </p>
+        </div>
       </div>
     </div>
   );

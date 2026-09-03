@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 // 路由設定：這支檔案定義路由，定義 API endpoint (對應到一個後端程式如controller與service)，例如 /api/ratings對應某個controller, service
 
 // src/modules/event-ratings/event-ratings.routes.ts
@@ -26,3 +27,29 @@ router.get("/:eventId", getRatings);
 router.patch("/:ratingId", updateRating);
 
 export default router;
+=======
+import { Router } from "express";
+import * as c from "../events/events.controller.js";
+// [新增] 引入評價控制器
+import { createRating, getRatings, updateRating, deleteRating } from "../event-ratings/event-ratings.controller.js";
+import { auth } from "../../middleware/auth.middleware.js";
+
+const router = Router();
+
+// 公開活動相關路由
+router.get("/", c.listEvents);
+
+router.get("/categories", c.listCategories);
+// 取得單一活動詳情
+router.get("/:id", c.getEventById);
+//
+router.post("/:id/ratings", (req, res, next) => {
+    req.body.event_id = parseInt(req.params.id);
+    next();
+}, createRating);
+
+
+router.delete("/:ratingId", auth("member"), deleteRating);
+
+export default router;
+>>>>>>> origin/main-final
