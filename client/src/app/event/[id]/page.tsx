@@ -1,7 +1,7 @@
 // new-LinkUp/client/src/app/event/[id]/page.tsx
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -496,7 +496,7 @@ const ReviewList = ({
 // -----------------------
 // 主元件
 // -----------------------
-export default function EventDetailPage() {
+function EventDetailContent() {
 	const params = useParams();
 	const id = params?.id;
 	const router = useRouter();
@@ -1098,5 +1098,12 @@ export default function EventDetailPage() {
 				</div>
 			</div>
 		</div>
+	);
+}
+export default function EventDetailPage() {
+	return (
+		<Suspense fallback={<div>載入活動細節資料中...</div>}>
+			<EventDetailContent />
+		</Suspense>
 	);
 }

@@ -1,7 +1,7 @@
 // new-LinkUp/client/src/components/EventTabs.tsx
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation'; // [新增] 抓取 URL 參數
 import {
 	Paper,
@@ -48,12 +48,10 @@ interface Review {
 	};
 }
 
-export default function EventTabs({ eventId, description }: EventTabsProps) {
+function EventTabsContent({ eventId, description }: EventTabsProps) {
 	const { user } = useUser();
 	const searchParams = useSearchParams();
 
-	// [修復 1] Tab 控制邏輯：監聽 URL 參數
-	// 如果 URL 有 action=review 或 tab=comments，預設開啟評論區
 	const initialTab =
 		searchParams.get('action') === 'review' ||
 		searchParams.get('tab') === 'comments'
@@ -434,5 +432,12 @@ export default function EventTabs({ eventId, description }: EventTabsProps) {
 				</Paper>
 			</Tabs.Panel>
 		</Tabs>
+	);
+}
+export default function EventTabs(props: EventTabsProps) {
+	return (
+		<Suspense fallback={<div>載入標籤中...</div>}>
+			<EventTabsContent {...props} />
+		</Suspense>
 	);
 }
