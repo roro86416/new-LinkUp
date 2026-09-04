@@ -76,15 +76,17 @@ export const getECPayParams = (amount = 0, items = '') => {
 		.toString()
 		.padStart(2, '0')}${new Date().getMilliseconds().toString().padStart(2)}`;
 
-	const MerchantTradeDate = new Date().toLocaleDateString('zh-TW', {
-		year: 'numeric',
-		month: '2-digit',
-		day: '2-digit',
-		hour: '2-digit',
-		minute: '2-digit',
-		second: '2-digit',
-		hour12: false,
-	});
+	// 1. 先取得安全的台灣時區 Date 物件
+	const now = new Date();
+	const twDate = new Date(
+		now.toLocaleString('en-US', { timeZone: 'Asia/Taipei' }),
+	);
+
+	// 2. 手動補零函式
+	const pad = (n: number) => (n < 10 ? `0${n}` : n);
+
+	// 3. 嚴格對齊 YYYY/MM/DD HH:mm:ss 格式 (完全避開任何內建的 locale 特殊字元)
+	const MerchantTradeDate = `${twDate.getFullYear()}/${pad(twDate.getMonth() + 1)}/${pad(twDate.getDate())} ${pad(twDate.getHours())}:${pad(twDate.getMinutes())}:${pad(twDate.getSeconds())}`;
 
 	// 三、準備 CheckMacValue 計算參數
 	let ParamsBeforeCMV: any = {
