@@ -1,8 +1,7 @@
 //前端 API 登入請求的入口
 //自動帶 token、自動加 header、自動處理錯誤、自動解析 JSON
 
-const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 class ApiClient {
 	private async request<T>(

@@ -35,13 +35,12 @@ const app: Express = express();
 const allowedOrigins = [
 	'http://localhost:3000',
 	'http://192.168.1.154:3000',
-	process.env.FRONTEND_URL || 'https://new-link-up-client-blsl.vercel.app/',
+	process.env.FRONTEND_URL || 'https://new-link-up-client-blsl.vercel.app',
 ];
 
 // --- 全域中間件 ---
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// --- CORS 設定（允許前端 localhost:3000 存取，含 cookies/token） ---
 app.use(
 	cors({
 		origin: function (origin, callback) {
